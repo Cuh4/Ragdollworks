@@ -5,7 +5,7 @@
 --[[
     ----------------------------
 
-    Copyright (C) 2025 cuhHub - All Rights Reserved
+    Copyright (C) 2025 Cuh4 - All Rights Reserved
         - Unauthorized copying of this file, via any medium is strictly prohibited
         - Proprietary and confidential
 
