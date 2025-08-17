@@ -1,0 +1,46 @@
+{
+  "name": "Ragdollworks",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "Rage": {
+        "$path": "src/Rage"
+      },
+
+      "Libs": {
+        "$path": "src/Libs"
+      },
+
+      "Classes": {
+        "$path": "src/Classes"
+      },
+
+      "Packages": {
+        "$path": "Packages"
+      },
+
+      "DevPackages": {
+        "$path": "DevPackages"
+      }
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/Client"
+        }
+      }
+    },
+
+    "ServerScriptService": {
+      "Packages": {
+        "$path": "ServerPackages"
+      },
+
+      "Server": {
+        "$path": "src/Server"
+      }
+    }
+  }
+}
