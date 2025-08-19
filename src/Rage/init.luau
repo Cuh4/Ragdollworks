@@ -26,6 +26,7 @@ Rage = {}
 Rage.RunService = game:GetService("RunService")
 Rage.IsServer = Rage.RunService:IsServer()
 Rage.IsClient = not Rage.IsServer
+Rage.IsStudio = Rage.RunService:IsStudio()
 Rage.Workspace = game:GetService("Workspace")
 Rage.Lighting = game:GetService("Lighting")
 Rage.ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -75,6 +76,7 @@ function Rage:Initialize(path: Instance)
 
     -- Load services
     self.Logging:Info("Loading all services at:", path:GetFullName())
+
     for _, service: Service in pairs(self:_LoadAll(path)) do
         self:_LoadService(service)
     end
