@@ -30,7 +30,7 @@ local Maps = require(script.Parent.Maps)
 --[[
     A service for handling the player's camera.
 ]]
-Camera = Rage:Service("Camera")
+Camera = Rage:Service("Camera") :: Camera
 Camera.CAMERA_FOV = 2
 Camera.ZOOM_Z_MULTIPLIER = 6000
 Camera.CAMERA_SPEED = 0.5
@@ -136,18 +136,31 @@ function Camera:HandleInputEvents()
 end
 
 --[[
+    Returns the camera's Z position based on zoom level.
+]]
+function Camera:GetCamZ(): number
+    return ((self.Zoom + 1) * self.ZOOM_Z_MULTIPLIER) + self.CAMERA_Z_OFFSET
+end
+
+--[[
     Returns the camera's needed CFrame.
 ]]
 function Camera:GetCamCFrame(): CFrame
     if not Maps.IsInMap then
         self.Position = Maps.MAP_POSITION
         self:SetZoom(1)
+
+        return CFrame.new(
+            self.Position.X,
+            self.Position.Y,
+            self:GetCamZ()
+        )
     end
 
     return CFrame.new(
         math.clamp(self.Position.X, -Maps.CurrentMap.Size.X / 2, Maps.CurrentMap.Size.X / 2),
         math.clamp(self.Position.Y, -Maps.CurrentMap.Size.Y / 2, Maps.CurrentMap.Size.Y / 2),
-        ((self.Zoom + 1) * self.ZOOM_Z_MULTIPLIER) + self.CAMERA_Z_OFFSET
+        self:GetCamZ()
     )
 end
 
@@ -167,4 +180,5 @@ function Camera:HidePlayer()
     root.CFrame = CFrame.new(0, 0, -1000) -- out of the way
 end
 
+export type Camera = typeof(Camera)
 return Camera
