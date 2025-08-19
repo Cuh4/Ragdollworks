@@ -26,4 +26,5 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 -- // Main
 -------------------------------
 
+Rage.Logging:Info("Welcome to Ragdollworks. If you see any errors (red text), please screenshot and show them to us!")
 Rage:Initialize(script.Game)
