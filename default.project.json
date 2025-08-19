@@ -18,10 +18,6 @@
 
       "Packages": {
         "$path": "Packages"
-      },
-
-      "DevPackages": {
-        "$path": "DevPackages"
       }
     },
 
@@ -34,10 +30,6 @@
     },
 
     "ServerScriptService": {
-      "Packages": {
-        "$path": "ServerPackages"
-      },
-
       "Server": {
         "$path": "src/Server"
       }
