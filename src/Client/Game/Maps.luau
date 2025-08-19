@@ -198,6 +198,7 @@ end
 ]]
 function Maps:LoadMaps()
     for _, map in pairs(self.MAP_FOLDER:GetChildren()) do
+        Rage.Logging:Info("Maps:LoadMaps(): Loaded map '"..map.Name.."'.")
         table.insert(self.ExistingMaps, Map.FromInstance(map))
     end
 end
