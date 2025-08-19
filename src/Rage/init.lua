@@ -23,7 +23,6 @@
     Rage, a minimal framework for Roblox games.
 ]]
 Rage = {}
-
 Rage.RunService = game:GetService("RunService")
 Rage.IsServer = Rage.RunService:IsServer()
 Rage.IsClient = not Rage.IsServer
@@ -80,9 +79,6 @@ function Rage:Initialize(path: Instance)
         self:_LoadService(service)
     end
 
-    -- Init services
-    self:InitServices()
-
     -- Start services
     self:StartServices()
 end
@@ -102,22 +98,6 @@ function Rage:_LoadService(service: Service): Service
 
     self.Services[service.Name] = service
     return service
-end
-
---[[
-    Initializes all services.
-]]
-function Rage:InitServices()
-    for _, service in pairs(self.Services) do
-        if not service.OnInit then
-            self.Logging:Warn(service.Name, "(service) does not have an `OnInit` method. This method is not required to be implemented however.")
-            continue
-        end
-
-        local start = tick()
-        service:OnInit()
-        self.Logging:Info("Initialized:", service.Name..".", "Took:", ("%.2fs"):format(tick() - start))
-    end
 end
 
 --[[
