@@ -58,4 +58,13 @@ function Logging:Error(...: string)
     self:_Log("ERROR", error, ...)
 end
 
+--[[
+    Sends an error if the condition is false (assert).
+]]
+function Logging:Assert(condition: boolean, ...: string)
+    if not condition then
+        self:Error(...)
+    end
+end
+
 return Logging
