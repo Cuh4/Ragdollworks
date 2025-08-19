@@ -22,7 +22,8 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local Map = require(Rage.ReplicatedStorage.Classes.Map)
+local CLI = require(script.Parent.CLI)
+local Map = require(game:GetService("ReplicatedStorage").Classes.Map) -- cant use Rage.ReplicatedStorage. luau lsp wont detect types. https://github.com/JohnnyMorganz/luau-lsp/issues/1183
 
 -------------------------------
 -- // Main
@@ -31,7 +32,7 @@ local Map = require(Rage.ReplicatedStorage.Classes.Map)
 --[[
     A service for handling maps.
 ]]
-Maps = Rage:Service("Maps")
+Maps = Rage:Service("Maps") :: Maps
 Maps.MAP_FOLDER = Rage.Assets:GetAsset("Maps")
 Maps.MAP_POSITION = Vector2.new(0, 0)
 Maps.BOUNDARY_THICKNESS = 5
@@ -40,8 +41,8 @@ Maps.BACKGROUND_SIZE = Vector2.new(10000, 10000)
 Maps.BACKGROUND_COLOR = Maps.BOUNDARY_COLOR
 
 Maps.ExistingMaps = {} :: {Map.Map}
-Maps.CurrentMap = nil :: Map.Map
-Maps.MapInstance = nil :: Model
+Maps.CurrentMap = nil :: Map.Map?
+Maps.MapInstance = nil :: Model?
 Maps.IsInMap = false
 
 --[[
@@ -49,7 +50,8 @@ Maps.IsInMap = false
 ]]
 function Maps:OnStart()
     self:LoadMaps()
-    self:StartMap(self:GetMap("Testing"))
+
+    self:_CreateCommands()
 end
 
 --[[
@@ -180,17 +182,20 @@ function Maps:ExitMap()
     self.IsInMap = false
     self.CurrentMap = nil
     self.MapInstance:Destroy()
+    self.MapInstance = nil
 end
 
 --[[
     Gets a map by its name.
 ]]
-function Maps:GetMap(name: string): Map.Map
+function Maps:GetMap(name: string): Map.Map?
     for _, map in pairs(self.ExistingMaps) do
         if map.Name == name then
             return map
         end
     end
+
+    return nil
 end
 
 --[[
@@ -203,4 +208,66 @@ function Maps:LoadMaps()
     end
 end
 
+--[[
+    Creates commands.
+]]
+function Maps:_CreateCommands()
+    CLI.Conch.register("start-map", {
+        description = "Starts a map by its name.",
+
+        arguments = function()
+            return CLI.Conch.args.string("MapName", "The name of the map to start.")
+        end,
+
+        callback = function(name)
+            if self.IsInMap then
+                Rage.Logging:Warn("Already in a map. Exit the current map before starting a new one.")
+                return
+            end
+
+            local map = self:GetMap(name)
+
+            if not map then
+                Rage.Logging:Warn("No map found with provided name.")
+                return
+            end
+
+            self:StartMap(map)
+        end
+    })
+
+    CLI.Conch.register("list-maps", {
+        description = "Lists all available maps.",
+        arguments = function() end,
+
+        callback = function()
+            if #self.ExistingMaps == 0 then
+                Rage.Logging:Warn("No maps found. This should not be the case.")
+                return
+            end
+
+            Rage.Logging:Info("Available maps:")
+
+            for _, map in pairs(self.ExistingMaps) do
+                Rage.Logging:Info("- " .. map.Name)
+            end
+        end
+    })
+
+    CLI.Conch.register("exit-map", {
+        description = "Exits the current map.",
+        arguments = function() end,
+
+        callback = function()
+            if not self.IsInMap then
+                Rage.Logging:Warn("Can't exit map, not in a map.")
+                return
+            end
+
+            self:ExitMap()
+        end
+    })
+end
+
+export type Maps = typeof(Maps)
 return Maps
