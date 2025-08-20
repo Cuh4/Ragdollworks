@@ -59,6 +59,8 @@ export type SpawnedObject = {
     Parts: {[BasePart]: ObjectPart},
     Behaviours: {ObjectBehaviour},
 
+    _RemovalRequested: signal.Signal,
+
     New: (ID: number, object: Object, instance: Model) -> SpawnedObject,
 
     Update: (self: SpawnedObject, startBound: Vector2, endBound: Vector2) -> nil,
@@ -69,7 +71,8 @@ export type SpawnedObject = {
     FindParts: (self: SpawnedObject) -> {[BasePart]: ObjectPart},
     GetPart: (self: SpawnedObject, part: BasePart) -> ObjectPart?,
     RemovePart: (self: SpawnedObject, part: BasePart) -> nil,
-    Despawn: (self: SpawnedObject) -> nil
+    Despawn: (self: SpawnedObject) -> nil,
+    Remove: (self: SpawnedObject) -> nil
 }
 
 export type ObjectPart = {
@@ -86,6 +89,7 @@ export type ObjectPart = {
     OnDragStart: signal.Signal,
     OnDragEnd: signal.Signal,
     OnActivate: signal.Signal,
+    OnDespawn: signal.Signal,
 
     New: (part: BasePart, settings: ObjectPartSettings) -> ObjectPart,
     FromPart: (part: BasePart) -> ObjectPart,
@@ -98,7 +102,8 @@ export type ObjectPart = {
     Activate: (self: ObjectPart) -> nil,
     SetRotationForce: (self: ObjectPart, force: number) -> nil,
     Drag: (self: ObjectPart) -> nil,
-    StopDragging: (self: ObjectPart) -> nil
+    StopDragging: (self: ObjectPart) -> nil,
+    Despawn: (self: ObjectPart) -> nil
 }
 
 export type ObjectPartSettings = {
@@ -106,14 +111,14 @@ export type ObjectPartSettings = {
 }
 
 export type ObjectBehaviour = {
-    Name: string,
+    SpawnedObject: SpawnedObject,
 
-    New: (name: string) -> ObjectBehaviour,
+    New: (spawnedObject: SpawnedObject) -> ObjectBehaviour,
 
-    OnSpawn: (self: ObjectBehaviour, object: SpawnedObject) -> nil,
-    OnPreDespawn: (self: ObjectBehaviour, object: SpawnedObject) -> nil,
-    OnActivate: (self: ObjectBehaviour, object: SpawnedObject, objectPart: ObjectPart) -> nil,
-    OnUpdate: (self: ObjectBehaviour, object: SpawnedObject) -> nil
+    OnSpawn: (self: ObjectBehaviour) -> nil,
+    OnPreDespawn: (self: ObjectBehaviour) -> nil,
+    OnActivate: (self: ObjectBehaviour, objectPart: ObjectPart) -> nil,
+    OnUpdate: (self: ObjectBehaviour) -> nil
 }
 
 return {}
