@@ -54,9 +54,9 @@ end
 --[[
     Updates the spawned object.
 ]]
-function SpawnedObject:Update(startBound: Vector2, endBound: Vector2)
+function SpawnedObject:Update(startBound: Vector2, endBound: Vector2, dragPosition: Vector2)
     for _, part in pairs(self.Parts) do
-        part:Update(startBound, endBound)
+        part:Update(startBound, endBound, dragPosition)
     end
 
     for _, behaviour in pairs(self.Behaviours) do

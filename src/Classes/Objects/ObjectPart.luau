@@ -106,13 +106,13 @@ end
 --[[
     Updates the part.
 ]]
-function ObjectPart:Update(startBound: Vector2, endBound: Vector2)
+function ObjectPart:Update(startBound: Vector2, endBound: Vector2, dragPosition: Vector2)
     self.Part.Anchored = self.Frozen
 
     self.AngularVelocityInstance.AngularVelocity = Vector3.new(0, 0, self.RotationForce)
     self.AngularVelocityInstance.Enabled = self.Dragging
 
-    self.AlignPositionInstance.Position = Rage.Player:GetMouse().Hit.Position
+    self.AlignPositionInstance.Position = Vector3.new(dragPosition.X, dragPosition.Y, 0)
     self.AlignPositionInstance.Enabled = self.Dragging
 
     self:LockZAxis()
