@@ -38,21 +38,22 @@ ObjectPart.__index = ObjectPart
     Creates a new ObjectPart class instance.
 ]]
 function ObjectPart.New(part: BasePart, settings: types.ObjectPartSettings): types.ObjectPart
-    local objectPart = setmetatable({}, ObjectPart) :: types.ObjectPart
-    objectPart.Part = part
-    objectPart.Settings = settings
-    objectPart.Dragging = false
-    objectPart.Frozen = false
-    objectPart.AlignPositionInstance = nil :: AlignPosition
-    objectPart.AngularVelocityInstance = nil :: AngularVelocity
-    objectPart.AttachmentInstance = nil :: Attachment
-    objectPart.RotationForce = 0
+    local self = setmetatable({}, ObjectPart) :: types.ObjectPart
+    self.Part = part
+    self.Settings = settings
+    self.Dragging = false
+    self.Frozen = false
+    self.AlignPositionInstance = nil :: AlignPosition
+    self.AngularVelocityInstance = nil :: AngularVelocity
+    self.AttachmentInstance = nil :: Attachment
+    self.RotationForce = 0
 
-    objectPart.OnDragStart = signal.new()
-    objectPart.OnDragEnd = signal.new()
-    objectPart.OnActivate = signal.new()
+    self.OnDragStart = signal.new()
+    self.OnDragEnd = signal.new()
+    self.OnActivate = signal.new()
+    self.OnDespawn = signal.new()
 
-    return objectPart
+    return self
 end
 
 --[[
@@ -182,6 +183,14 @@ function ObjectPart:StopDragging()
 
     self.Dragging = false
     self.OnDragEnd:Fire()
+end
+
+--[[
+    Despawns the part.
+]]
+function ObjectPart:Despawn()
+    self.Part:Destroy()
+    self.OnDespawn:Fire()
 end
 
 return ObjectPart
