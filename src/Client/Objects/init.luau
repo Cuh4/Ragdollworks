@@ -416,6 +416,7 @@ function Objects:_CreateCommands()
 
     CLI.Conch.register("spawn-objects", {
         description = "Spawns x amount of objects at the mouse position.",
+
         arguments = function()
             return CLI.Conch.args.number("Amount", "The amount of objects to spawn.")
         end,
