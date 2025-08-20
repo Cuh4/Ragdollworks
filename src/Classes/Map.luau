@@ -28,7 +28,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 --[[
     A class representing a map.
 ]]
-Map = {}
+Map = {} :: Map
 Map.__index = Map
 
 --[[
@@ -39,7 +39,7 @@ function Map.New(name: string, description: string, size: Vector2, mapInstance: 
     map.Name = name
     map.Description = description
     map.Size = size
-    map.Instance = mapInstance or Rage.Logging:Error("Map.New(): No map instance provided.")
+    map.Instance = mapInstance
 
     return map
 end
