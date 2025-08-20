@@ -48,6 +48,12 @@ Rage.Logging = require(script.Logging)
 Rage.Assets = require(script.Assets)
 
 --[[
+    A table of all built-in libraries.
+]]
+Rage.Libs = {}
+Rage.Libs.Classes = require(script.Libs.Classes)
+
+--[[
     A table of all built-in classes.
 ]]
 Rage.Classes = {}
@@ -78,6 +84,10 @@ function Rage:Initialize(path: Instance)
     self.Logging:Info("Loading all services at:", path:GetFullName())
 
     for _, service: Service in pairs(self:_LoadAll(path)) do
+        if not self.Libs.Classes:IsClassInstance(service, Rage.Classes.Service) then
+            continue
+        end
+
         self:_LoadService(service)
     end
 
