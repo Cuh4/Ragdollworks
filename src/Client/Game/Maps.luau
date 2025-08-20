@@ -22,6 +22,8 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
+local signal = require(Rage.ReplicatedStorage.Packages.signal)
+
 local CLI = require(script.Parent.CLI)
 local Map = require(game:GetService("ReplicatedStorage").Classes.Map) -- cant use Rage.ReplicatedStorage. luau lsp wont detect types. https://github.com/JohnnyMorganz/luau-lsp/issues/1183
 
@@ -39,6 +41,10 @@ Maps.BOUNDARY_THICKNESS = 5
 Maps.BOUNDARY_COLOR = Color3.fromRGB(15, 15, 15)
 Maps.BACKGROUND_SIZE = Vector2.new(10000, 10000)
 Maps.BACKGROUND_COLOR = Maps.BOUNDARY_COLOR
+Maps.BACKGROUND_Z_OFFSET = -10
+
+Maps.OnMapStart = signal.new() :: signal.Signal<Map.Map>
+Maps.OnMapExit = signal.new() :: signal.Signal
 
 Maps.ExistingMaps = {} :: {Map.Map}
 Maps.CurrentMap = nil :: Map.Map?
@@ -69,6 +75,8 @@ function Maps:StartMap(map: Map.Map)
     self:_SetupMapInstance()
     self:_CreateMapBoundaries()
     self:_CreateMapBackground()
+
+    self.OnMapStart:Fire(self.CurrentMap)
 end
 
 --[[
@@ -85,6 +93,18 @@ function Maps:_SetupMapInstance()
     end
 
     self.MapInstance = self.CurrentMap:CreateInstance()
+
+    local background: BasePart = self.MapInstance:FindFirstChild("MapBackground")
+
+    if not background then
+        Rage.Logging:Error("Maps:_SetupMapInstance(): Map instance does not have a background part.")
+    end
+
+    background.Position = Vector3.new(
+        background.Position.X,
+        background.Position.Y,
+        self.BACKGROUND_Z_OFFSET
+    )
 
     self.MapInstance:PivotTo(CFrame.new(
         self.MAP_POSITION.X,
@@ -143,8 +163,8 @@ function Maps:_CreateBoundaryPart(size: Vector2, position: Vector2): Part
     part.Color = self.BOUNDARY_COLOR
     part.Anchored = true
     part.CanCollide = true
-    part.Size = Vector3.new(size.X, size.Y, 5)
-    part.Position = Vector3.new(position.X, position.Y, 0)
+    part.Size = Vector3.new(size.X, size.Y, math.abs(self.BACKGROUND_Z_OFFSET) * 2)
+    part.Position = Vector3.new(position.X, position.Y, self.BACKGROUND_Z_OFFSET / 2)
 
     return part
 end
@@ -159,7 +179,7 @@ function Maps:_CreateMapBackground()
     background.Anchored = true
     background.CanCollide = false
     background.Size = Vector3.new(1, 1, 1)
-    background.Position = Vector3.new(self.MAP_POSITION.X, -10, self.MAP_POSITION.Y)
+    background.Position = Vector3.new(self.MAP_POSITION.X, self.MAP_POSITION.Y, self.BACKGROUND_Z_OFFSET)
 
     local mesh = Instance.new("BlockMesh") -- meshes can exceed part size limit
     mesh.Name = "SizeExtenderMesh"
@@ -183,6 +203,8 @@ function Maps:ExitMap()
     self.CurrentMap = nil
     self.MapInstance:Destroy()
     self.MapInstance = nil
+
+    self.OnMapExit:Fire()
 end
 
 --[[
@@ -219,7 +241,7 @@ function Maps:_CreateCommands()
             return CLI.Conch.args.string("MapName", "The name of the map to start.")
         end,
 
-        callback = function(name)
+        callback = function(name: string)
             if self.IsInMap then
                 Rage.Logging:Warn("Already in a map. Exit the current map before starting a new one.")
                 return
