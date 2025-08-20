@@ -22,7 +22,7 @@
 --[[
     A class representing a service.
 ]]
-Service = {}
+Service = {} :: Service
 Service.__index = Service
 
 --[[
