@@ -73,16 +73,7 @@ end
 --[[
     Called when an object using this behaviour is updated.
 ]]
-function TestObjectBehaviour:OnUpdate(object: types.SpawnedObject)
-    if time() - self.Last < 3 then
-        return
-    end
-
-    self.Last = time()
-
-    Rage.Logging:Info("TestObjectBehaviour: object updated!")
-    print(object)
-end
+function TestObjectBehaviour:OnUpdate(object: types.SpawnedObject) end
 
 export type TestObjectBehaviour = {
     Last: number
