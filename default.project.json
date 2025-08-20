@@ -8,10 +8,6 @@
         "$path": "src/Rage"
       },
 
-      "Libs": {
-        "$path": "src/Libs"
-      },
-
       "Classes": {
         "$path": "src/Classes"
       },
