@@ -43,7 +43,7 @@ local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
 ]]
 Objects = Rage:Service("Objects") :: Objects
 Objects.OBJECT_FOLDER = Rage.Assets:GetAsset("Objects")
-Objects.RAY_DISTANCE = 8000
+Objects.RAY_DISTANCE = 50000
 
 Objects.ExistingObjects = {} :: {ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
