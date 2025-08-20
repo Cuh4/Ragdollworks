@@ -38,10 +38,13 @@ Camera.CAMERA_SPEED_ZOOMED_OUT = 7
 Camera.SCROLL_ZOOM_SENSITIVITY = 0.05
 Camera.CAMERA_Z_OFFSET = -4500 -- due to extremely low camera fov to get a 2d effect, this offset is in place to keep the camera from being too far from the map when zoomed all the way in
 Camera.MAX_ZOOM = 2
+Camera.DEFAULT_ZOOM = 1
 
 Camera.Position = Maps.MAP_POSITION
 Camera.Zoom = 0
 Camera.MoveFaster = false
+Camera.IsPanning = false
+Camera.LastMousePosition = Vector2.new(0, 0)
 
 --[[
     Called when the service starts.
@@ -51,6 +54,10 @@ function Camera:OnStart()
 
     self.HeartbeatConnection = Rage.RunService.Heartbeat:Connect(function()
         self:Update()
+    end)
+
+    Maps.OnMapStart:Connect(function()
+        self:SetZoom(self.DEFAULT_ZOOM)
     end)
 end
 
@@ -98,6 +105,14 @@ function Camera:GetSpeed(): number
 end
 
 --[[
+    Returns the mouse's position.
+]]
+function Camera:GetMousePosition(): Vector2
+    local mouse = Rage.Player:GetMouse()
+    return Vector2.new(mouse.X, mouse.Y)
+end
+
+--[[
     Handles camera movement from input.
 ]]
 function Camera:HandleInputTick()
@@ -118,6 +133,15 @@ function Camera:HandleInputTick()
     end
 
     self:SetMoveFaster(Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift))
+
+    if self.IsPanning then
+        local mousePos = self:GetMousePosition()
+        local delta = mousePos - self.LastMousePosition
+        local multiplier = math.clamp(self.Zoom / self.MAX_ZOOM, 0.05, 1)
+        self:Move(-delta.X * multiplier, delta.Y * multiplier)
+
+        self.LastMousePosition = mousePos
+    end
 end
 
 --[[
@@ -133,6 +157,39 @@ function Camera:HandleInputEvents()
             self:SetZoom(self.Zoom + -(input.Position.Z * self.SCROLL_ZOOM_SENSITIVITY))
         end
     end)
+
+    Rage.Input.InputBegan:Connect(function(input, gameProcessedEvent)
+        if gameProcessedEvent then
+            return
+        end
+
+        if input.UserInputType == Enum.UserInputType.MouseButton3 then
+            self:SetPanning(true)
+        end
+    end)
+
+    Rage.Input.InputEnded:Connect(function(input, gameProcessedEvent)
+        if gameProcessedEvent then
+            return
+        end
+
+        if input.UserInputType == Enum.UserInputType.MouseButton3 then
+            self:SetPanning(false)
+        end
+    end)
+end
+
+--[[
+    Sets if the camera is panning.
+]]
+function Camera:SetPanning(isPanning: boolean)
+    self.IsPanning = isPanning
+
+    if isPanning then
+        self.LastMousePosition = self:GetMousePosition()
+    end
+
+    Rage.Logging:Info("Camera:SetPanning(): Panning is "..tostring(isPanning))
 end
 
 --[[
@@ -148,7 +205,6 @@ end
 function Camera:GetCamCFrame(): CFrame
     if not Maps.IsInMap then
         self.Position = Maps.MAP_POSITION
-        self:SetZoom(1)
 
         return CFrame.new(
             self.Position.X,
@@ -168,7 +224,12 @@ end
     Sets the camera's zoom.
 ]]
 function Camera:SetZoom(zoom: number)
+    if not Maps.IsInMap then
+        return
+    end
+
     self.Zoom = math.clamp(zoom, 0, self.MAX_ZOOM)
+    Rage.Logging:Info(("Camera:SetZoom(): Zoom set to %.2f"):format(self.Zoom))
 end
 
 --[[
