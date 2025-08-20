@@ -36,11 +36,29 @@ SpawnedObject.__index = SpawnedObject
     Creates a new SpawnedObject class instance.
 ]]
 function SpawnedObject.New(ID: number, object: Object, instance: Model): types.SpawnedObject
-    local spawnedObject = setmetatable({}, SpawnedObject)
+    local spawnedObject = setmetatable({}, SpawnedObject) :: types.SpawnedObject
     spawnedObject.ID = ID
     spawnedObject.Object = object
     spawnedObject.Instance = instance
     spawnedObject.Parts = spawnedObject:FindParts()
+    spawnedObject.Behaviours = {}
+
+    for _, behaviour in pairs(object.Behaviours) do
+        local behaviourInstance = behaviour.New()
+        table.insert(spawnedObject.Behaviours, behaviourInstance)
+    end
+
+    for _, behaviour in pairs(spawnedObject.Behaviours) do
+        behaviour:OnSpawn(spawnedObject)
+    end
+
+    for _, part in pairs(spawnedObject.Parts) do
+        part.OnActivate:Connect(function()
+            for _, behaviour in pairs(spawnedObject.Behaviours) do
+                behaviour:OnActivate(spawnedObject, part)
+            end
+        end)
+    end
 
     return spawnedObject
 end
@@ -51,6 +69,10 @@ end
 function SpawnedObject:Update(startBound: Vector2, endBound: Vector2)
     for _, part in pairs(self.Parts) do
         part:Update(startBound, endBound)
+    end
+
+    for _, behaviour in pairs(self.Behaviours) do
+        behaviour:OnUpdate(self)
     end
 end
 
@@ -141,6 +163,10 @@ end
     Despawns the spawned object, removing all parts and cleaning up.
 ]]
 function SpawnedObject:Despawn()
+    for _, behaviour in pairs(self.Behaviours) do
+        behaviour:OnPreDespawn(self)
+    end
+
     self.Instance:Destroy()
 end
 

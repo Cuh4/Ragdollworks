@@ -44,11 +44,13 @@ Objects.OBJECT_FOLDER = Rage.Assets:GetAsset("Objects")
 Objects.ExistingObjects = {} :: {ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
+Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
 
 --[[
     Called when the service starts.
 ]]
 function Objects:OnStart()
+    self:LoadBehaviours()
     self:LoadObjects()
     self:_CreateCommands()
 
@@ -84,6 +86,26 @@ function Objects:OnMouseClick()
     local position = Vector2.new(mousePosition.X, mousePosition.Y)
 
     self:SpawnObject(self.ExistingObjects[math.random(1, #self.ExistingObjects)], position)
+end
+
+--[[
+    Loads all object behaviours.
+]]
+function Objects:LoadBehaviours()
+    for _, behaviourModuleScript: ModuleScript in pairs(script.ObjectBehaviours:GetChildren()) do
+        local behaviourClass = require(behaviourModuleScript)
+        self:RegisterBehaviour(behaviourModuleScript.Name, behaviourClass)
+    end
+
+    Rage.Logging:Info("Objects:LoadBehaviours(): Loaded all object behaviours.")
+end
+
+--[[
+    Registers a new object behaviour.
+]]
+function Objects:RegisterBehaviour(name: string, behaviourClass: ObjectTypes.ObjectBehaviour)
+    self.Behaviours[name] = behaviourClass
+    Rage.Logging:Info(("Objects:RegisterBehaviour(): Registered behaviour %s."):format(name))
 end
 
 --[[
@@ -148,13 +170,26 @@ end
 ]]
 function Objects:LoadObjects()
     for _, objectInstance: Model in pairs(self.OBJECT_FOLDER:GetChildren()) do
-        local object = Object.FromInstance(objectInstance)
+        -- Find object behaviours this object has
+        local objectBehaviours: {ObjectTypes.ObjectBehaviour} = {}
 
+        for name: string, behaviour: ObjectTypes.ObjectBehaviour in pairs(self.Behaviours) do
+            if objectInstance:GetAttribute(name.."ObjectBehaviour") then
+                Rage.Logging:Info("Objects:LoadObjects(): Found behaviour for to-be-loaded object: "..name)
+                table.insert(objectBehaviours, behaviour.New())
+            end
+        end
+
+        -- Create object instance
+        local object = Object.FromInstance(objectInstance, objectBehaviours)
+
+        -- Create category if it doesn't exist
         if not self.ExistingObjectsByCategory[object.Category] then
             self.ExistingObjectsByCategory[object.Category] = {}
             Rage.Logging:Info("Objects:LoadObjects(): Created new category: "..object.Category)
         end
 
+        -- Register
         table.insert(self.ExistingObjects, object)
         table.insert(self.ExistingObjectsByCategory[object.Category], object)
 
@@ -171,7 +206,7 @@ function Objects:_CreateCommands()
 
         arguments = function() end,
 
-        callback = function(name: string)
+        callback = function()
             self:DespawnAllObjects()
         end
     })

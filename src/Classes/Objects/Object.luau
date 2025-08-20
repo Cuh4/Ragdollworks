@@ -35,12 +35,13 @@ Object.__index = Object
 --[[
     Creates a new Object class instance.
 ]]
-function Object.New(name: string, description: string, category: string, settings: types.ObjectSettings, instance: Model): types.Object
-    local object = setmetatable({}, Object)
+function Object.New(name: string, description: string, category: string, settings: types.ObjectSettings, behaviours: {types.ObjectBehaviour}, instance: Model): types.Object
+    local object = setmetatable({}, Object) :: Object
     object.Name = name
     object.Description = description
     object.Category = category
     object.Settings = settings
+    object.Behaviours = behaviours
     object.Instance = instance
 
     return object
@@ -49,7 +50,7 @@ end
 --[[
     Creates a new Object class instance from an actual object instance.
 ]]
-function Object.FromInstance(instance: Model): types.Object
+function Object.FromInstance(instance: Model, behaviours: {types.ObjectBehaviour}): types.Object
     return Object.New(
         instance:GetAttribute("ObjectName") or Rage.Logging:Error(instance:GetFullName()..": No object name provided."),
         instance:GetAttribute("ObjectDescription") or Rage.Logging:Error(instance:GetFullName()..": No object description provided."),
@@ -60,6 +61,7 @@ function Object.FromInstance(instance: Model): types.Object
             IsSpawnable = instance:GetAttribute("ObjectIsSpawnable") or false
         },
 
+        behaviours,
         instance
     )
 end
