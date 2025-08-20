@@ -22,6 +22,8 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
+local signal = require(Rage.ReplicatedStorage.Packages.signal)
+
 local CLI = require(script.Parent.CLI)
 local ID = require(script.Parent.ID)
 local Maps = require(script.Parent.Maps)
@@ -45,6 +47,10 @@ Objects.ExistingObjects = {} :: {ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
 Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
+Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
+
+Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
+Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 
 --[[
     Called when the service starts.
@@ -52,18 +58,43 @@ Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
 function Objects:OnStart()
     self:LoadBehaviours()
     self:LoadObjects()
+    self:HandleInput()
+
     self:_CreateCommands()
 
     Rage.RunService.Heartbeat:Connect(function()
         self:Update()
     end)
 
-    Rage.Player:GetMouse().Button1Down:Connect(function()
-        self:OnMouseClick()
-    end)
-
     Maps.OnMapExit:Connect(function()
         self:OnMapExit()
+    end)
+end
+
+--[[
+    Handles uUser input.
+]]
+function Objects:HandleInput()
+    Rage.Player:GetMouse().Button1Down:Connect(function()
+        self:DragPartUnderMouse()
+    end)
+
+    Rage.Player:GetMouse().Button1Up:Connect(function()
+        self:StopDraggingPart()
+    end)
+
+    Rage.Input.InputBegan:Connect(function(input, gameProcessedEvent)
+        if gameProcessedEvent then
+            return
+        end
+
+        if input.KeyCode == Enum.KeyCode.F then
+            self:ActivatePartUnderMouse()
+        end
+
+        if input.KeyCode == Enum.KeyCode.E then
+            self:PlayerSpawnObject(self.ExistingObjects[math.random(1, #self.ExistingObjects)])
+        end
     end)
 end
 
@@ -75,17 +106,88 @@ function Objects:OnMapExit()
 end
 
 --[[
-    Handles spawning an object when the user clicks.
+    Drags the part under the mouse.
 ]]
-function Objects:OnMouseClick()
-    if not Maps.IsInMap then
+function Objects:DragPartUnderMouse()
+    if self.DraggingPart then
+        self:StopDraggingPart()
+    end
+
+    local part = self:GetPartUnderMouse()
+
+    if not part then
+        Rage.Logging:Warn("Objects:DragPartUnderMouse(): Attempted to drag part under mouse, but no part was found.")
         return
     end
 
-    local mousePosition = Rage.Player:GetMouse().Hit.Position
-    local position = Vector2.new(mousePosition.X, mousePosition.Y)
+    part:Drag()
+    self.DraggingPart = part
 
-    self:SpawnObject(self.ExistingObjects[math.random(1, #self.ExistingObjects)], position)
+    Rage.Logging:Info("Objects:DragPartUnderMouse(): Started dragging part "..part.Part:GetFullName())
+end
+
+function Objects:StopDraggingPart()
+    if not self.DraggingPart then
+        Rage.Logging:Warn("Objects:StopDraggingPart(): Attempted to stop dragging part, but no part is being dragged.")
+        return
+    end
+
+    self.DraggingPart:StopDragging()
+    self.DraggingPart = nil
+
+    Rage.Logging:Info("Objects:StopDraggingPart(): Stopped dragging part.")
+end
+
+--[[
+    Activates the part under the mouse cursor, if it exists.
+]]
+function Objects:ActivatePartUnderMouse()
+    local part = self:GetPartUnderMouse()
+
+    if not part then
+        return
+    end
+
+    part:Activate()
+end
+
+--[[
+    Returns the ObjectPart under the mouse, if any.
+]]
+function Objects:GetPartUnderMouse(): ObjectTypes.ObjectPart?
+    local target = Rage.Player:GetMouse().Target
+
+    if not target then
+        return
+    end
+
+    return self:GetObjectPartFromPart(target)
+end
+
+--[[
+    Returns an ObjectPart from the provided part, if possible.
+]]
+function Objects:GetObjectPartFromPart(part: BasePart): ObjectTypes.ObjectPart?
+    local spawnedObject = self:GetSpawnedObjectFromPart(part)
+
+    if not spawnedObject then
+        return
+    end
+
+    return spawnedObject:GetPart(part)
+end
+
+--[[
+    Returns a SpawnedObject from the provided part, if possible.
+]]
+function Objects:GetSpawnedObjectFromPart(part: BasePart): ObjectTypes.SpawnedObject?
+    local spawnedObjectID = part:GetAttribute("SpawnedObjectID")
+
+    if not spawnedObjectID then
+        return
+    end
+
+    return self.SpawnedObjects[spawnedObjectID]
 end
 
 --[[
@@ -109,6 +211,22 @@ function Objects:RegisterBehaviour(name: string, behaviourClass: ObjectTypes.Obj
 end
 
 --[[
+    Spawns an object (player-driven).
+]]
+function Objects:PlayerSpawnObject(object: ObjectTypes.Object): ObjectTypes.SpawnedObject
+    if not Maps.IsInMap then
+        return
+    end
+
+    if not object:CanPlayerSpawn() then
+        Rage.Logging:Error("Objects:PlayerSpawnObject(): Object "..object.Name.." cannot be spawned by the player.")
+    end
+
+    Rage.Logging:Info("Objects:PlayerSpawnObject(): Player is spawning object "..object.Name)
+    return self:SpawnObject(object, Rage.Player:GetMouse().Hit.Position)
+end
+
+--[[
     Spawns an object at the specified position.
 ]]
 function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): ObjectTypes.SpawnedObject
@@ -117,6 +235,8 @@ function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): Obj
     spawnedObject:MoveTo(position)
 
     self.SpawnedObjects[spawnedObject.ID] = spawnedObject
+
+    self.OnSpawn:Fire(spawnedObject)
 
     Rage.Logging:Info(("Objects:SpawnObject(): Spawned object %s (%s) at %s"):format(object.Name, spawnedObject.ID, tostring(position)))
 
@@ -131,8 +251,17 @@ function Objects:DespawnObject(spawnedObject: ObjectTypes.SpawnedObject)
         Rage.Logging:Error("Objects:DespawnObject(): Spawned object with ID "..spawnedObject.ID.." does not exist.")
     end
 
+    for _, part in pairs(spawnedObject.Parts) do
+        if part == self.DraggingPart then
+            self:StopDraggingPart()
+            break
+        end
+    end
+
     spawnedObject:Despawn()
     self.SpawnedObjects[spawnedObject.ID] = nil
+
+    self.OnDespawn:Fire(spawnedObject)
 
     Rage.Logging:Info(("Objects:DespawnObject(): Despawned object %s (%s)"):format(spawnedObject.Object.Name, spawnedObject.ID))
 end
@@ -154,14 +283,13 @@ function Objects:Update()
         return
     end
 
-    for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
-        local mapSize = Maps.CurrentMap.Size
-        local mapPos = Maps.MAP_POSITION
+    local mapSize = Maps.CurrentMap.Size
+    local mapPos = Maps.MAP_POSITION
+    local startBound = Vector2.new(mapPos.X - mapSize.X / 2, mapPos.Y - mapSize.Y / 2)
+    local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
 
-        spawnedObject:Update(
-            Vector2.new(mapPos.X - mapSize.X / 2, mapPos.Y - mapSize.Y / 2),
-            Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
-        )
+    for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
+        task.spawn(spawnedObject.Update, spawnedObject, startBound, endBound)
     end
 end
 
@@ -219,6 +347,19 @@ function Objects:_CreateCommands()
                 for _, objectPart: ObjectTypes.ObjectPart in pairs(spawnedObject.Parts) do
                     objectPart:Activate()
                 end
+            end
+        end
+    })
+
+    CLI.Conch.register("spawn-objects", {
+        description = "Spawns x amount of objects at the mouse position.",
+        arguments = function()
+            return CLI.Conch.args.number("Amount", "The amount of objects to spawn.")
+        end,
+
+        callback = function(amount: number)
+            for _ = 1, amount do
+                self:PlayerSpawnObject(self.ExistingObjects[math.random(1, #self.ExistingObjects)])
             end
         end
     })
