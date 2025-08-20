@@ -69,9 +69,19 @@ Rage.Classes.Service = _service
 Rage.Services = {} :: {[string]: ModuleScript}
 
 --[[
+    A dictionary of paths to load services from.
+]]
+Rage.ServicePaths = {}
+Rage.ServicePaths.Client = Rage.ReplicatedStorage.Client
+Rage.ServicePaths.Server = Rage.ServerScriptService.Server
+
+--[[
     Initializes Rage. This should only be ran once.
 ]]
-function Rage:Initialize(path: Instance)
+function Rage:Initialize()
+    -- Get service path
+    local path = self:GetServicesPath()
+
     -- Wait for game to load
     if self.IsClient and not game:IsLoaded() then
         self.Logging:Info("Waiting for game to load before initializing Rage...")
@@ -94,6 +104,13 @@ function Rage:Initialize(path: Instance)
 
     -- Start services
     self:StartServices()
+end
+
+--[[
+    Returns the path to load services from.
+]]
+function Rage:GetServicesPath(): Instance
+    return self.IsServer and self.ServicePaths.Server or self.ServicePaths.Client
 end
 
 --[[

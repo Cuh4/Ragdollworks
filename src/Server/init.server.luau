@@ -26,4 +26,4 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 -- // Main
 -------------------------------
 
-Rage:Initialize(script.Game)
+Rage:Initialize()
