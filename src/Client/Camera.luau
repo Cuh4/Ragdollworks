@@ -246,12 +246,36 @@ end
 ]]
 function Camera:CastRay(distance: number): RaycastResult?
     local mouseLocation = Rage.Input:GetMouseLocation()
-    local viewportray = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
+    local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
 
     return game.Workspace:Raycast(
-        viewportray.Origin,
-        viewportray.Direction * distance
+        viewportRay.Origin,
+        viewportRay.Direction * distance
     )
+end
+
+--[[
+    Casts a ray to Z 0.
+]]
+function Camera:CastRayToZ0(): Vector2
+    local mouseLocation = Rage.Input:GetMouseLocation()
+    local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
+
+    local origin = viewportRay.Origin
+    local direction = viewportRay.Direction
+
+    if direction .Z == 0 then
+        return nil
+    end
+
+    local scalar = -origin.Z / direction.Z
+
+    if scalar < 0 then
+        return nil
+    end
+
+    local hitPos = origin + direction * scalar
+    return Vector2.new(hitPos.X, hitPos.Y)
 end
 
 export type Camera = typeof(Camera)
