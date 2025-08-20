@@ -42,6 +42,8 @@ export type Object = {
 
     New: (name: string, description: string, category: string, settings: ObjectSettings, behaviours: {ObjectBehaviour}, instance: Model) -> Object,
     FromInstance: (instance: Model) -> Object,
+
+    CanPlayerSpawn: (self: Object) -> boolean,
     Spawn: (self: Object) -> Model
 }
 
@@ -76,6 +78,10 @@ export type ObjectPart = {
     Activated: boolean,
     Dragging: boolean,
     Frozen: boolean,
+    AlignPositionInstance: AlignPosition,
+    AngularVelocityInstance: AngularVelocity,
+    AttachmentInstance: Attachment,
+    RotationForce: number,
 
     OnDragStart: signal.Signal,
     OnDragEnd: signal.Signal,
@@ -84,10 +90,15 @@ export type ObjectPart = {
     New: (part: BasePart, settings: ObjectPartSettings) -> ObjectPart,
     FromPart: (part: BasePart) -> ObjectPart,
 
+    Setup: (self: ObjectPart) -> nil,
+    SetupDragging: (self: ObjectPart) -> nil,
     Update: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
     KeepWithinBounds: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
     LockZAxis: (self: ObjectPart) -> nil,
-    Activate: (self: ObjectPart) -> nil
+    Activate: (self: ObjectPart) -> nil,
+    SetRotationForce: (self: ObjectPart, force: number) -> nil,
+    Drag: (self: ObjectPart) -> nil,
+    StopDragging: (self: ObjectPart) -> nil
 }
 
 export type ObjectPartSettings = {
