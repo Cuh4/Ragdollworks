@@ -19,6 +19,9 @@
 -- // Variables
 -------------------------------
 
+local Rage = require(game:GetService("ReplicatedStorage").Rage)
+local signal = require(Rage.ReplicatedStorage.Packages.signal)
+
 local ObjectPart = require(script.Parent.ObjectPart)
 local types = require(script.Parent.Types)
 
@@ -36,31 +39,16 @@ SpawnedObject.__index = SpawnedObject
     Creates a new SpawnedObject class instance.
 ]]
 function SpawnedObject.New(ID: number, object: Object, instance: Model): types.SpawnedObject
-    local spawnedObject = setmetatable({}, SpawnedObject) :: types.SpawnedObject
-    spawnedObject.ID = ID
-    spawnedObject.Object = object
-    spawnedObject.Instance = instance
-    spawnedObject.Parts = spawnedObject:FindParts()
-    spawnedObject.Behaviours = {}
+    local self = setmetatable({}, SpawnedObject) :: types.SpawnedObject
+    self.ID = ID
+    self.Object = object
+    self.Instance = instance
+    self.Parts = self:FindParts()
+    self.Behaviours = {}
 
-    for _, behaviour in pairs(object.Behaviours) do
-        local behaviourInstance = behaviour.New()
-        table.insert(spawnedObject.Behaviours, behaviourInstance)
-    end
+    self._RemovalRequested = signal.new()
 
-    for _, behaviour in pairs(spawnedObject.Behaviours) do
-        behaviour:OnSpawn(spawnedObject)
-    end
-
-    for _, part in pairs(spawnedObject.Parts) do
-        part.OnActivate:Connect(function()
-            for _, behaviour in pairs(spawnedObject.Behaviours) do
-                behaviour:OnActivate(spawnedObject, part)
-            end
-        end)
-    end
-
-    return spawnedObject
+    return self
 end
 
 --[[
@@ -72,7 +60,7 @@ function SpawnedObject:Update(startBound: Vector2, endBound: Vector2)
     end
 
     for _, behaviour in pairs(self.Behaviours) do
-        behaviour:OnUpdate(self)
+        behaviour:OnUpdate()
     end
 end
 
@@ -80,6 +68,27 @@ end
     Sets up the spawned object.
 ]]
 function SpawnedObject:Setup()
+    for _, behaviour in pairs(self.Object.Behaviours) do
+        local behaviourInstance = behaviour.New(self)
+        table.insert(self.Behaviours, behaviourInstance)
+    end
+
+    for _, behaviour in pairs(self.Behaviours) do
+        behaviour:OnSpawn()
+    end
+
+    for _, part in pairs(self.Parts) do
+        part.OnActivate:Connect(function()
+            for _, behaviour in pairs(self.Behaviours) do
+                behaviour:OnActivate(part)
+            end
+        end)
+
+        part.OnDespawn:Connect(function()
+            self:RemovePart(part)
+        end)
+    end
+
     self:CreateNoCollideConstraints()
     self:SetupAttributes()
 
@@ -154,13 +163,12 @@ end
 --[[
     Removes a spawned part from the spawned object.
 ]]
-function SpawnedObject:RemovePart(part: BasePart)
-    if not self.Parts[part] then
-        return
-    end
+function SpawnedObject:RemovePart(part: types.ObjectPart)
+    self.Parts[part.Part] = nil
 
-    self.Parts[part] = nil
-    part:Destroy()
+    if Rage.Libs.Table:GetLength(self.Parts) == 0 then
+        self:Remove()
+    end
 end
 
 --[[
@@ -168,10 +176,18 @@ end
 ]]
 function SpawnedObject:Despawn()
     for _, behaviour in pairs(self.Behaviours) do
-        behaviour:OnPreDespawn(self)
+        behaviour:OnPreDespawn()
     end
 
     self.Instance:Destroy()
+end
+
+--[[
+    Removes the spawned object. Despawns and removes from Objects service.
+]]
+function SpawnedObject:Remove()
+    self:Despawn()
+    self._RemovalRequested:Fire()
 end
 
 return SpawnedObject
