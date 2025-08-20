@@ -37,9 +37,10 @@ export type Object = {
     Description: string,
     Category: string,
     Settings: ObjectSettings,
+    Behaviours: {ObjectBehaviour},
     Instance: Model,
 
-    New: (name: string, description: string, category: string, settings: ObjectSettings, instance: Model) -> Object,
+    New: (name: string, description: string, category: string, settings: ObjectSettings, behaviours: {ObjectBehaviour}, instance: Model) -> Object,
     FromInstance: (instance: Model) -> Object,
     Spawn: (self: Object) -> Model
 }
@@ -54,6 +55,7 @@ export type SpawnedObject = {
     Object: Object,
     Instance: Model,
     Parts: {[BasePart]: ObjectPart},
+    Behaviours: {ObjectBehaviour},
 
     New: (ID: number, object: Object, instance: Model) -> SpawnedObject,
 
@@ -90,6 +92,17 @@ export type ObjectPart = {
 
 export type ObjectPartSettings = {
     IsDraggable: boolean
+}
+
+export type ObjectBehaviour = {
+    Name: string,
+
+    New: (name: string) -> ObjectBehaviour,
+
+    OnSpawn: (self: ObjectBehaviour, object: SpawnedObject) -> nil,
+    OnPreDespawn: (self: ObjectBehaviour, object: SpawnedObject) -> nil,
+    OnActivate: (self: ObjectBehaviour, object: SpawnedObject, objectPart: ObjectPart) -> nil,
+    OnUpdate: (self: ObjectBehaviour, object: SpawnedObject) -> nil
 }
 
 return {}
