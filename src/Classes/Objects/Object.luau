@@ -67,6 +67,13 @@ function Object.FromInstance(instance: Model, behaviours: {types.ObjectBehaviour
 end
 
 --[[
+    Returns whether or not the part can be spawned by the player.
+]]
+function Object:CanPlayerSpawn(): boolean
+    return self.Settings.IsSpawnable
+end
+
+--[[
     Creates a copy of the object instance and returns it.
 ]]
 function Object:Spawn(): Model
