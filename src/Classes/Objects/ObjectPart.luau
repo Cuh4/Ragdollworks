@@ -43,6 +43,10 @@ function ObjectPart.New(part: BasePart, settings: types.ObjectPartSettings): typ
     objectPart.Settings = settings
     objectPart.Dragging = false
     objectPart.Frozen = false
+    objectPart.AlignPositionInstance = nil :: AlignPosition
+    objectPart.AngularVelocityInstance = nil :: AngularVelocity
+    objectPart.AttachmentInstance = nil :: Attachment
+    objectPart.RotationForce = 0
 
     objectPart.OnDragStart = signal.new()
     objectPart.OnDragEnd = signal.new()
@@ -65,10 +69,51 @@ function ObjectPart.FromPart(part: BasePart): types.ObjectPart
 end
 
 --[[
+    Setups the part.
+]]
+function ObjectPart:Setup()
+    self:SetupDragging()
+end
+
+--[[
+    Adds dragging capabilities to the part (constraints, etc).
+]]
+function ObjectPart:SetupDragging()
+    self.Attachment = Instance.new("Attachment")
+    self.Attachment.Name = "DragAttachment"
+    self.Attachment.Parent = self.Part
+
+    self.AlignPositionInstance = Instance.new("AlignPosition")
+    self.AlignPositionInstance.Name = "DragAlignPosition"
+    self.AlignPositionInstance.Mode = Enum.PositionAlignmentMode.OneAttachment
+    self.AlignPositionInstance.Attachment0 = self.Attachment
+    self.AlignPositionInstance.MaxForce = math.huge
+    self.AlignPositionInstance.Responsiveness = 50
+    self.AlignPositionInstance.ApplyAtCenterOfMass = true
+    self.AlignPositionInstance.Enabled = false
+    self.AlignPositionInstance.Parent = self.Part
+
+    self.AngularVelocityInstance = Instance.new("AngularVelocity")
+    self.AngularVelocityInstance.Name = "DragAngularVelocity"
+    self.AngularVelocityInstance.Attachment0 = self.Attachment
+    self.AngularVelocityInstance.MaxTorque = math.huge
+    self.AngularVelocityInstance.AngularVelocity = Vector3.new(0, 0, 0)
+    self.AngularVelocityInstance.Enabled = false
+    self.AngularVelocityInstance.Parent = self.Part
+end
+
+--[[
     Updates the part.
 ]]
 function ObjectPart:Update(startBound: Vector2, endBound: Vector2)
     self.Part.Anchored = self.Frozen
+
+    self.AngularVelocityInstance.AngularVelocity = Vector3.new(0, 0, self.RotationForce)
+    self.AngularVelocityInstance.Enabled = self.Dragging
+
+    self.AlignPositionInstance.Position = Rage.Player:GetMouse().Hit.Position
+    self.AlignPositionInstance.Enabled = self.Dragging
+
     self:LockZAxis()
     self:KeepWithinBounds(startBound, endBound)
 end
@@ -98,10 +143,45 @@ function ObjectPart:LockZAxis()
 end
 
 --[[
-    Activates the part, allowing it to be dragged.
+    Activates the part.
 ]]
 function ObjectPart:Activate()
     self.OnActivate:Fire()
+end
+
+--[[
+    Sets the angular velocity of the part (only works if it is being dragged).
+]]
+function ObjectPart:SetRotationForce(force: number)
+    self.RotationForce = force
+end
+
+--[[
+    Drag the part.
+]]
+function ObjectPart:Drag()
+    if not self.Settings.IsDraggable then
+        return
+    end
+
+    if self.Dragging then
+        return
+    end
+
+    self.Dragging = true
+    self.OnDragStart:Fire()
+end
+
+--[[
+    Stop dragging the part.
+]]
+function ObjectPart:StopDragging()
+    if not self.Dragging then
+        return
+    end
+
+    self.Dragging = false
+    self.OnDragEnd:Fire()
 end
 
 return ObjectPart

@@ -83,6 +83,10 @@ function SpawnedObject:Setup()
     self:CreateNoCollideConstraints()
     self:SetupAttributes()
 
+    for _, part in pairs(self.Parts) do
+        part:Setup()
+    end
+
     self.Instance.Parent = game.Workspace
 end
 
