@@ -52,6 +52,7 @@ Rage.Assets = require(script.Assets)
 ]]
 Rage.Libs = {}
 Rage.Libs.Classes = require(script.Libs.Classes)
+Rage.Libs.Table = require(script.Libs.Table)
 
 --[[
     A table of all built-in classes.
