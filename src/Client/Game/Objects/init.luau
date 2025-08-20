@@ -150,9 +150,11 @@ function Objects:ActivatePartUnderMouse()
     local part = self:GetPartUnderMouse()
 
     if not part then
+        Rage.Logging:Warn("Objects:ActivatePartUnderMouse(): Attempted to activate part under mouse, but no part was found.")
         return
     end
 
+    Rage.Logging:Info("Objects:ActivatePartUnderMouse(): Activating part "..part.Part:GetFullName())
     part:Activate()
 end
 
@@ -243,6 +245,10 @@ function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): Obj
 
     self.OnSpawn:Fire(spawnedObject)
 
+    spawnedObject._RemovalRequested:Once(function()
+        self:DespawnObject(spawnedObject)
+    end)
+
     Rage.Logging:Info(("Objects:SpawnObject(): Spawned object %s (%s) at %s with %d parts"):format(
         object.Name,
         spawnedObject.ID,
@@ -314,7 +320,7 @@ function Objects:LoadObjects()
         for name: string, behaviour: ObjectTypes.ObjectBehaviour in pairs(self.Behaviours) do
             if objectInstance:GetAttribute(name.."ObjectBehaviour") then
                 Rage.Logging:Info("Objects:LoadObjects(): Found behaviour for to-be-loaded object: "..name)
-                table.insert(objectBehaviours, behaviour.New())
+                table.insert(objectBehaviours, behaviour)
             end
         end
 
