@@ -203,11 +203,23 @@ end
 function Objects:_CreateCommands()
     CLI.Conch.register("despawn-all-objects", {
         description = "Despawns all spawned objects.",
-
         arguments = function() end,
 
         callback = function()
             self:DespawnAllObjects()
+        end
+    })
+
+    CLI.Conch.register("activate-all-object-parts", {
+        description = "Activates all parts of all objects.",
+        arguments = function() end,
+
+        callback = function()
+            for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
+                for _, objectPart: ObjectTypes.ObjectPart in pairs(spawnedObject.Parts) do
+                    objectPart:Activate()
+                end
+            end
         end
     })
 end
