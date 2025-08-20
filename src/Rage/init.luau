@@ -72,8 +72,14 @@ Rage.Services = {} :: {[string]: ModuleScript}
     A dictionary of paths to load services from.
 ]]
 Rage.ServicePaths = {}
-Rage.ServicePaths.Client = Rage.ReplicatedStorage.Client
-Rage.ServicePaths.Server = Rage.ServerScriptService.Server
+
+if Rage.IsClient then
+    Rage.ServicePaths.Client = Rage.ReplicatedStorage.Client
+end
+
+if Rage.IsServer then
+    Rage.ServicePaths.Server = Rage.ServerScriptService.Server
+end
 
 --[[
     Initializes Rage. This should only be ran once.
