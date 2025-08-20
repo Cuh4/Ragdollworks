@@ -50,6 +50,7 @@ Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
 Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
 Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
+Objects.DragPosition = Vector2.new(0, 0)
 
 Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
@@ -321,12 +322,16 @@ function Objects:Update()
     local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
     local raycastResult = Camera:CastRay(self.RAY_DISTANCE)
 
+    if raycastResult then
+        self.DragPosition = raycastResult.Position
+    end
+
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
         task.spawn(function()
             spawnedObject:Update(
                 startBound,
                 endBound,
-                raycastResult and raycastResult.Position or Vector2.new(0, 0)
+                self.DragPosition
             )
         end)
     end
