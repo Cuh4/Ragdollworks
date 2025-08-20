@@ -35,11 +35,11 @@ ObjectBehaviour.__index = ObjectBehaviour
 --[[
     Creates a new ObjectBehaviour class instance.
 ]]
-function ObjectBehaviour.New(name: string): types.ObjectBehaviour
-    local objectBehaviour = setmetatable({}, ObjectBehaviour)
-    objectBehaviour.Name = name
+function ObjectBehaviour.New(spawnedObject: types.SpawnedObject): types.ObjectBehaviour
+    local self = setmetatable({}, ObjectBehaviour)
+    self.SpawnedObject = spawnedObject
 
-    return objectBehaviour
+    return self
 end
 
 --[[

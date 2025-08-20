@@ -29,10 +29,10 @@ Service.__index = Service
     Creates a new service class instance.
 ]]
 function Service.New(name: string): Service
-    local service = setmetatable({}, Service) :: Service
-    service.Name = name
+    local self = setmetatable({}, Service) :: Service
+    self.Name = name
 
-    return service
+    return self
 end
 
 --[[
