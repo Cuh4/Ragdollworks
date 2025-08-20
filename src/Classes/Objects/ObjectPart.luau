@@ -38,7 +38,7 @@ ObjectPart.__index = ObjectPart
     Creates a new ObjectPart class instance.
 ]]
 function ObjectPart.New(part: BasePart, settings: types.ObjectPartSettings): types.ObjectPart
-    local objectPart = setmetatable({}, ObjectPart)
+    local objectPart = setmetatable({}, ObjectPart) :: types.ObjectPart
     objectPart.Part = part
     objectPart.Settings = settings
     objectPart.Dragging = false
