@@ -63,7 +63,7 @@ export type SpawnedObject = {
 
     New: (ID: number, object: Object, instance: Model) -> SpawnedObject,
 
-    Update: (self: SpawnedObject, startBound: Vector2, endBound: Vector2) -> nil,
+    Update: (self: SpawnedObject, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
     Setup: (self: SpawnedObject) -> nil,
     MoveTo: (self: SpawnedObject, position: Vector2) -> nil,
     SetupAttributes: (self: SpawnedObject) -> nil,
@@ -96,7 +96,7 @@ export type ObjectPart = {
 
     Setup: (self: ObjectPart) -> nil,
     SetupDragging: (self: ObjectPart) -> nil,
-    Update: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
+    Update: (self: ObjectPart, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
     KeepWithinBounds: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
     LockZAxis: (self: ObjectPart) -> nil,
     Activate: (self: ObjectPart) -> nil,
