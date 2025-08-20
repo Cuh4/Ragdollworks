@@ -26,6 +26,7 @@ local signal = require(Rage.ReplicatedStorage.Packages.signal)
 
 local CLI = require(script.Parent.CLI)
 local ID = require(script.Parent.ID)
+local Camera = require(script.Parent.Camera)
 local Maps = require(script.Parent.Maps)
 
 local Object = require(Rage.ReplicatedStorage.Classes.Objects.Object)
@@ -42,6 +43,7 @@ local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
 ]]
 Objects = Rage:Service("Objects") :: Objects
 Objects.OBJECT_FOLDER = Rage.Assets:GetAsset("Objects")
+Objects.RAY_DISTANCE = 8000
 
 Objects.ExistingObjects = {} :: {ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
@@ -75,17 +77,13 @@ end
     Handles uUser input.
 ]]
 function Objects:HandleInput()
-    Rage.Player:GetMouse().Button1Down:Connect(function()
-        self:DragPartUnderMouse()
-    end)
-
-    Rage.Player:GetMouse().Button1Up:Connect(function()
-        self:StopDraggingPart()
-    end)
-
     Rage.Input.InputBegan:Connect(function(input, gameProcessedEvent)
         if gameProcessedEvent then
             return
+        end
+
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            self:DragPartUnderMouse()
         end
 
         if input.KeyCode == Enum.KeyCode.F then
@@ -94,6 +92,16 @@ function Objects:HandleInput()
 
         if input.KeyCode == Enum.KeyCode.E then
             self:PlayerSpawnObject(self.ExistingObjects[math.random(1, #self.ExistingObjects)])
+        end
+    end)
+
+    Rage.Input.InputEnded:Connect(function(input, gameProcessedEvent)
+        if gameProcessedEvent then
+            return
+        end
+
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            self:StopDraggingPart()
         end
     end)
 end
@@ -162,13 +170,13 @@ end
     Returns the ObjectPart under the mouse, if any.
 ]]
 function Objects:GetPartUnderMouse(): ObjectTypes.ObjectPart?
-    local target = Rage.Player:GetMouse().Target
+    local result = Camera:CastRay(self.RAY_DISTANCE)
 
-    if not target then
+    if not result then
         return
     end
 
-    return self:GetObjectPartFromPart(target)
+    return self:GetObjectPartFromPart(result.Instance)
 end
 
 --[[
@@ -230,7 +238,15 @@ function Objects:PlayerSpawnObject(object: ObjectTypes.Object): ObjectTypes.Spaw
     end
 
     Rage.Logging:Info("Objects:PlayerSpawnObject(): Player is spawning object "..object.Name)
-    return self:SpawnObject(object, Rage.Player:GetMouse().Hit.Position)
+
+    local raycastResult = Camera:CastRay(self.RAY_DISTANCE)
+
+    if not raycastResult then
+        Rage.Logging:Warn("Objects:PlayerSpawnObject(): Raycast returned nil, couldn't spawn object.")
+        return
+    end
+
+    return self:SpawnObject(object, raycastResult.Position)
 end
 
 --[[
@@ -303,9 +319,16 @@ function Objects:Update()
     local mapPos = Maps.MAP_POSITION
     local startBound = Vector2.new(mapPos.X - mapSize.X / 2, mapPos.Y - mapSize.Y / 2)
     local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
+    local raycastResult = Camera:CastRay(self.RAY_DISTANCE)
 
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
-        task.spawn(spawnedObject.Update, spawnedObject, startBound, endBound)
+        task.spawn(function()
+            spawnedObject:Update(
+                startBound,
+                endBound,
+                raycastResult and raycastResult.Position or Vector2.new(0, 0)
+            )
+        end)
     end
 end
 

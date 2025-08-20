@@ -241,5 +241,18 @@ function Camera:HidePlayer()
     root.CFrame = CFrame.new(0, 0, -1000) -- out of the way
 end
 
+--[[
+    Casts a ray from the camera's position to the mouse's position.
+]]
+function Camera:CastRay(distance: number): RaycastResult?
+    local mouseLocation = Rage.Input:GetMouseLocation()
+    local viewportray = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
+
+    return game.Workspace:Raycast(
+        viewportray.Origin,
+        viewportray.Direction * distance
+    )
+end
+
 export type Camera = typeof(Camera)
 return Camera
