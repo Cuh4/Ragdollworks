@@ -33,6 +33,7 @@ Rage.ReplicatedStorage = game:GetService("ReplicatedStorage")
 Rage.Players = game:GetService("Players")
 Rage.Camera = Rage.Workspace.CurrentCamera
 Rage.Input = game:GetService("UserInputService")
+Rage.Debris = game:GetService("Debris")
 
 if Rage.IsServer then
     Rage.ServerScriptService = game:GetService("ServerScriptService")
