@@ -36,15 +36,15 @@ Object.__index = Object
     Creates a new Object class instance.
 ]]
 function Object.New(name: string, description: string, category: string, settings: types.ObjectSettings, behaviours: {types.ObjectBehaviour}, instance: Model): types.Object
-    local object = setmetatable({}, Object) :: Object
-    object.Name = name
-    object.Description = description
-    object.Category = category
-    object.Settings = settings
-    object.Behaviours = behaviours
-    object.Instance = instance
+    local self = setmetatable({}, Object) :: Object
+    self.Name = name
+    self.Description = description
+    self.Category = category
+    self.Settings = settings
+    self.Behaviours = behaviours
+    self.Instance = instance
 
-    return object
+    return self
 end
 
 --[[
