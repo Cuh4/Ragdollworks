@@ -28,6 +28,7 @@ local CLI = require(script.Parent.CLI)
 local ID = require(script.Parent.ID)
 local Camera = require(script.Parent.Camera)
 local Maps = require(script.Parent.Maps)
+local Debug = require(script.Parent.Debug)
 
 local Object = require(Rage.ReplicatedStorage.Classes.Objects.Object)
 local SpawnedObject = require(Rage.ReplicatedStorage.Classes.Objects.SpawnedObject)
@@ -51,6 +52,7 @@ Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
 Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
 Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
 Objects.DragPosition = Vector2.new(0, 0)
+Objects.SelectedObjectToSpawn = nil :: ObjectTypes.Object
 
 Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
@@ -92,7 +94,7 @@ function Objects:HandleInput()
         end
 
         if input.KeyCode == Enum.KeyCode.E then
-            self:PlayerSpawnObject(self.ExistingObjects[math.random(1, #self.ExistingObjects)])
+            self:PlayerSpawnObject()
         end
     end)
 
@@ -207,6 +209,17 @@ function Objects:GetSpawnedObjectFromPart(part: BasePart): ObjectTypes.SpawnedOb
 end
 
 --[[
+    Gets an object by name.
+]]
+function Objects:GetObject(name: string): ObjectTypes.Object?
+    for _, object in pairs(self.ExistingObjects) do
+        if object.Name == name then
+            return object
+        end
+    end
+end
+
+--[[
     Loads all object behaviours.
 ]]
 function Objects:LoadBehaviours()
@@ -229,25 +242,34 @@ end
 --[[
     Spawns an object (player-driven).
 ]]
-function Objects:PlayerSpawnObject(object: ObjectTypes.Object): ObjectTypes.SpawnedObject
+function Objects:PlayerSpawnObject(): ObjectTypes.SpawnedObject
     if not Maps.IsInMap then
         return
     end
 
-    if not object:CanPlayerSpawn() then
-        Rage.Logging:Error("Objects:PlayerSpawnObject(): Object "..object.Name.." cannot be spawned by the player.")
-    end
-
-    Rage.Logging:Info("Objects:PlayerSpawnObject(): Player is spawning object "..object.Name)
-
-    local raycastResult = Camera:CastRay(self.RAY_DISTANCE)
-
-    if not raycastResult then
-        Rage.Logging:Warn("Objects:PlayerSpawnObject(): Raycast returned nil, couldn't spawn object.")
+    if not self.SelectedObjectToSpawn then
+        Rage.Logging:Warn("Objects:PlayerSpawnObject(): No object selected to spawn.")
         return
     end
 
-    return self:SpawnObject(object, raycastResult.Position)
+    if not self.SelectedObjectToSpawn:CanPlayerSpawn() then
+        Rage.Logging:Error("Objects:PlayerSpawnObject(): Object "..self.SelectedObjectToSpawn.Name.." cannot be spawned by the player.")
+    end
+
+    Rage.Logging:Info("Objects:PlayerSpawnObject(): Player is spawning object "..self.SelectedObjectToSpawn.Name)
+
+    local position = Camera:CastRayToZ0()
+    Debug:CreateDebugPart(Vector3.new(position.X, position.Y, 0))
+
+    return self:SpawnObject(self.SelectedObjectToSpawn, position)
+end
+
+--[[
+    Selects an object to spawn.
+]]
+function Objects:SelectObjectToSpawn(object: ObjectTypes.Object)
+    self.SelectedObjectToSpawn = object
+    Rage.Logging:Info("Objects:SelectObjectToSpawn(): Selected object "..object.Name)
 end
 
 --[[
@@ -320,11 +342,8 @@ function Objects:Update()
     local mapPos = Maps.MAP_POSITION
     local startBound = Vector2.new(mapPos.X - mapSize.X / 2, mapPos.Y - mapSize.Y / 2)
     local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
-    local raycastResult = Camera:CastRay(self.RAY_DISTANCE)
 
-    if raycastResult then
-        self.DragPosition = raycastResult.Position
-    end
+    self.DragPosition = Camera:CastRayToZ0()
 
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
         task.spawn(function()
@@ -403,8 +422,27 @@ function Objects:_CreateCommands()
 
         callback = function(amount: number)
             for _ = 1, amount do
-                self:PlayerSpawnObject(self.ExistingObjects[math.random(1, #self.ExistingObjects)])
+                self:PlayerSpawnObject()
             end
+        end
+    })
+
+    CLI.Conch.register("select-object", {
+        description = "Selects an object to spawn.",
+
+        arguments = function()
+            return CLI.Conch.args.string("ObjectName", "The name of the object to select.")
+        end,
+
+        callback = function(objectName: string)
+            local object = self:GetObject(objectName)
+
+            if not object then
+                Rage.Logging:Warn("No object found with provided name.")
+                return
+            end
+
+            self:SelectObjectToSpawn(object)
         end
     })
 end
