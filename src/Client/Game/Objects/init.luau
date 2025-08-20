@@ -120,6 +120,11 @@ function Objects:DragPartUnderMouse()
         return
     end
 
+    if not part.Settings.IsDraggable then
+        Rage.Logging:Warn("Objects:DragPartUnderMouse(): Attempted to drag part "..part.Part:GetFullName()..", but it is not draggable.")
+        return
+    end
+
     part:Drag()
     self.DraggingPart = part
 
@@ -238,7 +243,12 @@ function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): Obj
 
     self.OnSpawn:Fire(spawnedObject)
 
-    Rage.Logging:Info(("Objects:SpawnObject(): Spawned object %s (%s) at %s"):format(object.Name, spawnedObject.ID, tostring(position)))
+    Rage.Logging:Info(("Objects:SpawnObject(): Spawned object %s (%s) at %s with %d parts"):format(
+        object.Name,
+        spawnedObject.ID,
+        tostring(position),
+        Rage.Libs.Table:GetLength(spawnedObject.Parts)
+    ))
 
     return spawnedObject
 end
