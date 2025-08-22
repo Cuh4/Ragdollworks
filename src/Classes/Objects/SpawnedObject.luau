@@ -20,7 +20,7 @@
 -------------------------------
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
-local signal = require(Rage.ReplicatedStorage.Packages.signal)
+local signal = require(Rage.WallyPackages.signal)
 
 local ObjectPart = require(script.Parent.ObjectPart)
 local types = require(script.Parent.Types)
