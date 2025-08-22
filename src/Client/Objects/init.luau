@@ -46,6 +46,8 @@ local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
 Objects = Rage:Service("Objects") :: Objects
 Objects.OBJECT_FOLDER = Rage.Assets:GetAsset("Objects")
 Objects.RAY_DISTANCE = 50000
+Objects.ROTATION_FORCE = 1
+Objects.FASTER_ROTATION_MULTIPLIER = 3
 
 Objects.ExistingObjects = {} :: {ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
@@ -79,7 +81,22 @@ function Objects:OnStart()
 end
 
 --[[
-    Handles uUser input.
+    Handles user input every tick.
+]]
+function Objects:HandleInputTick()
+    local multiplier = Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift) and self.FASTER_ROTATION_MULTIPLIER or 1
+
+    if Rage.Input:IsKeyDown(Enum.KeyCode.A) then
+        self:RotateDraggedPart(-self.ROTATION_FORCE * multiplier)
+    end
+
+    if Rage.Input:IsKeyDown(Enum.KeyCode.D) then
+        self:RotateDraggedPart(self.ROTATION_FORCE * multiplier)
+    end
+end
+
+--[[
+    Handles user input.
 ]]
 function Objects:HandleInput()
     Rage.Input.InputBegan:Connect(function(input, gameProcessedEvent)
@@ -120,6 +137,18 @@ end
 ]]
 function Objects:OnMapExit()
     self:DespawnAllObjects()
+end
+
+--[[
+    Rotates the currently-dragged part. -1 = left
+]]
+function Objects:RotateDraggedPart(direction: number)
+    if not self.DraggingPart then
+        Rage.Logging:Warn("Objects:RotateDraggedPart(): Attempted to rotate part, but no part is being dragged.")
+        return
+    end
+
+    self.DraggingPart:SetRotationForce(direction)
 end
 
 --[[
@@ -303,7 +332,7 @@ end
 function Objects:DespawnLastObject()
     local recent = Rage.Libs.Table:GetLast(self.SpawnedObjectHistory) :: ObjectTypes.SpawnedObject
 
-    if not recent then  
+    if not recent then
         Rage.Logging:Warn("Objects:DespawnLastObject(): No recent spawned object to despawn.")
 
         Toasts:DisplayToast(
@@ -328,9 +357,8 @@ end
     Spawns an object at the specified position.
 ]]
 function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): ObjectTypes.SpawnedObject
-    local spawnedObject = SpawnedObject.New(ID:GetID(), object, object:Spawn())
-    spawnedObject:Setup()
-    spawnedObject:MoveTo(position)
+    local spawnedObject = SpawnedObject.New(ID:GetID(), object)
+    spawnedObject:Setup(position)
 
     self.SpawnedObjects[spawnedObject.ID] = spawnedObject
     table.insert(self.SpawnedObjectHistory, spawnedObject)
@@ -397,7 +425,7 @@ function Objects:DespawnAllObjects()
 end
 
 --[[
-    Updates all spawned objects. To be called every heartbeat.
+    Updates everything. To be called every heartbeat.
 ]]
 function Objects:Update()
     if not Maps.IsInMap then
@@ -421,6 +449,8 @@ function Objects:Update()
             )
         end)
     end
+
+    self:HandleInputTick()
 end
 
 --[[
