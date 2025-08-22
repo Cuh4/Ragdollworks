@@ -409,7 +409,8 @@ function Objects:Update()
     local startBound = Vector2.new(mapPos.X - mapSize.X / 2, mapPos.Y - mapSize.Y / 2)
     local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
 
-    self.DragPosition = Camera:CastRayToZ0()
+    self.DragPosition = (Camera:CastRayToZ0() or self.DragPosition) or Vector2.new(0, 0)
+    -- to explain above: raycasting can return nil. so we default to last raycast position, or if that doesnt exist, we default to 0
 
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
         task.spawn(function()
