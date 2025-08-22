@@ -37,6 +37,28 @@ function Table:GetLength(tbl: table): boolean
     return count
 end
 
+--[[
+    Returns the last value in a sequential table.
+]]
+function Table:GetLast(tbl: table): any
+    if #tbl <= 0 then
+        return
+    end
+
+    return tbl[#tbl]
+end
+
+--[[
+    Returns a random value in a sequential table.
+]]
+function Table:GetRandom(tbl: table): any
+    if #tbl <= 0 then
+        return
+    end
+
+    return tbl[math.random(1, #tbl)]
+end
+
 export type Table = typeof(Table)
 
 return Table
