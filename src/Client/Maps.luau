@@ -108,19 +108,19 @@ function Maps:_SetupMapInstance()
         Rage.Logging:Error("Maps:_SetupMapInstance(): Map instance does not have a background part.")
     end
 
+    self.MapInstance.Parent = game.Workspace
+
+    self.MapInstance:MoveTo(Vector3.new(
+        self.MAP_POSITION.X,
+        self.MAP_POSITION.Y,
+        0
+    ))
+
     background.Position = Vector3.new(
         background.Position.X,
         background.Position.Y,
         self.BACKGROUND_Z_OFFSET
     )
-
-    self.MapInstance:PivotTo(CFrame.new(
-        self.MAP_POSITION.X,
-        0,
-        self.MAP_POSITION.Y
-    ))
-
-    self.MapInstance.Parent = game.Workspace
 end
 
 --[[
@@ -135,28 +135,28 @@ function Maps:_CreateMapBoundaries()
 
     local top = self:_CreateBoundaryPart(
         Vector2.new(self.CurrentMap.Size.X + (self.BOUNDARY_THICKNESS * 2), self.BOUNDARY_THICKNESS),
-        Vector2.new(0, self.CurrentMap.Size.Y / 2 + (self.BOUNDARY_THICKNESS / 2))
+        Vector2.new(self.MAP_POSITION.X, self.MAP_POSITION.Y + (self.CurrentMap.Size.Y / 2 + (self.BOUNDARY_THICKNESS / 2)))
     )
 
     top.Parent = self.MapInstance
 
     local bottom = self:_CreateBoundaryPart(
         Vector2.new(self.CurrentMap.Size.X + (self.BOUNDARY_THICKNESS * 2), self.BOUNDARY_THICKNESS),
-        Vector2.new(0, -self.CurrentMap.Size.Y / 2 - (self.BOUNDARY_THICKNESS / 2))
+        Vector2.new(self.MAP_POSITION.X, self.MAP_POSITION.Y + (-self.CurrentMap.Size.Y / 2 - (self.BOUNDARY_THICKNESS / 2)))
     )
 
     bottom.Parent = self.MapInstance
 
     local left = self:_CreateBoundaryPart(
         Vector2.new(self.BOUNDARY_THICKNESS, self.CurrentMap.Size.Y),
-        Vector2.new(-self.CurrentMap.Size.X / 2 - (self.BOUNDARY_THICKNESS / 2), 0)
+        Vector2.new(self.MAP_POSITION.X + (-self.CurrentMap.Size.X / 2 - (self.BOUNDARY_THICKNESS / 2)), self.MAP_POSITION.Y)
     )
 
     left.Parent = self.MapInstance
 
     local right = self:_CreateBoundaryPart(
         Vector2.new(self.BOUNDARY_THICKNESS, self.CurrentMap.Size.Y),
-        Vector2.new(self.CurrentMap.Size.X / 2 + (self.BOUNDARY_THICKNESS / 2), 0)
+        Vector2.new(self.MAP_POSITION.X + (self.CurrentMap.Size.X / 2 + (self.BOUNDARY_THICKNESS / 2)), self.MAP_POSITION.Y)
     )
 
     right.Parent = self.MapInstance
@@ -182,7 +182,7 @@ end
 ]]
 function Maps:_CreateMapBackground()
     local background = Instance.new("Part")
-    background.Name = "MapBackground"
+    background.Name = "ScaledMapBackground"
     background.Color = self.BACKGROUND_COLOR
     background.Anchored = true
     background.CanCollide = false
