@@ -38,12 +38,12 @@ SpawnedObject.__index = SpawnedObject
 --[[
     Creates a new SpawnedObject class instance.
 ]]
-function SpawnedObject.New(ID: number, object: Object, instance: Model): types.SpawnedObject
+function SpawnedObject.New(ID: number, object: Object): types.SpawnedObject
     local self = setmetatable({}, SpawnedObject) :: types.SpawnedObject
     self.ID = ID
     self.Object = object
-    self.Instance = instance
-    self.Parts = self:FindParts()
+    self.Instance = nil
+    self.Parts = nil
     self.Behaviours = {}
 
     self._RemovalRequested = signal.new()
@@ -67,7 +67,12 @@ end
 --[[
     Sets up the spawned object.
 ]]
-function SpawnedObject:Setup()
+function SpawnedObject:Setup(spawnPos: Vector3)
+    self.Instance = self.Object:Spawn()
+    self:MoveTo(spawnPos)
+
+    self.Parts = self:FindParts()
+
     for _, behaviour in pairs(self.Object.Behaviours) do
         local behaviourInstance = behaviour.New(self)
         table.insert(self.Behaviours, behaviourInstance)
@@ -103,7 +108,7 @@ end
     Moves the spawned object to the specified position.
 ]]
 function SpawnedObject:MoveTo(position: Vector2)
-    self.Instance:MoveTo(Vector3.new(position.X, position.Y, 0))
+    self.Instance:PivotTo(CFrame.new(Vector3.new(position.X, position.Y, 0)))
 end
 
 --[[
@@ -146,7 +151,7 @@ function SpawnedObject:FindParts(): {[BasePart]: types.ObjectPart}
 
     for _, part in pairs(self.Instance:GetDescendants()) do
         if part:IsA("BasePart") then
-            partsData[part] = ObjectPart.FromPart(part)
+            partsData[part] = ObjectPart.FromPart(part, self)
         end
     end
 
