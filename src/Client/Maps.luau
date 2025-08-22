@@ -108,19 +108,17 @@ function Maps:_SetupMapInstance()
         Rage.Logging:Error("Maps:_SetupMapInstance(): Map instance does not have a background part.")
     end
 
+    if self.MapInstance.PrimaryPart ~= background then
+        self.MapInstance.PrimaryPart = background
+    end
+
     self.MapInstance.Parent = game.Workspace
 
     self.MapInstance:MoveTo(Vector3.new(
         self.MAP_POSITION.X,
         self.MAP_POSITION.Y,
-        0
-    ))
-
-    background.Position = Vector3.new(
-        background.Position.X,
-        background.Position.Y,
         self.BACKGROUND_Z_OFFSET
-    )
+    ))
 end
 
 --[[
