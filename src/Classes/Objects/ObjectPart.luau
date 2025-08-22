@@ -37,9 +37,10 @@ ObjectPart.__index = ObjectPart
 --[[
     Creates a new ObjectPart class instance.
 ]]
-function ObjectPart.New(part: BasePart, settings: types.ObjectPartSettings): types.ObjectPart
+function ObjectPart.New(part: BasePart, spawnedObject: types.SpawnedObject, layer: number, settings: types.ObjectPartSettings): types.ObjectPart
     local self = setmetatable({}, ObjectPart) :: types.ObjectPart
     self.Part = part
+    self.SpawnedObject = spawnedObject
     self.Settings = settings
     self.Dragging = false
     self.Frozen = false
@@ -47,6 +48,7 @@ function ObjectPart.New(part: BasePart, settings: types.ObjectPartSettings): typ
     self.AngularVelocityInstance = nil :: AngularVelocity
     self.AttachmentInstance = nil :: Attachment
     self.RotationForce = 0
+    self.Layer = layer
 
     self.OnDragStart = signal.new()
     self.OnDragEnd = signal.new()
@@ -59,9 +61,11 @@ end
 --[[
     Creates a new ObjectPart class instance from a part within a spawned object.
 ]]
-function ObjectPart.FromPart(part: BasePart): types.ObjectPart
+function ObjectPart.FromPart(part: BasePart, spawnedObject: types.SpawnedObject): types.ObjectPart
     return ObjectPart.New(
         part,
+        spawnedObject,
+        part:GetAttribute("Layer") or 0,
 
         {
             IsDraggable = part:GetAttribute("IsDraggable") or false
@@ -115,7 +119,7 @@ function ObjectPart:Update(startBound: Vector2, endBound: Vector2, dragPosition:
     self.AlignPositionInstance.Position = Vector3.new(dragPosition.X, dragPosition.Y, 0)
     self.AlignPositionInstance.Enabled = self.Dragging
 
-    self:LockZAxis()
+    self:Lock()
     self:KeepWithinBounds(startBound, endBound)
 end
 
@@ -136,11 +140,22 @@ function ObjectPart:KeepWithinBounds(startBound: Vector2, endBound: Vector2)
 end
 
 --[[
-    Locks the part on the Z axis.
+    Locks the part on allowed axes.
 ]]
-function ObjectPart:LockZAxis()
+function ObjectPart:Lock()
+    local part = self.Part
     local _, _, rotZ = self.Part.CFrame:ToEulerAnglesXYZ()
-    self.Part.CFrame = CFrame.new(self.Part.CFrame.Position.X, self.Part.CFrame.Position.Y, 0) * CFrame.Angles(0, 0, rotZ)
+    local posX, posY = part.CFrame.Position.X, part.CFrame.Position.Y
+
+    self.Part.CFrame = CFrame.new(
+        posX,
+        posY,
+        self.Layer * 0.01
+    ) * CFrame.Angles(
+        0,
+        0,
+        rotZ
+    )
 end
 
 --[[
@@ -151,10 +166,11 @@ function ObjectPart:Activate()
 end
 
 --[[
-    Sets the angular velocity of the part (only works if it is being dragged).
+    Sets the angular velocity of the part (only works if it is being dragged).<br>
+    -1 = counterclockwise, 1 = clockwise
 ]]
 function ObjectPart:SetRotationForce(force: number)
-    self.RotationForce = force
+    self.RotationForce = -force
 end
 
 --[[
@@ -182,6 +198,7 @@ function ObjectPart:StopDragging()
     end
 
     self.Dragging = false
+    self:SetRotationForce(0)
     self.OnDragEnd:Fire()
 end
 
