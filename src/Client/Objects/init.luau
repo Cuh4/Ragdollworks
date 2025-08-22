@@ -22,13 +22,14 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local signal = require(Rage.ReplicatedStorage.Packages.signal)
+local signal = require(Rage.WallyPackages.signal)
 
 local CLI = require(script.Parent.CLI)
 local ID = require(script.Parent.ID)
 local Camera = require(script.Parent.Camera)
 local Maps = require(script.Parent.Maps)
 local Debug = require(script.Parent.Debug)
+local Toasts = require(script.Parent.Toasts)
 
 local Object = require(Rage.ReplicatedStorage.Classes.Objects.Object)
 local SpawnedObject = require(Rage.ReplicatedStorage.Classes.Objects.SpawnedObject)
@@ -49,6 +50,7 @@ Objects.RAY_DISTANCE = 50000
 Objects.ExistingObjects = {} :: {ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
+Objects.SpawnedObjectHistory = {} :: {ObjectTypes.SpawnedObject}
 Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
 Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
 Objects.DragPosition = Vector2.new(0, 0)
@@ -95,6 +97,10 @@ function Objects:HandleInput()
 
         if input.KeyCode == Enum.KeyCode.E then
             self:PlayerSpawnObject()
+        end
+
+        if input.KeyCode == Enum.KeyCode.Z then
+            self:DespawnLastObject()
         end
     end)
 
@@ -249,6 +255,13 @@ function Objects:PlayerSpawnObject(): ObjectTypes.SpawnedObject
 
     if not self.SelectedObjectToSpawn then
         Rage.Logging:Warn("Objects:PlayerSpawnObject(): No object selected to spawn.")
+
+        Toasts:DisplayToast(
+            "Objects",
+            "You need to select an object to spawn.",
+            2
+        )
+
         return
     end
 
@@ -261,6 +274,12 @@ function Objects:PlayerSpawnObject(): ObjectTypes.SpawnedObject
     local position = Camera:CastRayToZ0()
     Debug:CreateDebugPart(Vector3.new(position.X, position.Y, 0))
 
+    Toasts:DisplayToast(
+        "Objects",
+        "You have spawned "..self.SelectedObjectToSpawn.Name..".",
+        2
+    )
+
     return self:SpawnObject(self.SelectedObjectToSpawn, position)
 end
 
@@ -270,6 +289,39 @@ end
 function Objects:SelectObjectToSpawn(object: ObjectTypes.Object)
     self.SelectedObjectToSpawn = object
     Rage.Logging:Info("Objects:SelectObjectToSpawn(): Selected object "..object.Name)
+
+    Toasts:DisplayToast(
+        "Objects",
+        "You have selected "..object.Name..".",
+        2
+    )
+end
+
+--[[
+    Despawns the most recent spawned object.
+]]
+function Objects:DespawnLastObject()
+    local recent = Rage.Libs.Table:GetLast(self.SpawnedObjectHistory) :: ObjectTypes.SpawnedObject
+
+    if not recent then  
+        Rage.Logging:Warn("Objects:DespawnLastObject(): No recent spawned object to despawn.")
+
+        Toasts:DisplayToast(
+            "Objects",
+            "No object to undo.",
+            2
+        )
+
+        return
+    end
+
+    self:DespawnObject(recent)
+
+    Toasts:DisplayToast(
+        "Objects",
+        "Successfully despawned last object.",
+        2
+    )
 end
 
 --[[
@@ -281,6 +333,7 @@ function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): Obj
     spawnedObject:MoveTo(position)
 
     self.SpawnedObjects[spawnedObject.ID] = spawnedObject
+    table.insert(self.SpawnedObjectHistory, spawnedObject)
 
     self.OnSpawn:Fire(spawnedObject)
 
@@ -315,10 +368,23 @@ function Objects:DespawnObject(spawnedObject: ObjectTypes.SpawnedObject)
 
     spawnedObject:Despawn()
     self.SpawnedObjects[spawnedObject.ID] = nil
+    self:_RemoveSpawnedObjectFromHistory(spawnedObject)
 
     self.OnDespawn:Fire(spawnedObject)
 
     Rage.Logging:Info(("Objects:DespawnObject(): Despawned object %s (%s)"):format(spawnedObject.Object.Name, spawnedObject.ID))
+end
+
+--[[
+    Removes a spawned object from history.
+]]
+function Objects:_RemoveSpawnedObjectFromHistory(spawnedObject: ObjectTypes.SpawnedObject)
+    for index, _spawnedObject in pairs(self.SpawnedObjectHistory) do
+        if _spawnedObject == spawnedObject then
+            table.remove(self.SpawnedObjectHistory, index)
+            break
+        end
+    end
 end
 
 --[[
