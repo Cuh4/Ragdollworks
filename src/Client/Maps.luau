@@ -22,9 +22,11 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local signal = require(Rage.ReplicatedStorage.Packages.signal)
+local signal = require(Rage.WallyPackages.signal)
 
 local CLI = require(script.Parent.CLI)
+local Toasts = require(script.Parent.Toasts)
+
 local Map = require(game:GetService("ReplicatedStorage").Classes.Map) -- cant use Rage.ReplicatedStorage. luau lsp wont detect types. https://github.com/JohnnyMorganz/luau-lsp/issues/1183
 
 -------------------------------
@@ -77,6 +79,12 @@ function Maps:StartMap(map: Map.Map)
     self:_CreateMapBackground()
 
     self.OnMapStart:Fire(self.CurrentMap)
+
+    Toasts:DisplayToast(
+        "Map",
+        "You have entered "..map.Name..".",
+        2
+    )
 end
 
 --[[
@@ -205,6 +213,12 @@ function Maps:ExitMap()
     self.MapInstance = nil
 
     self.OnMapExit:Fire()
+
+    Toasts:DisplayToast(
+        "Map",
+        "You have exited the map.",
+        2
+    )
 end
 
 --[[
