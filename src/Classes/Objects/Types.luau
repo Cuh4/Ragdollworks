@@ -61,10 +61,10 @@ export type SpawnedObject = {
 
     _RemovalRequested: signal.Signal,
 
-    New: (ID: number, object: Object, instance: Model) -> SpawnedObject,
+    New: (ID: number, object: Object) -> SpawnedObject,
 
     Update: (self: SpawnedObject, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
-    Setup: (self: SpawnedObject) -> nil,
+    Setup: (self: SpawnedObject, spawnPos: Vector3) -> nil,
     MoveTo: (self: SpawnedObject, position: Vector2) -> nil,
     SetupAttributes: (self: SpawnedObject) -> nil,
     CreateNoCollideConstraints: (self: SpawnedObject) -> nil,
@@ -77,6 +77,7 @@ export type SpawnedObject = {
 
 export type ObjectPart = {
     Part: BasePart,
+    SpawnedObject: SpawnedObject,
     Settings: ObjectPartSettings,
     Activated: boolean,
     Dragging: boolean,
@@ -85,20 +86,21 @@ export type ObjectPart = {
     AngularVelocityInstance: AngularVelocity,
     AttachmentInstance: Attachment,
     RotationForce: number,
+    Layer: number,
 
     OnDragStart: signal.Signal,
     OnDragEnd: signal.Signal,
     OnActivate: signal.Signal,
     OnDespawn: signal.Signal,
 
-    New: (part: BasePart, settings: ObjectPartSettings) -> ObjectPart,
-    FromPart: (part: BasePart) -> ObjectPart,
+    New: (part: BasePart, spawnedObject: SpawnedObject, layer: number, settings: ObjectPartSettings) -> ObjectPart,
+    FromPart: (part: BasePart, spawnedObject: SpawnedObject) -> ObjectPart,
 
     Setup: (self: ObjectPart) -> nil,
     SetupDragging: (self: ObjectPart) -> nil,
     Update: (self: ObjectPart, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
     KeepWithinBounds: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
-    LockZAxis: (self: ObjectPart) -> nil,
+    Lock: (self: ObjectPart) -> nil,
     Activate: (self: ObjectPart) -> nil,
     SetRotationForce: (self: ObjectPart, force: number) -> nil,
     Drag: (self: ObjectPart) -> nil,
