@@ -34,6 +34,7 @@ Rage.Players = game:GetService("Players")
 Rage.Camera = Rage.Workspace.CurrentCamera
 Rage.Input = game:GetService("UserInputService")
 Rage.Debris = game:GetService("Debris")
+Rage.TweenService = game:GetService("TweenService")
 
 if Rage.IsServer then
     Rage.ServerScriptService = game:GetService("ServerScriptService")
@@ -45,6 +46,7 @@ else
     end
 end
 
+Rage.WallyPackages = Rage.ReplicatedStorage.Packages
 Rage.Logging = require(script.Logging)
 Rage.Assets = require(script.Assets)
 
