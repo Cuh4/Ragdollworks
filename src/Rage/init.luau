@@ -56,6 +56,7 @@ Rage.Assets = require(script.Assets)
 Rage.Libs = {}
 Rage.Libs.Classes = require(script.Libs.Classes)
 Rage.Libs.Table = require(script.Libs.Table)
+Rage.Libs.Math = require(script.Libs.Math)
 
 --[[
     A table of all built-in classes.
@@ -72,25 +73,22 @@ Rage.Classes.Service = _service
 Rage.Services = {} :: {[string]: ModuleScript}
 
 --[[
-    A dictionary of paths to load services from.
+    The instance in which all services are under.
 ]]
-Rage.ServicePaths = {}
+Rage.Path = nil :: Instance
 
 if Rage.IsClient then
-    Rage.ServicePaths.Client = Rage.ReplicatedStorage.Client
+    Rage.Path = Rage.ReplicatedStorage.Client
 end
 
 if Rage.IsServer then
-    Rage.ServicePaths.Server = Rage.ServerScriptService.Server
+    Rage.Path = Rage.ServerScriptService.Server
 end
 
 --[[
     Initializes Rage. This should only be ran once.
 ]]
 function Rage:Initialize()
-    -- Get service path
-    local path = self:GetServicesPath()
-
     -- Wait for game to load
     if self.IsClient and not game:IsLoaded() then
         self.Logging:Info("Waiting for game to load before initializing Rage...")
@@ -101,9 +99,9 @@ function Rage:Initialize()
     self.Logging:Info("Initializing Rage.")
 
     -- Load services
-    self.Logging:Info("Loading all services at:", path:GetFullName())
+    self.Logging:Info("Loading all services at:", self.Path:GetFullName())
 
-    for _, service: Service in pairs(self:_LoadAll(path)) do
+    for _, service: Service in pairs(self:_LoadAll(self.Path)) do
         if not self.Libs.Classes:IsClassInstance(service, Rage.Classes.Service) then
             continue
         end
@@ -113,13 +111,6 @@ function Rage:Initialize()
 
     -- Start services
     self:StartServices()
-end
-
---[[
-    Returns the path to load services from.
-]]
-function Rage:GetServicesPath(): Instance
-    return self.IsServer and self.ServicePaths.Server or self.ServicePaths.Client
 end
 
 --[[
