@@ -35,10 +35,10 @@ Camera.CAMERA_FOV = 2
 Camera.ZOOM_Z_MULTIPLIER = 6000
 Camera.CAMERA_SPEED = 0.5
 Camera.CAMERA_SPEED_ZOOMED_OUT = 7
-Camera.SCROLL_ZOOM_SENSITIVITY = 0.05
-Camera.CAMERA_Z_OFFSET = -4500 -- due to extremely low camera fov to get a 2d effect, this offset is in place to keep the camera from being too far from the map when zoomed all the way in
-Camera.MAX_ZOOM = 2
-Camera.DEFAULT_ZOOM = 1
+Camera.SCROLL_ZOOM_SENSITIVITY = 0.02
+Camera.CAMERA_Z_ZOOMED_IN = 430
+Camera.CAMERA_Z_ZOOMED_OUT = 9000
+Camera.DEFAULT_ZOOM = 0.5
 
 Camera.Position = Maps.MAP_POSITION
 Camera.Zoom = 0
@@ -100,44 +100,36 @@ end
     Calculates the camera speed.
 ]]
 function Camera:GetSpeed(): number
-    -- lerps from CAMERA_SPEED to CAMERA_SPEED_ZOOMED_OUT based on zoom %
-    return (self.CAMERA_SPEED + (self.CAMERA_SPEED_ZOOMED_OUT - self.CAMERA_SPEED) * (self.Zoom / self.MAX_ZOOM)) * (self.MoveFaster and 2 or 1)
-end
-
---[[
-    Returns the mouse's position.
-]]
-function Camera:GetMousePosition(): Vector2
-    local mouse = Rage.Player:GetMouse()
-    return Vector2.new(mouse.X, mouse.Y)
+    return Rage.Libs.Math:Lerp(self.CAMERA_SPEED, self.CAMERA_SPEED_ZOOMED_OUT, self.Zoom) * (self.MoveFaster and 2 or 1)
 end
 
 --[[
     Handles camera movement from input.
 ]]
 function Camera:HandleInputTick()
-    if Rage.Input:IsKeyDown(Enum.KeyCode.W) then
+    if Rage.Input:IsKeyDown(Enum.KeyCode.Up) then
         self:Move(0, self:GetSpeed())
     end
 
-    if Rage.Input:IsKeyDown(Enum.KeyCode.S) then
+    if Rage.Input:IsKeyDown(Enum.KeyCode.Down) then
         self:Move(0, -self:GetSpeed())
     end
 
-    if Rage.Input:IsKeyDown(Enum.KeyCode.A) then
+    if Rage.Input:IsKeyDown(Enum.KeyCode.Left) then
         self:Move(-self:GetSpeed(), 0)
     end
 
-    if Rage.Input:IsKeyDown(Enum.KeyCode.D) then
+    if Rage.Input:IsKeyDown(Enum.KeyCode.Right) then
         self:Move(self:GetSpeed(), 0)
     end
 
     self:SetMoveFaster(Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift))
 
     if self.IsPanning then
-        local mousePos = self:GetMousePosition()
+        local mousePos = Rage.Input:GetMouseLocation()
         local delta = mousePos - self.LastMousePosition
-        local multiplier = math.clamp(self.Zoom / self.MAX_ZOOM, 0.05, 1)
+        local multiplier = Rage.Libs.Math:Lerp(self.Zoom, 0.05, 0.6)
+
         self:Move(-delta.X * multiplier, delta.Y * multiplier)
 
         self.LastMousePosition = mousePos
@@ -186,7 +178,7 @@ function Camera:SetPanning(isPanning: boolean)
     self.IsPanning = isPanning
 
     if isPanning then
-        self.LastMousePosition = self:GetMousePosition()
+        self.LastMousePosition = Rage.Input:GetMouseLocation()
     end
 
     Rage.Logging:Info("Camera:SetPanning(): Panning is "..tostring(isPanning))
@@ -196,7 +188,11 @@ end
     Returns the camera's Z position based on zoom level.
 ]]
 function Camera:GetCamZ(): number
-    return ((self.Zoom + 1) * self.ZOOM_Z_MULTIPLIER) + self.CAMERA_Z_OFFSET
+    return Rage.Libs.Math:Lerp(
+        self.CAMERA_Z_ZOOMED_IN,
+        self.CAMERA_Z_ZOOMED_OUT,
+        self.Zoom
+    )
 end
 
 --[[
@@ -228,7 +224,7 @@ function Camera:SetZoom(zoom: number)
         return
     end
 
-    self.Zoom = math.clamp(zoom, 0, self.MAX_ZOOM)
+    self.Zoom = math.clamp(zoom, 0, 1)
     Rage.Logging:Info(("Camera:SetZoom(): Zoom set to %.2f"):format(self.Zoom))
 end
 
