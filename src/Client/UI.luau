@@ -30,7 +30,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
     A mini-service for UI.
 ]]
 UI = Rage:Service("UI"):: UI
-UI.COMPONENTS_FOLDER = Rage.Assets:GetAsset("Components") :: Folder
+UI.COMPONENTS_FOLDER = Rage.Assets:GetAsset("UIComponents") :: Folder
 UI.PLAYER_GUI = Rage.Player.PlayerGui
 
 --[[
