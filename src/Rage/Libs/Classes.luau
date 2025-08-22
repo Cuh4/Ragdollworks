@@ -32,5 +32,4 @@ function Classes:IsClassInstance(instance: table, class: table): boolean
 end
 
 export type Classes = typeof(Classes)
-
 return Classes

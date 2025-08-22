@@ -60,5 +60,4 @@ function Table:GetRandom(tbl: table): any
 end
 
 export type Table = typeof(Table)
-
 return Table
