@@ -35,7 +35,7 @@ Map.__index = Map
     Creates a new Map class instance.
 ]]
 function Map.New(name: string, description: string, size: Vector2, mapInstance: Model): Map
-    local self = setmetatable({}, Map)
+    local self = setmetatable({}, Map) :: Map
     self.Name = name
     self.Description = description
     self.Size = size
