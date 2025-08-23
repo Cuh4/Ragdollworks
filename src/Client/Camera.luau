@@ -251,6 +251,38 @@ function Camera:CastRay(distance: number): RaycastResult?
 end
 
 --[[
+    Casts a ray from the camera's position to the mouse's position, and returning ALL hit instances instead of the first.
+]]
+function Camera:CastRayAll(distance: number): {RaycastResult}
+    local mouseLocation = Rage.Input:GetMouseLocation()
+    local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
+
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    raycastParams.FilterDescendantsInstances = {}
+
+    local found = {} :: {RaycastResult}
+    local _exclude = {} :: {Instance}
+
+    repeat
+        local raycastResult = game.Workspace:Raycast(
+            viewportRay.Origin,
+            viewportRay.Direction * distance,
+            raycastParams
+        )
+
+        if raycastResult then
+            table.insert(found, raycastResult)
+            table.insert(_exclude, raycastResult.Instance)
+
+            raycastParams.FilterDescendantsInstances = _exclude
+        end
+    until not raycastResult
+
+    return found
+end
+
+--[[
     Casts a ray to Z 0.
 ]]
 function Camera:CastRayToZ0(): Vector2
