@@ -32,7 +32,7 @@ local CLI = require(script.Parent.CLI)
     A service for debuggng utilities.
 ]]
 Debug = Rage:Service("Debug"):: Debug
-Debug.DEBUG_PART_EXPIRATION_TIME = 15
+Debug.DEBUG_PART_EXPIRATION_TIME = 2
 
 Debug.DebugEnabled = false
 
@@ -54,10 +54,12 @@ function Debug:CreateDebugPart(position: Vector3)
     local part = Instance.new("Part")
     part.Name = "Debug"
     part.CanCollide = false
+    part.CanQuery = false
     part.Anchored = true
     part.Size = Vector3.new(4, 4, 4)
     part.Position = position
     part.Material = Enum.Material.ForceField
+    part.Transparency = 0.5
     part.Color = Color3.fromRGB(0, 255, 0)
 
     part.Parent = game.Workspace
