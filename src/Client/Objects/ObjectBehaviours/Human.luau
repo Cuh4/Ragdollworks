@@ -54,11 +54,18 @@ end
 ]]
 function HumanObjectBehaviour:CreateLimb(objectPart: types.ObjectPart)
     local limb = Limb.FromObjectPart(objectPart)
-    limb:Setup()
-
     self.Limbs[objectPart] = limb
 
     Rage.Logging:Info("Created limb: "..limb.LimbName)
+end
+
+--[[
+    Setups all limps.
+]]
+function HumanObjectBehaviour:SetupLimbs()
+    for _, limb in pairs(self.Limbs) do
+        limb:Setup(self.Limbs)
+    end
 end
 
 --[[
@@ -68,13 +75,17 @@ function HumanObjectBehaviour:OnSpawn()
     for _, objectPart in pairs(self.SpawnedObject.Parts) do
         self:CreateLimb(objectPart)
     end
+
+    self:SetupLimbs()
 end
 
 --[[
     Called when an object using this behaviour is about to be despawned.
 ]]
 function HumanObjectBehaviour:OnPreDespawn()
-
+    for _, limb in pairs(self.Limbs) do
+        limb:Cleanup()
+    end
 end
 
 --[[
@@ -93,7 +104,7 @@ end
 ]]
 function HumanObjectBehaviour:OnUpdate()
     for _, limb in pairs(self.Limbs) do
-        limb:Update(self.Limbs)
+        limb:Update()
     end
 end
 
