@@ -23,6 +23,7 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local Sound = require(Rage.ReplicatedStorage.Classes.Sound)
+local SoundCollection = require(Rage.ReplicatedStorage.Classes.SoundCollection)
 
 local CLI = require(script.Parent.CLI)
 
@@ -43,10 +44,17 @@ function Sounds:OnStart()
 end
 
 --[[
+    Creates a new sound collection.
+]]
+function Sounds:CreateSoundCollection(...: Sound.Sound): SoundCollection.SoundCollection
+    return SoundCollection.New(...)
+end
+
+--[[
     Creates a new sound.
 ]]
-function Sounds:CreateSound(soundID: number, settings: Sound.SoundSettings, parentInstance: Instance?)
-    return Sound.New(soundID, settings, parentInstance)
+function Sounds:CreateSound(soundID: number, settings: Sound.SoundSettings): Sound.Sound
+    return Sound.New(soundID, settings)
 end
 
 --[[
