@@ -54,6 +54,7 @@ Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
 Objects.SpawnedObjectHistory = {} :: {ObjectTypes.SpawnedObject}
 Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
+Objects.FollowingPart = nil :: ObjectTypes.ObjectPart
 Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
 Objects.DragPosition = Vector2.new(0, 0)
 Objects.SelectedObjectToSpawn = nil :: ObjectTypes.Object
@@ -118,6 +119,15 @@ function Objects:HandleInput()
 
         if input.KeyCode == Enum.KeyCode.Z then
             self:DespawnLastObject()
+        end
+
+        if input.KeyCode == Enum.KeyCode.U then
+            if not self:GetPartUnderMouse() then
+                self:StopFollowingPart()
+                return
+            end
+
+            self:FollowPartUnderMouse()
         end
     end)
 
@@ -186,6 +196,32 @@ function Objects:StopDraggingPart()
     self.DraggingPart = nil
 
     Rage.Logging:Info("Objects:StopDraggingPart(): Stopped dragging part.")
+end
+
+--[[
+    Makes the camera follow the part under the mouse.
+]]
+function Objects:FollowPartUnderMouse()
+    local part = self:GetPartUnderMouse()
+
+    if not part then
+        Rage.Logging:Warn("Objects:FollowPartUnderMouse(): Attempted to follow part under mouse, but no part was found.")
+        return
+    end
+
+    self.FollowingPart = part
+end
+
+--[[
+    Stops following the part under the mouse.
+]]
+function Objects:StopFollowingPart()
+    if not self.FollowingPart then
+        Rage.Logging:Warn("Objects:StopFollowingPart(): Attempted to stop following part, but no part is being followed.")
+        return
+    end
+
+    self.FollowingPart = nil
 end
 
 --[[
@@ -406,6 +442,11 @@ function Objects:DespawnObject(spawnedObject: ObjectTypes.SpawnedObject)
             self:StopDraggingPart()
             break
         end
+
+        if part == self.FollowingPart then
+            self:StopFollowingPart()
+            break
+        end
     end
 
     spawnedObject:Despawn()
@@ -462,6 +503,10 @@ function Objects:Update()
                 self.DragPosition
             )
         end)
+    end
+
+    if self.FollowingPart then
+        Camera.Position = self.FollowingPart:GetPosition()
     end
 
     self:HandleInputTick()
