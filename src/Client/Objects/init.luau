@@ -88,10 +88,10 @@ function Objects:HandleInputTick()
 
     if Rage.Input:IsKeyDown(Enum.KeyCode.A) then
         self:RotateDraggedPart(-self.ROTATION_FORCE * multiplier)
-    end
-
-    if Rage.Input:IsKeyDown(Enum.KeyCode.D) then
+    elseif Rage.Input:IsKeyDown(Enum.KeyCode.D) then
         self:RotateDraggedPart(self.ROTATION_FORCE * multiplier)
+    else
+        self:RotateDraggedPart(0)
     end
 end
 
@@ -144,7 +144,6 @@ end
 ]]
 function Objects:RotateDraggedPart(direction: number)
     if not self.DraggingPart then
-        Rage.Logging:Warn("Objects:RotateDraggedPart(): Attempted to rotate part, but no part is being dragged.")
         return
     end
 
@@ -208,13 +207,28 @@ end
     Returns the ObjectPart under the mouse, if any.
 ]]
 function Objects:GetPartUnderMouse(): ObjectTypes.ObjectPart?
-    local result = Camera:CastRay(self.RAY_DISTANCE)
+    local results = Camera:CastRayAll(self.RAY_DISTANCE)
+    local parts = {} :: {ObjectTypes.ObjectPart}
 
-    if not result then
-        return
+    -- Convert raycast results to object parts if possible
+    for _, result in pairs(results) do
+        local part = self:GetObjectPartFromPart(result.Instance)
+
+        if part then
+            table.insert(parts, part)
+        end
     end
 
-    return self:GetObjectPartFromPart(result.Instance)
+    -- Return the part with the highest layer
+    local highest = nil :: ObjectTypes.ObjectPart?
+
+    for _, part in pairs(parts) do
+        if not highest or part.Layer > highest.Layer then
+            highest = part
+        end
+    end
+
+    return highest
 end
 
 --[[
