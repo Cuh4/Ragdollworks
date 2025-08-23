@@ -37,7 +37,7 @@ ExplosiveObjectBehaviour.__index = ExplosiveObjectBehaviour
 setmetatable(ExplosiveObjectBehaviour, ObjectBehaviour)
 
 --[[
-    Creates a new ObjectBehaviour class instance.
+    Creates a new ExplosiveObjectBehaviour class instance.
 ]]
 function ExplosiveObjectBehaviour.New(spawnedObject: types.SpawnedObject): ExplosiveObjectBehaviour
     local self = setmetatable(ObjectBehaviour.New(spawnedObject), ExplosiveObjectBehaviour) :: ExplosiveObjectBehaviour
