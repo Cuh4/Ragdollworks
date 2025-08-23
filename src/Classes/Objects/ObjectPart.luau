@@ -203,6 +203,34 @@ function ObjectPart:StopDragging()
 end
 
 --[[
+    Returns the position of the part (2D).
+]]
+function ObjectPart:GetPosition(): Vector2
+    return Vector2.new(self:GetPosition3D().X, self:GetPosition3D().Y)
+end
+
+--[[
+    Returns the position of the part (3D).
+]]
+function ObjectPart:GetPosition3D(): Vector3
+    return self.Part.Position
+end
+
+--[[
+    Returns the velocity of the part (2D).
+]]
+function ObjectPart:GetVelocity(): Vector2
+    return Vector2.new(self:GetVelocity3D().X, self:GetVelocity3D().Y)
+end
+
+--[[
+    Returns the velocity of the part (3D).
+]]
+function ObjectPart:GetVelocity3D(): Vector3
+    return self.Part.AssemblyLinearVelocity
+end
+
+--[[
     Despawns the part.
 ]]
 function ObjectPart:Despawn()

@@ -105,6 +105,10 @@ export type ObjectPart = {
     SetRotationForce: (self: ObjectPart, force: number) -> nil,
     Drag: (self: ObjectPart) -> nil,
     StopDragging: (self: ObjectPart) -> nil,
+    GetPosition: (self: ObjectPart) -> Vector2,
+    GetPosition3D: (self: ObjectPart) -> Vector3,
+    GetVelocity: (self: ObjectPart) -> Vector2,
+    GetVelocity3D: (self: ObjectPart) -> Vector3,
     Despawn: (self: ObjectPart) -> nil
 }
 
