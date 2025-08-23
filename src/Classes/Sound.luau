@@ -34,13 +34,11 @@ Sound.__index = Sound
 --[[
     Creates a new Sound class instance.
 ]]
-function Sound.New(soundID: number, parentInstance: Instance?, settings: SoundSettings): Sound
-    local self = setmetatable({}, Sound)
+function Sound.New(soundID: number, settings: SoundSettings): Sound
+    local self = setmetatable({}, Sound) :: Sound
     self.SoundID = soundID
-    self.ParentInstance = parentInstance
     self.Settings = settings
-
-    self.Instance = self:CreateInstance()
+    self.Instances = {}
 
     return self
 end
@@ -55,11 +53,20 @@ function Sound:CreateInstance(): Sound
         sound[key] = value
     end
 
+    sound.Name = self.SoundID
     sound.SoundId = "rbxassetid://" .. self.SoundID
-    sound.Parent = self.ParentInstance or game.Workspace
+    sound.Parent = Rage.Player
 
-    sound.Ended:Once(function()
+    local endedConnection, stoppedConnection
+
+    endedConnection = sound.Ended:Once(function()
         sound:Destroy()
+        stoppedConnection:Disconnect()
+    end)
+
+    stoppedConnection = sound.Stopped:Once(function()
+        sound:Destroy()
+        endedConnection:Disconnect()
     end)
 
     return sound
@@ -68,26 +75,22 @@ end
 --[[
     Plays the sound.
 ]]
-function Sound:Play()
-    self.Instance:Play()
-end
+function Sound:Play(): Sound
+    local instance = self:CreateInstance()
+    table.insert(self.Instances, instance)
 
---[[
-    Stops the sound.
-]]
-function Sound:Stop()
-    self.Instance:Stop()
+    instance:Play()
+
+    return instance
 end
 
 export type Sound = {
     SoundID: number,
-    ParentInstance: Instance?,
     Settings: SoundSettings,
-
-    Instance: Sound
+    Instances: {Sound}
 } & typeof(Sound)
 
-export type SoundSettings=  {
+export type SoundSettings = {
     RollOffMaxDistance: number,
     RollOffMinDistance: number,
     RollOffMode: Enum.RollOffMode,
