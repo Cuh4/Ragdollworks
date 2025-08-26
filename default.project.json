@@ -14,10 +14,14 @@
 
       "Packages": {
         "$path": "Packages"
-      },
+      }
+    },
 
-      "Client": {
-        "$path": "src/Client"
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/Client"
+        }
       }
     },
 
