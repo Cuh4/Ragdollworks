@@ -57,6 +57,7 @@ Rage.Libs = {}
 Rage.Libs.Classes = require(script.Libs.Classes)
 Rage.Libs.Table = require(script.Libs.Table)
 Rage.Libs.Math = require(script.Libs.Math)
+Rage.Libs.String = require(script.Libs.String)
 
 --[[
     A table of all built-in classes.
@@ -78,7 +79,7 @@ Rage.Services = {} :: {[string]: ModuleScript}
 Rage.Path = nil :: Instance
 
 if Rage.IsClient then
-    Rage.Path = Rage.ReplicatedStorage.Client
+    Rage.Path = Rage.Player.PlayerScripts.Client
 end
 
 if Rage.IsServer then
