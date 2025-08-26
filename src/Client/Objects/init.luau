@@ -46,9 +46,11 @@ local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
 Objects = Rage:Service("Objects") :: Objects
 Objects.OBJECT_FOLDER = Rage.Assets:GetAsset("Objects")
 Objects.RAY_DISTANCE = 50000
-Objects.ROTATION_FORCE = 1
-Objects.FASTER_ROTATION_MULTIPLIER = 3
+Objects.MAX_ROTATION_SPEED = 6
+Objects.ROTATION_SPEED_INCREMENT = 0.06
+Objects.DEFAULT_ROTATION_SPEED = 1
 
+Objects.RotationSpeed = 1
 Objects.ExistingObjects = {} :: {ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
@@ -85,14 +87,18 @@ end
     Handles user input every tick.
 ]]
 function Objects:HandleInputTick()
-    local multiplier = Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift) and self.FASTER_ROTATION_MULTIPLIER or 1
-
     if Rage.Input:IsKeyDown(Enum.KeyCode.A) then
-        self:RotateDraggedPart(-self.ROTATION_FORCE * multiplier)
+        self:RotateDraggedPart(-self.RotationSpeed)
     elseif Rage.Input:IsKeyDown(Enum.KeyCode.D) then
-        self:RotateDraggedPart(self.ROTATION_FORCE * multiplier)
+        self:RotateDraggedPart(self.RotationSpeed)
     else
         self:RotateDraggedPart(0)
+    end
+
+    if Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift) then
+        self.RotationSpeed = self.RotationSpeed + self.ROTATION_SPEED_INCREMENT
+    else
+        self.RotationSpeed = self.DEFAULT_ROTATION_SPEED
     end
 end
 
@@ -327,7 +333,7 @@ end
 --[[
     Spawns an object (player-driven).
 ]]
-function Objects:PlayerSpawnObject(): ObjectTypes.SpawnedObject
+function Objects:PlayerSpawnObject(position: Vector3?): ObjectTypes.SpawnedObject
     if not Maps.IsInMap then
         return
     end
@@ -348,16 +354,18 @@ function Objects:PlayerSpawnObject(): ObjectTypes.SpawnedObject
         Rage.Logging:Error("Objects:PlayerSpawnObject(): Object "..self.SelectedObjectToSpawn.Name.." cannot be spawned by the player.")
     end
 
-    Rage.Logging:Info("Objects:PlayerSpawnObject(): Player is spawning object "..self.SelectedObjectToSpawn.Name)
-
-    local position = Camera:CastRayToZ0()
-    Debug:CreateDebugPart(Vector3.new(position.X, position.Y, 0))
+    if not position then
+        position = Camera:CastRayToZ0()
+        Debug:CreateDebugPart(Vector3.new(position.X, position.Y, 0))
+    end
 
     Toasts:DisplayToast(
         "Objects",
         "You have spawned "..self.SelectedObjectToSpawn.Name..".",
         2
     )
+
+    Rage.Logging:Info("Objects:PlayerSpawnObject(): Player is spawning object "..self.SelectedObjectToSpawn.Name)
 
     return self:SpawnObject(self.SelectedObjectToSpawn, position)
 end
@@ -574,12 +582,15 @@ function Objects:_CreateCommands()
         description = "Spawns x amount of objects at the mouse position.",
 
         arguments = function()
-            return CLI.Conch.args.number("Amount", "The amount of objects to spawn.")
+            return CLI.Conch.args.number("Amount", "The amount of objects to spawn."), CLI.Conch.args.number("Padding", "How many studs should the objects be separated by")
         end,
 
-        callback = function(amount: number)
+        callback = function(amount: number, padding: number)
+            local at = Camera:CastRayToZ0()
+
             for _ = 1, amount do
-                self:PlayerSpawnObject()
+                self:PlayerSpawnObject(at)
+                at = at + Vector2.new(padding, 0)
             end
         end
     })
