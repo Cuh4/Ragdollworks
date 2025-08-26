@@ -63,7 +63,9 @@ function Limb.New(objectPart: types.ObjectPart, maxHealth: number, maxStabilizat
     self.IsGrounded = false
     self.IsForceLimp = false
     self.IsBrainAlive = true
-    self.BraindeadHealthLossRate = 0.35
+    self.IsHeartBeating = true
+    self.BrainDeadHealthLossRate = 0.35 -- per update
+    self.HeartDeadHealthLossRate = 0.1 -- per update
 
     self.StabilizationForce = nil :: AlignOrientation
     self.Attachment = nil :: Attachment
@@ -332,7 +334,7 @@ end
     Returns whether or not the limb is alive.
 ]]
 function Limb:IsAlive(): boolean
-    return self.IsLimbAlive and self.IsBrainAlive
+    return self.IsLimbAlive and self.IsBrainAlive and self.IsHeartBeating
 end
 
 --[[
@@ -376,6 +378,7 @@ function Limb:HandleState()
     self.IsGrounded = self:DetectIsGrounded()
     self.IsLimbAlive = self.Health > 0
     self.IsBrainAlive = self:FindLimbByName("Head").IsLimbAlive
+    self.IsHeartBeating = self:FindLimbByName("UpperTorso").IsLimbAlive
 end
 
 --[[
@@ -383,7 +386,11 @@ end
 ]]
 function Limb:HandlePassiveDamage()
     if not self.IsBrainAlive then
-        self:Damage(self.BraindeadHealthLossRate)
+        self:Damage(self.BrainDeadHealthLossRate)
+    end
+
+    if not self.IsHeartBeating then
+        self:Damage(self.HeartDeadHealthLossRate)
     end
 end
 
@@ -457,7 +464,9 @@ export type Limb = {
     Grounded: boolean,
     IsForceLimp: boolean,
     IsBrainAlive: boolean,
-    BraindeadHealthLossRate: number,
+    IsHeartBeating: boolean,
+    BrainDeadHealthLossRate: number,
+    HeartDeadHealthLossRate: number,
 
     StabilizationForce: AlignOrientation,
     Attachment: Attachment,
