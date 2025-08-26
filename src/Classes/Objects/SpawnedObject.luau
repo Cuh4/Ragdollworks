@@ -78,6 +78,13 @@ function SpawnedObject:Setup(spawnPos: Vector3)
         table.insert(self.Behaviours, behaviourInstance)
     end
 
+    self:CreateNoCollideConstraints()
+    self:SetupAttributes()
+
+    for _, part in pairs(self.Parts) do
+        part:Setup()
+    end
+
     for _, behaviour in pairs(self.Behaviours) do
         behaviour:OnSpawn()
     end
@@ -92,13 +99,6 @@ function SpawnedObject:Setup(spawnPos: Vector3)
         part.OnDespawn:Connect(function()
             self:RemovePart(part)
         end)
-    end
-
-    self:CreateNoCollideConstraints()
-    self:SetupAttributes()
-
-    for _, part in pairs(self.Parts) do
-        part:Setup()
     end
 
     self.Instance.Parent = game.Workspace
