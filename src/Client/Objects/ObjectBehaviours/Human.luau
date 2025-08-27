@@ -111,6 +111,6 @@ end
 export type HumanObjectBehaviour = {
     Limbs: {[types.ObjectPart]: Limb.Limb},
     IsForceLimp: boolean
-} & types.ObjectBehaviour
+} & typeof(HumanObjectBehaviour) & types.ObjectBehaviour
 
 return HumanObjectBehaviour
