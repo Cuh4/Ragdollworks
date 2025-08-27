@@ -34,11 +34,6 @@ CLI = Rage:Service("CLI") :: CLI
 CLI.Conch = require(game:GetService("ReplicatedStorage").Packages.conch)
 
 function CLI:OnStart()
-    if not Rage.IsStudio then
-        Rage.Logging:Warn("CLI has been disabled due to production environment.")
-        return
-    end
-
     self.Conch.initiate_default_lifecycle()
 end
 
