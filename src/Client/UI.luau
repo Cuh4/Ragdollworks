@@ -43,7 +43,7 @@ end
 --[[
     Returns a component by name.
 ]]
-function UI:GetComponent(name: string): Frame
+function UI:GetComponent(name: string): GuiObject
     return self.COMPONENTS_FOLDER:WaitForChild(name) or Rage.Logging:Error("UI:GetComponent(): Component '"..name.."' does not exist.")
 end
 
