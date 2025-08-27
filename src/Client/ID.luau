@@ -29,7 +29,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 --[[
     A service to get unique IDs.
 ]]
-ID = Rage:Service("ID"):: ID
+ID = Rage:Service("ID") :: ID
 ID.CurrentID = 0
 
 --[[
