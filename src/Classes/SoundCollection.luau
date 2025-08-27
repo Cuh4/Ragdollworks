@@ -46,14 +46,14 @@ end
 --[[
     Plays a random sound.
 ]]
-function SoundCollection:PlayRandom()
+function SoundCollection:PlayRandom(modifiers: {Instance}?)
     local sound = Rage.Libs.Table:GetRandom(self.Sounds) :: Sound
 
     if not sound then
         Rage.Logging:Error("SoundCollection:Play(): No sound found.")
     end
 
-    sound:Play()
+    sound:Play(modifiers)
 end
 
 export type SoundCollection = {

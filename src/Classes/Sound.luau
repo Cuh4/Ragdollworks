@@ -46,11 +46,17 @@ end
 --[[
     Creates a sound instance.
 ]]
-function Sound:CreateInstance(): Sound
+function Sound:CreateInstance(modifiers: {Instance}?): Sound
     local sound = Instance.new("Sound")
 
     for key, value in pairs(self.Settings) do
         sound[key] = value
+    end
+
+    if modifiers then
+        for _, instance in pairs(modifiers) do
+            instance:Clone().Parent = sound
+        end
     end
 
     sound.Name = self.SoundID
@@ -75,8 +81,8 @@ end
 --[[
     Plays the sound.
 ]]
-function Sound:Play(): Sound
-    local instance = self:CreateInstance()
+function Sound:Play(modifiers: {Instance}?): Sound
+    local instance = self:CreateInstance(modifiers)
     table.insert(self.Instances, instance)
 
     instance:Play()

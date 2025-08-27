@@ -44,6 +44,20 @@ function Sounds:OnStart()
 end
 
 --[[
+    Creates a sound modifier and applies the given properties to it.<br>
+    The instance can then be passed to `Sound:Play(...)`.
+]]
+function Sounds:CreateSoundModifier(className: string, properties: {[string]: any}): Instance
+    local modifier = Instance.new(className)
+
+    for key, value in pairs(properties) do
+        modifier[key] = value
+    end
+
+    return modifier
+end
+
+--[[
     Creates a new sound collection.
 ]]
 function Sounds:CreateSoundCollection(...: Sound.Sound): SoundCollection.SoundCollection
