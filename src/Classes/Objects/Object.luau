@@ -35,7 +35,7 @@ Object.__index = Object
 --[[
     Creates a new Object class instance.
 ]]
-function Object.New(name: string, description: string, category: string, settings: types.ObjectSettings, behaviours: {types.ObjectBehaviour}, instance: Model): types.Object
+function Object.New(name: string, description: string, category: string, settings: types.ObjectSettings, behaviours: {types.ObjectBehaviour}, instance: Model, iconAssetID: string?): types.Object
     local self = setmetatable({}, Object) :: Object
     self.Name = name
     self.Description = description
@@ -43,6 +43,7 @@ function Object.New(name: string, description: string, category: string, setting
     self.Settings = settings
     self.Behaviours = behaviours
     self.Instance = instance
+    self.IconAssetID = iconAssetID
 
     return self
 end
@@ -62,7 +63,8 @@ function Object.FromInstance(instance: Model, behaviours: {types.ObjectBehaviour
         },
 
         behaviours,
-        instance
+        instance,
+        instance:GetAttribute("ObjectIconAssetID")
     )
 end
 
