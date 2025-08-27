@@ -59,5 +59,18 @@ function Table:GetRandom(tbl: table): any
     return tbl[math.random(1, #tbl)]
 end
 
+--[[
+    Merges two tables together via `table.insert` and iteration.
+]]
+function Table:Merge(tbl1: table, tbl2: table)
+    local tbl = table.clone(tbl1)
+
+    for _, value in pairs(tbl2) do
+        table.insert(tbl, value)
+    end
+
+    return tbl
+end
+
 export type Table = typeof(Table)
 return Table
