@@ -53,6 +53,7 @@ Objects.DEFAULT_ROTATION_SPEED = 1
 Objects.RotationSpeed = 1
 Objects.ExistingObjects = {} :: {ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
+Objects.SpawnedObjectCount = 0
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
 Objects.SpawnedObjectHistory = {} :: {ObjectTypes.SpawnedObject}
 Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
@@ -63,6 +64,7 @@ Objects.SelectedObjectToSpawn = nil :: ObjectTypes.Object
 
 Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
+Objects.OnSelect = signal.new() :: signal.Signal<ObjectTypes.Object>
 
 --[[
     Called when the service starts.
@@ -375,6 +377,7 @@ end
 ]]
 function Objects:SelectObjectToSpawn(object: ObjectTypes.Object)
     self.SelectedObjectToSpawn = object
+    self.OnSelect:Fire(object)
     Rage.Logging:Info("Objects:SelectObjectToSpawn(): Selected object "..object.Name)
 
     Toasts:DisplayToast(
@@ -421,11 +424,13 @@ function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): Obj
     self.SpawnedObjects[spawnedObject.ID] = spawnedObject
     table.insert(self.SpawnedObjectHistory, spawnedObject)
 
-    self.OnSpawn:Fire(spawnedObject)
-
     spawnedObject._RemovalRequested:Once(function()
         self:DespawnObject(spawnedObject)
     end)
+
+    self.SpawnedObjectCount = self.SpawnedObjectCount + 1
+
+    self.OnSpawn:Fire(spawnedObject)
 
     Rage.Logging:Info(("Objects:SpawnObject(): Spawned object %s (%s) at %s with %d parts"):format(
         object.Name,
@@ -460,6 +465,8 @@ function Objects:DespawnObject(spawnedObject: ObjectTypes.SpawnedObject)
     spawnedObject:Despawn()
     self.SpawnedObjects[spawnedObject.ID] = nil
     self:_RemoveSpawnedObjectFromHistory(spawnedObject)
+
+    self.SpawnedObjectCount = self.SpawnedObjectCount - 1
 
     self.OnDespawn:Fire(spawnedObject)
 
