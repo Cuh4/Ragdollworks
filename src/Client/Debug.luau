@@ -22,7 +22,7 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local CLI = require(script.Parent.CLI)
+local CLI = require(Rage.Path.CLI)
 
 -------------------------------
 -- // Main
@@ -31,7 +31,7 @@ local CLI = require(script.Parent.CLI)
 --[[
     A service for debuggng utilities.
 ]]
-Debug = Rage:Service("Debug"):: Debug
+Debug = Rage:Service("Debug") :: Debug
 Debug.DEBUG_PART_EXPIRATION_TIME = 2
 
 Debug.DebugEnabled = false

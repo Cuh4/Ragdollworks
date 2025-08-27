@@ -29,7 +29,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 --[[
     A service for spawning particle effects.
 ]]
-Effects = Rage:Service("Effects"):: Effects
+Effects = Rage:Service("Effects") :: Effects
 Effects.EFFECTS_FOLDER = Rage.Assets:GetAsset("Effects") :: Folder
 
 --[[

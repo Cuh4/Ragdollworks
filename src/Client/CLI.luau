@@ -30,7 +30,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
     A service to setup CMDR, a command line interface package.<br>
     This is the client-side implementation, fit with an UI.
 ]]
-CLI = Rage:Service("CLI"):: CLI
+CLI = Rage:Service("CLI") :: CLI
 CLI.Conch = require(game:GetService("ReplicatedStorage").Packages.conch)
 CLI.ConchUI = require(game:GetService("ReplicatedStorage").Packages.conch_ui)
 

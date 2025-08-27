@@ -21,7 +21,7 @@
 -------------------------------
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
-local Maps = require(script.Parent.Maps)
+local Maps = require(Rage.Path.Maps)
 
 -------------------------------
 -- // Main

@@ -25,7 +25,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local Sound = require(Rage.ReplicatedStorage.Classes.Sound)
 local SoundCollection = require(Rage.ReplicatedStorage.Classes.SoundCollection)
 
-local CLI = require(script.Parent.CLI)
+local CLI = require(Rage.Path.CLI)
 
 -------------------------------
 -- // Main
@@ -34,7 +34,7 @@ local CLI = require(script.Parent.CLI)
 --[[
     A service for playing sounds.
 ]]
-Sounds = Rage:Service("Sounds"):: Sounds
+Sounds = Rage:Service("Sounds") :: Sounds
 
 --[[
     Called when the service starts.

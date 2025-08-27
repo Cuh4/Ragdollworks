@@ -24,12 +24,12 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local signal = require(Rage.WallyPackages.signal)
 
-local CLI = require(script.Parent.CLI)
-local ID = require(script.Parent.ID)
-local Camera = require(script.Parent.Camera)
-local Maps = require(script.Parent.Maps)
-local Debug = require(script.Parent.Debug)
-local Toasts = require(script.Parent.Toasts)
+local CLI = require(Rage.Path.CLI)
+local ID = require(Rage.Path.ID)
+local Camera = require(Rage.Path.Camera)
+local Maps = require(Rage.Path.Maps)
+local Debug = require(Rage.Path.Debug)
+local Toasts = require(Rage.Path.Toasts)
 
 local Object = require(Rage.ReplicatedStorage.Classes.Objects.Object)
 local SpawnedObject = require(Rage.ReplicatedStorage.Classes.Objects.SpawnedObject)
