@@ -263,7 +263,11 @@ function Limb:HandleImpact(amount: number)
     end
 
     -- SFX
-    self.ImpactSounds:PlayRandom()
+    self.ImpactSounds:PlayRandom({
+        Sounds:CreateSoundModifier("PitchShiftSoundEffect", {
+            Octave = math.clamp(1 - (amount / 175), 0.75, 1)
+        })
+    })
 
     -- VFX
     Effects:SpawnEffect(Rage.Libs.Table:GetRandom(self.ImpactEffects), 0.07, self.ObjectPart.Part)
