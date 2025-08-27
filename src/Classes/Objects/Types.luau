@@ -39,8 +39,9 @@ export type Object = {
     Settings: ObjectSettings,
     Behaviours: {ObjectBehaviour},
     Instance: Model,
+    IconAssetID: string?,
 
-    New: (name: string, description: string, category: string, settings: ObjectSettings, behaviours: {ObjectBehaviour}, instance: Model) -> Object,
+    New: (name: string, description: string, category: string, settings: ObjectSettings, behaviours: {ObjectBehaviour}, instance: Model, iconAssetID: string) -> Object,
     FromInstance: (instance: Model) -> Object,
 
     CanPlayerSpawn: (self: Object) -> boolean,
