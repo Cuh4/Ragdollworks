@@ -53,7 +53,7 @@ function Toasts:DisplayToast(title: string, message: string, lifetime: number)
     local toast = self.TOAST_COMPONENT:Clone()
     local container = toast.Container :: Frame
     container.Position = self.OUT_POSITION
-    container.Title.Text = title
+    container.TitleContainer.Title.Text = title
     container.Content.Text = message
 
     toast.Parent = self.TOAST_CONTAINER
