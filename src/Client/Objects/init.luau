@@ -62,7 +62,9 @@ Objects.SpawnedObjectHistory = {} :: {ObjectTypes.SpawnedObject}
 Objects.SelectedObjectParts = {} :: {ObjectTypes.ObjectPart}
 
 Objects.IsFollowing = false
+
 Objects.IsDragging = false
+Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
 Objects.DragPosition = Vector2.new(0, 0)
 
 Objects.SelectedObject = nil :: ObjectTypes.Object
@@ -126,12 +128,7 @@ function Objects:HandleInput()
 
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             self:SelectObjectPartUnderMouse(not Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift))
-
-            local part = self:GetPartUnderMouse()
-
-            if part and self:IsObjectPartSelected(part) then
-                self:SetDragging(true)
-            end
+            self:DragPartUnderMouse()
         end
 
         if input.KeyCode == Enum.KeyCode.F then
@@ -165,7 +162,7 @@ function Objects:HandleInput()
         end
 
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            self:SetDragging(false)
+            self:StopDragging()
         end
     end)
 end
@@ -187,18 +184,51 @@ function Objects:RotateDraggedPart(direction: number)
 end
 
 --[[
+    Starts dragging the provided part.
+]]
+function Objects:DragObjectPart(part: ObjectTypes.ObjectPart)
+    if self.IsDragging then
+        Rage.Logging:Warn("Objects:DragObjectPart(): Already dragging a part.")
+        return
+    end
+
+    self.DraggingPart = part
+    self.DraggingPart:Drag()
+
+    self.IsDragging = true
+
+    Rage.Logging:Info("Objects:DragObjectPart(): Started dragging part.")
+end
+
+--[[
     Drags the part under the mouse.
 ]]
-function Objects:SetDragging(drag: boolean)
-    self.IsDragging = drag and self:IsAnyObjectPartSelected()
+function Objects:DragPartUnderMouse()
+    local part = self:GetPartUnderMouse()
 
-    for _, part in pairs(self.SelectedObjectParts) do
-        if self.IsDragging then
-            part:Drag()
-        else
-            part:StopDragging()
-        end
+    if not part then
+        Rage.Logging:Warn("Objects:DragPartUnderMouse(): Attempted to drag part under mouse, but no part was found.")
+        return
     end
+
+    self:DragObjectPart(part)
+end
+
+--[[
+    Stops dragging the currently-dragged part.
+]]
+function Objects:StopDragging()
+    if not self.IsDragging then
+        Rage.Logging:Warn("Objects:StopDragging(): Not dragging a part.")
+        return
+    end
+
+    self.DraggingPart:StopDragging()
+    self.DraggingPart = nil
+
+    self.IsDragging = false
+
+    Rage.Logging:Info("Objects:StopDragging(): Stopped dragging part.")
 end
 
 --[[
@@ -701,7 +731,6 @@ function Objects:DeselectObjectPart(objectPart: ObjectTypes.ObjectPart)
         return
     end
 
-    objectPart:StopDragging() -- fixme: hacky. find a better way idiot
     objectPart:Deselect()
     Rage.Libs.Table:Remove(self.SelectedObjectParts, objectPart)
 
