@@ -23,7 +23,7 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local ObjectBehaviour = require(Rage.ReplicatedStorage.Classes.Objects.ObjectBehaviour)
-local types = require(Rage.ReplicatedStorage.Classes.Objects.Types)
+local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
 
 local Limb = require(Rage.ReplicatedStorage.Classes.Limb)
 
@@ -41,9 +41,9 @@ setmetatable(HumanObjectBehaviour, ObjectBehaviour)
 --[[
     Creates a new HumanObjectBehaviour class instance.
 ]]
-function HumanObjectBehaviour.New(spawnedObject: types.SpawnedObject): HumanObjectBehaviour
+function HumanObjectBehaviour.New(spawnedObject: ObjectTypes.SpawnedObject): HumanObjectBehaviour
     local self = setmetatable(ObjectBehaviour.New(spawnedObject), HumanObjectBehaviour) :: HumanObjectBehaviour
-    self.Limbs = {} :: {[types.ObjectPart]: Limb.Limb}
+    self.Limbs = {} :: {[ObjectTypes.ObjectPart]: Limb.Limb}
     self.IsForceLimp = false
 
     return self
@@ -52,7 +52,7 @@ end
 --[[
     Creates a limb for an object part.
 ]]
-function HumanObjectBehaviour:CreateLimb(objectPart: types.ObjectPart)
+function HumanObjectBehaviour:CreateLimb(objectPart: ObjectTypes.ObjectPart)
     local limb = Limb.FromObjectPart(objectPart)
     self.Limbs[objectPart] = limb
 
@@ -91,7 +91,7 @@ end
 --[[
     Called when an object using this behaviour is activated.
 ]]
-function HumanObjectBehaviour:OnActivate(objectPart: types.ObjectPart)
+function HumanObjectBehaviour:OnActivate(objectPart: ObjectTypes.ObjectPart)
     self.IsForceLimp = not self.IsForceLimp
 
     for _, limb in pairs(self.Limbs) do
@@ -109,8 +109,8 @@ function HumanObjectBehaviour:OnUpdate()
 end
 
 export type HumanObjectBehaviour = {
-    Limbs: {[types.ObjectPart]: Limb.Limb},
+    Limbs: {[ObjectTypes.ObjectPart]: Limb.Limb},
     IsForceLimp: boolean
-} & typeof(HumanObjectBehaviour) & types.ObjectBehaviour
+} & typeof(HumanObjectBehaviour) & ObjectTypes.ObjectBehaviour
 
 return HumanObjectBehaviour

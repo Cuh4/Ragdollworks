@@ -20,7 +20,7 @@
 -------------------------------
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
-local types = require(script.Parent.Types)
+local ObjectTypes = require(script.Parent.Types)
 
 -------------------------------
 -- // Main
@@ -29,13 +29,13 @@ local types = require(script.Parent.Types)
 --[[
     A class representing a spawnable object.
 ]]
-Object = {} :: types.Object
+Object = {} :: ObjectTypes.Object
 Object.__index = Object
 
 --[[
     Creates a new Object class instance.
 ]]
-function Object.New(name: string, description: string, category: string, settings: types.ObjectSettings, behaviours: {types.ObjectBehaviour}, instance: Model, iconAssetID: string?): types.Object
+function Object.New(name: string, description: string, category: string, settings: ObjectTypes.ObjectSettings, behaviours: {ObjectTypes.ObjectBehaviour}, instance: Model, iconAssetID: string?): ObjectTypes.Object
     local self = setmetatable({}, Object) :: Object
     self.Name = name
     self.Description = description
@@ -51,7 +51,7 @@ end
 --[[
     Creates a new Object class instance from an actual object instance.
 ]]
-function Object.FromInstance(instance: Model, behaviours: {types.ObjectBehaviour}): types.Object
+function Object.FromInstance(instance: Model, behaviours: {ObjectTypes.ObjectBehaviour}): ObjectTypes.Object
     return Object.New(
         instance:GetAttribute("ObjectName") or Rage.Logging:Error(instance:GetFullName()..": No object name provided."),
         instance:GetAttribute("ObjectDescription") or Rage.Logging:Error(instance:GetFullName()..": No object description provided."),

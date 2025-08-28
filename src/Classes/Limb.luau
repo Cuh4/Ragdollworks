@@ -26,7 +26,7 @@ local UI = require(Rage.Path.UI)
 local Effects = require(Rage.Path.Effects)
 
 local Sound, SoundCollection = require(script.Parent.Sound), require(script.Parent.SoundCollection) -- purely for types
-local types = require(Rage.ReplicatedStorage.Classes.Objects.Types)
+local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
 
 -------------------------------
 -- // Main
@@ -41,7 +41,7 @@ Limb.__index = Limb
 --[[
     Creates a new Limb class instance.
 ]]
-function Limb.New(objectPart: types.ObjectPart, maxHealth: number, maxStabilizationAngularVelocity: number, maxStabilizationTorque: number): Limb
+function Limb.New(objectPart: ObjectTypes.ObjectPart, maxHealth: number, maxStabilizationAngularVelocity: number, maxStabilizationTorque: number): Limb
     local self = setmetatable({}, Limb) :: Limb
     self.LimbName = objectPart.Part.Name
     self.ObjectPart = objectPart
@@ -98,7 +98,7 @@ end
 --[[
     Creates a new Limb instance from an ObjectPart..
 ]]
-function Limb.FromObjectPart(objectPart: types.ObjectPart): Limb
+function Limb.FromObjectPart(objectPart: ObjectTypes.ObjectPart): Limb
     return Limb.New(
         objectPart,
         objectPart.Part:GetAttribute("MaxHealth") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `MaxHealth` attribute."),
@@ -372,7 +372,7 @@ function Limb:HandleHealthUI()
         0
     )
 
-    self.HealthContainer.Size = UDim2.new(self:GetHealthPercentage(), 0, 1, 0)
+    self.HealthContainer.Size = UDim2.new(self:GetHealthPercentage(), 0, 0.3, 0)
 end
 
 --[[
@@ -401,7 +401,7 @@ end
 --[[
     Setups the limb.
 ]]
-function Limb:Setup(limbs: {[types.ObjectPart]: Limb})
+function Limb:Setup(limbs: {[ObjectTypes.ObjectPart]: Limb})
     self.Limbs = limbs
 
     self.Attachment = Instance.new("Attachment")
@@ -446,10 +446,10 @@ end
 
 export type Limb = {
     LimbName: string,
-    ObjectPart: types.ObjectPart,
+    ObjectPart: ObjectTypes.ObjectPart,
     Health: number,
     MaxHealth: number,
-    Limbs: {[types.ObjectPart]: Limb},
+    Limbs: {[ObjectTypes.ObjectPart]: Limb},
 
     BillboardGUI: BillboardGui,
     HealthContainer: Frame,

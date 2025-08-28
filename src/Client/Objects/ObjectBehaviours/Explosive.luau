@@ -23,7 +23,7 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local ObjectBehaviour = require(Rage.ReplicatedStorage.Classes.Objects.ObjectBehaviour)
-local types = require(Rage.ReplicatedStorage.Classes.Objects.Types)
+local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
 
 -------------------------------
 -- // Main
@@ -39,7 +39,7 @@ setmetatable(ExplosiveObjectBehaviour, ObjectBehaviour)
 --[[
     Creates a new ExplosiveObjectBehaviour class instance.
 ]]
-function ExplosiveObjectBehaviour.New(spawnedObject: types.SpawnedObject): ExplosiveObjectBehaviour
+function ExplosiveObjectBehaviour.New(spawnedObject: ObjectTypes.SpawnedObject): ExplosiveObjectBehaviour
     local self = setmetatable(ObjectBehaviour.New(spawnedObject), ExplosiveObjectBehaviour) :: ExplosiveObjectBehaviour
     self.LastPosition = Vector2.new(0, 0)
     self.MainPart = table.pack(next(self.SpawnedObject.Parts))[2]
@@ -108,7 +108,7 @@ function ExplosiveObjectBehaviour:OnPreDespawn() end
 --[[
     Called when an object using this behaviour is activated.
 ]]
-function ExplosiveObjectBehaviour:OnActivate(objectPart: types.ObjectPart)
+function ExplosiveObjectBehaviour:OnActivate(objectPart: ObjectTypes.ObjectPart)
     if not self.ExplodeOnActivation then
         return
     end
@@ -138,11 +138,11 @@ end
 
 export type ExplosiveObjectBehaviour = {
     LastPosition: Vector2,
-    MainPart: types.ObjectPart,
+    MainPart: ObjectTypes.ObjectPart,
     ExplosionRadius: number,
     ExplosionPressure: number,
     PositionDeltaThreshold: number,
     ExplodeOnActivation: boolean
-} & types.ObjectBehaviour
+} & typeof(ExplosiveObjectBehaviour) & ObjectTypes.ObjectBehaviour
 
 return ExplosiveObjectBehaviour
