@@ -54,14 +54,15 @@ Objects.RotationSpeed = 1
 
 Objects.ExistingObjects = {} :: {string: ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
+Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
 
 Objects.SpawnedObjectCount = 0
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
 Objects.SpawnedObjectHistory = {} :: {ObjectTypes.SpawnedObject}
-Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
+Objects.SelectedObjectParts = {} :: {ObjectTypes.ObjectPart}
 
-Objects.FollowingPart = nil :: ObjectTypes.ObjectPart
-Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
+Objects.IsFollowing = false
+Objects.IsDragging = false
 Objects.DragPosition = Vector2.new(0, 0)
 
 Objects.SelectedObject = nil :: ObjectTypes.Object
@@ -69,7 +70,6 @@ Objects.SelectedObject = nil :: ObjectTypes.Object
 Objects.ExistingWires = {} :: {string: ObjectTypes.Wire}
 Objects.SelectedWire = nil :: ObjectTypes.Wire
 Objects.SpawnedWires = {} :: {ObjectTypes.SpawnedWire}
-Objects.SelectedPartForWiring = nil :: ObjectTypes.ObjectPart
 
 Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
@@ -125,7 +125,13 @@ function Objects:HandleInput()
         end
 
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            self:DragPartUnderMouse()
+            self:SelectObjectPartUnderMouse(not Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift))
+
+            local part = self:GetPartUnderMouse()
+
+            if part and self:IsObjectPartSelected(part) then
+                self:SetDragging(true)
+            end
         end
 
         if input.KeyCode == Enum.KeyCode.F then
@@ -140,17 +146,12 @@ function Objects:HandleInput()
             self:DespawnLastObject()
         end
 
-        if input.KeyCode == Enum.KeyCode.T then
-            self:SelectPartForWiringUnderMouse()
+        if input.KeyCode == Enum.KeyCode.U then
+            self:SetFollowing(not self.IsFollowing)
         end
 
-        if input.KeyCode == Enum.KeyCode.U then
-            if not self:GetPartUnderMouse() or self.FollowingPart ~= nil then
-                self:StopFollowingPart()
-                return
-            end
-
-            self:FollowPartUnderMouse()
+        if input.KeyCode == Enum.KeyCode.Delete then
+            self:DespawnSelectedObjects()
         end
     end)
 
@@ -161,11 +162,10 @@ function Objects:HandleInput()
 
         if input.KeyCode == Enum.KeyCode.T then
             self:PlayerWireParts()
-            self:DeselectPartForWiring()
         end
 
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            self:StopDraggingPart()
+            self:SetDragging(false)
         end
     end)
 end
@@ -181,75 +181,31 @@ end
     Rotates the currently-dragged part. -1 = left
 ]]
 function Objects:RotateDraggedPart(direction: number)
-    if not self.DraggingPart then
-        return
+    for _, part in pairs(self.SelectedObjectParts) do
+        part:SetRotationForce(direction)
     end
-
-    self.DraggingPart:SetRotationForce(direction)
 end
 
 --[[
     Drags the part under the mouse.
 ]]
-function Objects:DragPartUnderMouse()
-    if self.DraggingPart then
-        self:StopDraggingPart()
+function Objects:SetDragging(drag: boolean)
+    self.IsDragging = drag and self:IsAnyObjectPartSelected()
+
+    for _, part in pairs(self.SelectedObjectParts) do
+        if self.IsDragging then
+            part:Drag()
+        else
+            part:StopDragging()
+        end
     end
-
-    local part = self:GetPartUnderMouse()
-
-    if not part then
-        Rage.Logging:Warn("Objects:DragPartUnderMouse(): Attempted to drag part under mouse, but no part was found.")
-        return
-    end
-
-    if not part.Settings.IsDraggable then
-        Rage.Logging:Warn("Objects:DragPartUnderMouse(): Attempted to drag part "..part.Part:GetFullName()..", but it is not draggable.")
-        return
-    end
-
-    part:Drag()
-    self.DraggingPart = part
-
-    Rage.Logging:Info("Objects:DragPartUnderMouse(): Started dragging part "..part.Part:GetFullName())
-end
-
-function Objects:StopDraggingPart()
-    if not self.DraggingPart then
-        Rage.Logging:Warn("Objects:StopDraggingPart(): Attempted to stop dragging part, but no part is being dragged.")
-        return
-    end
-
-    self.DraggingPart:StopDragging()
-    self.DraggingPart = nil
-
-    Rage.Logging:Info("Objects:StopDraggingPart(): Stopped dragging part.")
 end
 
 --[[
-    Makes the camera follow the part under the mouse.
+    Toggles object part following.
 ]]
-function Objects:FollowPartUnderMouse()
-    local part = self:GetPartUnderMouse()
-
-    if not part then
-        Rage.Logging:Warn("Objects:FollowPartUnderMouse(): Attempted to follow part under mouse, but no part was found.")
-        return
-    end
-
-    self.FollowingPart = part
-end
-
---[[
-    Stops following the part under the mouse.
-]]
-function Objects:StopFollowingPart()
-    if not self.FollowingPart then
-        Rage.Logging:Warn("Objects:StopFollowingPart(): Attempted to stop following part, but no part is being followed.")
-        return
-    end
-
-    self.FollowingPart = nil
+function Objects:SetFollowing(follow: boolean)
+    self.IsFollowing = follow and self:IsAnyObjectPartSelected()
 end
 
 --[[
@@ -349,36 +305,6 @@ function Objects:RegisterBehaviour(name: string, behaviourClass: ObjectTypes.Obj
 end
 
 --[[
-    Selects the part under the mouse to be wired up to.
-]]
-function Objects:SelectPartForWiringUnderMouse()
-    local part = self:GetPartUnderMouse()
-
-    if not part then
-        Rage.Logging:Warn("Objects:SelectPartForWiringUnderMouse(): Attempted to select part for wiring under mouse, but no part was found.")
-        return
-    end
-
-    self:SelectPartForWiring(part)
-end
-
---[[
-    Selects a part to be wired up to.
-]]
-function Objects:SelectPartForWiring(part: ObjectTypes.ObjectPart)
-    self.SelectedPartForWiring = part
-    Rage.Logging:Info("Objects:SelectPartForWiring(): Selected part "..part.Part:GetFullName())
-end
-
---[[
-    Deselects a part to be wired up to.
-]]
-function Objects:DeselectPartForWiring()
-    self.SelectedPartForWiring = nil
-    Rage.Logging:Info("Objects:DeselectPartForWiring(): Deselected part.")
-end
-
---[[
     Connects two parts together via wire (player-driven).
 ]]
 function Objects:PlayerWireParts()
@@ -396,10 +322,10 @@ function Objects:PlayerWireParts()
         return
     end
 
-    if not self.SelectedPartForWiring then
+    if not self:IsAnyObjectPartSelected() then
         Toasts:DisplayToast(
             "Objects",
-            "You need to select a part to connect from.",
+            "You need to select at least one part to connect the wire(s) from.",
             2
         )
 
@@ -418,7 +344,7 @@ function Objects:PlayerWireParts()
         return
     end
 
-    if part == self.SelectedPartForWiring then
+    if self:IsObjectPartSelected(part) then
         Toasts:DisplayToast(
             "Objects",
             "You cannot connect a part to itself.",
@@ -428,13 +354,32 @@ function Objects:PlayerWireParts()
         return
     end
 
-    self:ConnectWireToParts(self.SelectedWire, self.SelectedPartForWiring, part)
+    for _, selectedPart in pairs(self.SelectedObjectParts) do
+        self:ConnectWireToParts(self.SelectedWire, selectedPart, part)
+    end
 
     Toasts:DisplayToast(
         "Wires",
-        "Successfully connected the two parts together.",
+        "Successfully connected all selected parts to the part under your mouse.",
         2
     )
+end
+
+--[[
+    Connects a wire to two object parts.
+]]
+function Objects:ConnectWireToParts(wire: ObjectTypes.Wire, partA: ObjectTypes.ObjectPart, partB: ObjectTypes.ObjectPart)
+    if partA == partB then
+        Rage.Logging:Warn("Objects:ConnectWireToParts(): Attempted to connect wire to same part twice.")
+        return
+    end
+
+    local spawnedWire = wire.WireClass.New()
+    spawnedWire:Setup(partA, partB)
+
+    table.insert(self.SpawnedWires, spawnedWire)
+
+    Rage.Logging:Info("Objects:ConnectWireToParts(): Connected wire "..wire.Name.." to parts "..partA.Part:GetFullName().." and "..partB.Part:GetFullName())
 end
 
 --[[
@@ -463,23 +408,6 @@ end
 ]]
 function Objects:GetWire(name: string): ObjectTypes.Wire?
     return self.ExistingWires[name]
-end
-
---[[
-    Connects a wire to two object parts.
-]]
-function Objects:ConnectWireToParts(wire: ObjectTypes.Wire, partA: ObjectTypes.ObjectPart, partB: ObjectTypes.ObjectPart)
-    if partA == partB then
-        Rage.Logging:Warn("Objects:ConnectWireToParts(): Attempted to connect wire to same part twice.")
-        return
-    end
-
-    local spawnedWire = wire.WireClass.New()
-    spawnedWire:Setup(partA, partB)
-
-    table.insert(self.SpawnedWires, spawnedWire)
-
-    Rage.Logging:Info("Objects:ConnectWireToParts(): Connected wire "..wire.Name.." to parts "..partA.Part:GetFullName().." and "..partB.Part:GetFullName())
 end
 
 --[[
@@ -513,13 +441,11 @@ function Objects:RemoveWiresFromPart(part: BasePart)
         return
     end
 
-    for index = #self.SpawnedWires, 1, -1 do
-        local wire = self.SpawnedWires[index]
-
+    Rage.Libs.Table:IterateReverse(self.SpawnedWires, function(_, wire)
         if wire:IsConnectedToPart(part) then
             self:RemoveWire(wire)
         end
-    end
+    end)
 end
 
 --[[
@@ -533,33 +459,6 @@ function Objects:SelectObject(object: ObjectTypes.Object)
     Toasts:DisplayToast(
         "Objects",
         "You have selected "..object.Name..".",
-        2
-    )
-end
-
---[[
-    Despawns the most recent spawned object.
-]]
-function Objects:DespawnLastObject()
-    local recent = Rage.Libs.Table:GetLast(self.SpawnedObjectHistory) :: ObjectTypes.SpawnedObject
-
-    if not recent then
-        Rage.Logging:Warn("Objects:DespawnLastObject(): No recent spawned object to despawn.")
-
-        Toasts:DisplayToast(
-            "Objects",
-            "No object to undo.",
-            2
-        )
-
-        return
-    end
-
-    self:DespawnObject(recent)
-
-    Toasts:DisplayToast(
-        "Objects",
-        "Successfully despawned last object.",
         2
     )
 end
@@ -648,18 +547,17 @@ end
 ]]
 function Objects:DespawnObject(spawnedObject: ObjectTypes.SpawnedObject)
     if not self.SpawnedObjects[spawnedObject.ID] then
-        Rage.Logging:Error("Objects:DespawnObject(): Spawned object with ID "..spawnedObject.ID.." does not exist.")
-    end
-
-    if self.DraggingPart and spawnedObject:HasPart(self.DraggingPart) then
-        self:StopDraggingPart()
-    end
-
-    if self.FollowingPart and spawnedObject:HasPart(self.FollowingPart) then
-        self:StopFollowingPart()
+        Rage.Logging:Warn([[Objects:DespawnObject(): Attempted to despawn an object that doesn't exist. This can be ignored as this probably
+        occurred from the player selecting multiple object parts belonging to the same spawned object, and deleting the parent spawned object
+        for each of them.]])
+        return
     end
 
     for _, part in pairs(spawnedObject.Parts) do
+        if self:IsObjectPartSelected(part) then
+            self:DeselectObjectPart(part)
+        end
+
         self:RemoveWiresFromPart(part)
     end
 
@@ -703,6 +601,128 @@ function Objects:DespawnAllObjects()
 end
 
 --[[
+    Despawns the most recent spawned object.
+]]
+function Objects:DespawnLastObject()
+    local recent = Rage.Libs.Table:GetLast(self.SpawnedObjectHistory) :: ObjectTypes.SpawnedObject
+
+    if not recent then
+        Rage.Logging:Warn("Objects:DespawnLastObject(): No recent spawned object to despawn.")
+
+        Toasts:DisplayToast(
+            "Objects",
+            "No object to undo.",
+            2
+        )
+
+        return
+    end
+
+    self:DespawnObject(recent)
+
+    Toasts:DisplayToast(
+        "Objects",
+        "Successfully despawned last object.",
+        2
+    )
+end
+
+--[[
+    Despawns the selected objects.
+]]
+function Objects:DespawnSelectedObjects()
+    Rage.Libs.Table:IterateReverse(self.SelectedObjectParts, function(_, selectedPart: ObjectTypes.ObjectPart)
+        self:DespawnObject(selectedPart.SpawnedObject)
+    end)
+end
+
+--[[
+    Selects the provided object part.
+]]
+function Objects:SelectObjectPart(objectPart: ObjectTypes.ObjectPart, overwrite: boolean)
+    if self:IsObjectPartSelected(objectPart) then
+        Rage.Logging:Warn("Objects:SelectObjectPart(): Attempted to select an object part that was already selected.")
+        return
+    end
+
+    if overwrite then
+        self:DeselectObjectParts()
+        self.SelectedObjectParts = {objectPart}
+    else
+        table.insert(self.SelectedObjectParts, objectPart)
+    end
+
+    objectPart:Select()
+
+    Rage.Logging:Info("Objects:SelectObjectPart(): Selected object part.")
+end
+
+--[[
+    Selects the object part under the mouse.
+]]
+function Objects:SelectObjectPartUnderMouse(overwrite: boolean)
+    local objectPart = self:GetPartUnderMouse()
+
+    if not objectPart then
+        Rage.Logging:Warn("Objects:SelectObjectPartUnderMouse(): No object part under mouse. Deselecting all (QOL).")
+
+        self:DeselectObjectParts()
+        return
+    end
+
+    if self:IsObjectPartSelected(objectPart) then
+        Rage.Logging:Warn("Objects:SelectObjectPartUnderMouse(): Attempted to select an object part that was already selected. Deselecting as a QOL (if not overwrite, otherwise ignoring).")
+
+        if not overwrite then
+            self:DeselectObjectPart(objectPart)
+        end
+
+        return
+    end
+
+    self:SelectObjectPart(objectPart, overwrite)
+end
+
+--[[
+    Deselects all selected object parts.
+]]
+function Objects:DeselectObjectParts()
+    Rage.Libs.Table:IterateReverse(self.SelectedObjectParts, function(_, objectPart: ObjectTypes.ObjectPart)
+        self:DeselectObjectPart(objectPart)
+    end)
+end
+
+--[[
+    Deselects a selected object part.
+]]
+function Objects:DeselectObjectPart(objectPart: ObjectTypes.ObjectPart)
+    if not self:IsObjectPartSelected(objectPart) then
+        Rage.Logging:Warn("Objects:DeselectObjectPart(): Attempted to deselect an object part that was not selected.")
+        return
+    end
+
+    objectPart:StopDragging() -- fixme: hacky. find a better way idiot
+    objectPart:Deselect()
+    Rage.Libs.Table:Remove(self.SelectedObjectParts, objectPart)
+
+    Rage.Logging:Info("Objects:DeselectObjectPart(): Deselected object part.")
+end
+
+--[[
+    Returns if an object part is selected.
+]]
+function Objects:IsObjectPartSelected(objectPart: ObjectTypes.ObjectPart): boolean
+    return Rage.Libs.Table:Find(self.SelectedObjectParts, objectPart) ~= nil
+end
+
+--[[
+    Returns if any object part is selected.
+]]
+function Objects:IsAnyObjectPartSelected(): boolean
+    return #self.SelectedObjectParts > 0
+end
+
+--[[
     Loads all objects from the OBJECT_FOLDER.
 ]]
 function Objects:LoadObjects()
@@ -732,6 +752,13 @@ function Objects:LoadObjects()
 
         Rage.Logging:Info("Objects:LoadObjects(): Loaded object: "..object.Name)
     end
+end
+
+--[[
+    Updates object part selection.
+]]
+function Objects:UpdateSelection()
+    self:SelectObjectPartUnderMouse()
 end
 
 --[[
@@ -772,8 +799,16 @@ end
     Updates the camera.
 ]]
 function Objects:UpdateCamera()
-    if self.FollowingPart then
-        Camera.Position = self.FollowingPart:GetPosition()
+    if self.IsFollowing and self:IsAnyObjectPartSelected() then
+        local average = Vector2.new(0, 0)
+
+        for _, objectPart: ObjectTypes.ObjectPart in pairs(self.SelectedObjectParts) do
+            average = average + objectPart:GetPosition()
+        end
+
+        average = average / #self.SelectedObjectParts
+
+        Camera.Position = average
     end
 end
 

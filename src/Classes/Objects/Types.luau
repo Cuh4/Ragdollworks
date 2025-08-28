@@ -79,15 +79,21 @@ export type SpawnedObject = {
 }
 
 export type ObjectPart = {
+    SELECTION_HIGHLIGHT_COLOR: Color3,
+    SELECTION_HIGHLIGHT_TRANSPARENCY: number,
+    DRAGGING_RESPONSIVENESS: number,
+
     Part: BasePart,
     SpawnedObject: SpawnedObject,
     Settings: ObjectPartSettings,
     Activated: boolean,
     Dragging: boolean,
     Frozen: boolean,
+    Selected: boolean,
     AlignPositionInstance: AlignPosition,
     AngularVelocityInstance: AngularVelocity,
     AttachmentInstance: Attachment,
+    HighlightInstance: Highlight,
     RotationForce: number,
     Layer: number,
 
@@ -100,6 +106,7 @@ export type ObjectPart = {
     FromPart: (part: BasePart, spawnedObject: SpawnedObject) -> ObjectPart,
 
     Setup: (self: ObjectPart) -> nil,
+    SetupSelection: (self: ObjectPart) -> nil,
     SetupDragging: (self: ObjectPart) -> nil,
     Update: (self: ObjectPart, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
     KeepWithinBounds: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
@@ -108,6 +115,10 @@ export type ObjectPart = {
     SetRotationForce: (self: ObjectPart, force: number) -> nil,
     Drag: (self: ObjectPart) -> nil,
     StopDragging: (self: ObjectPart) -> nil,
+    Freeze: (self: ObjectPart) -> nil,
+    Unfreeze: (self: ObjectPart) -> nil,
+    Select: (self: ObjectPart) -> nil,
+    Deselect: (self: ObjectPart) -> nil,
     GetPosition: (self: ObjectPart) -> Vector2,
     GetPosition3D: (self: ObjectPart) -> Vector3,
     GetVelocity: (self: ObjectPart) -> Vector2,

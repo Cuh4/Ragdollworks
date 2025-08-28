@@ -39,14 +39,20 @@ ObjectPart.__index = ObjectPart
 ]]
 function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject, layer: number, settings: ObjectTypes.ObjectPartSettings): ObjectTypes.ObjectPart
     local self = setmetatable({}, ObjectPart) :: ObjectTypes.ObjectPart
+    self.SELECTION_HIGHLIGHT_COLOR = Color3.new(0, 255, 0)
+    self.SELECTION_HIGHLIGHT_TRANSPARENCY = 0.8
+    self.DRAGGING_RESPONSIVENESS = 15
+
     self.Part = part
     self.SpawnedObject = spawnedObject
     self.Settings = settings
     self.Dragging = false
     self.Frozen = false
+    self.Selected = false
     self.AlignPositionInstance = nil :: AlignPosition
     self.AngularVelocityInstance = nil :: AngularVelocity
     self.AttachmentInstance = nil :: Attachment
+    self.HighlightInstance = nil :: Highlight
     self.RotationForce = 0
     self.Layer = layer
 
@@ -77,7 +83,21 @@ end
     Setups the part.
 ]]
 function ObjectPart:Setup()
+    self:SetupSelection()
     self:SetupDragging()
+end
+
+--[[
+    Adds selection instances to the part (highlights, etc).
+]]
+function ObjectPart:SetupSelection()
+    self.HighlightInstance = Instance.new("Highlight")
+    self.HighlightInstance.Name = "SelectionHighlight"
+    self.HighlightInstance.FillTransparency = 1
+    self.HighlightInstance.OutlineColor = self.SELECTION_HIGHLIGHT_COLOR
+    self.HighlightInstance.OutlineTransparency = self.SELECTION_HIGHLIGHT_TRANSPARENCY
+    self.HighlightInstance.Enabled = false
+    self.HighlightInstance.Parent = self.Part
 end
 
 --[[
@@ -93,7 +113,7 @@ function ObjectPart:SetupDragging()
     self.AlignPositionInstance.Mode = Enum.PositionAlignmentMode.OneAttachment
     self.AlignPositionInstance.Attachment0 = self.AttachmentInstance
     self.AlignPositionInstance.MaxForce = math.huge
-    self.AlignPositionInstance.Responsiveness = 50
+    self.AlignPositionInstance.Responsiveness = self.DRAGGING_RESPONSIVENESS
     self.AlignPositionInstance.ApplyAtCenterOfMass = true
     self.AlignPositionInstance.Enabled = false
     self.AlignPositionInstance.Parent = self.Part
@@ -118,6 +138,8 @@ function ObjectPart:Update(startBound: Vector2, endBound: Vector2, dragPosition:
 
     self.AlignPositionInstance.Position = Vector3.new(dragPosition.X, dragPosition.Y, 0)
     self.AlignPositionInstance.Enabled = self.Dragging
+
+    self.HighlightInstance.Enabled = self.Selected
 
     self:Lock()
     self:KeepWithinBounds(startBound, endBound)
@@ -200,6 +222,34 @@ function ObjectPart:StopDragging()
     self.Dragging = false
     self:SetRotationForce(0)
     self.OnDragEnd:Fire()
+end
+
+--[[
+    Freezes the part.
+]]
+function ObjectPart:Freeze()
+    self.Frozen = true
+end
+
+--[[
+    Unfreezes the part.
+]]
+function ObjectPart:Unfreeze()
+    self.Frozen = false
+end
+
+--[[
+    Selects the part.
+]]
+function ObjectPart:Select()
+    self.Selected = true
+end
+
+--[[
+    Deselects the part.
+]]
+function ObjectPart:Deselect()
+    self.Selected = false
 end
 
 --[[
