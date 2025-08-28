@@ -60,6 +60,7 @@ Objects.SpawnedObjectCount = 0
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
 Objects.SpawnedObjectHistory = {} :: {ObjectTypes.SpawnedObject}
 Objects.SelectedObjectParts = {} :: {ObjectTypes.ObjectPart}
+Objects.HighlightedPart = nil :: ObjectTypes.ObjectPart
 
 Objects.IsFollowing = false
 
@@ -114,6 +115,14 @@ function Objects:HandleInputTick()
         self.RotationSpeed = self.RotationSpeed + self.ROTATION_SPEED_INCREMENT
     else
         self.RotationSpeed = self.DEFAULT_ROTATION_SPEED
+    end
+
+    local part = self:GetPartUnderMouse()
+
+    if part then
+        self:HighlightPart(part)
+    else
+        self:UnhighlightPart()
     end
 end
 
@@ -236,6 +245,45 @@ end
 ]]
 function Objects:SetFollowing(follow: boolean)
     self.IsFollowing = follow and self:IsAnyObjectPartSelected()
+end
+
+--[[
+    Highlights the provided part.
+]]
+function Objects:HighlightPart(part: ObjectTypes.ObjectPart)
+    if self.HighlightedPart == part then
+        return
+    end
+
+    if self.HighlightedPart and self.HighlightedPart ~= part then
+        self:UnhighlightPart()
+    end
+
+    self.HighlightedPart = part
+    part:Highlight()
+
+    Rage.Logging:Info("Objects:HighlightPart(): Highlighted part.")
+end
+
+--[[
+    Unhighlights the currently-highlighted part.
+]]
+function Objects:UnhighlightPart()
+    if not self.HighlightedPart then
+        return
+    end
+
+    self.HighlightedPart:Unhighlight()
+    self.HighlightedPart = nil
+
+    Rage.Logging:Info("Objects:UnhighlightPart(): Unhighlighted part.")
+end
+
+--[[
+    Returns if the provided part is highlighted.
+]]
+function Objects:IsPartHighlighted(part: ObjectTypes.ObjectPart): boolean
+    return self.HighlightedPart == part
 end
 
 --[[
@@ -586,6 +634,10 @@ function Objects:DespawnObject(spawnedObject: ObjectTypes.SpawnedObject)
     for _, part in pairs(spawnedObject.Parts) do
         if self:IsObjectPartSelected(part) then
             self:DeselectObjectPart(part)
+        end
+
+        if self:IsPartHighlighted(part) then
+            self:UnhighlightPart()
         end
 
         self:RemoveWiresFromPart(part)

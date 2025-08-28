@@ -39,8 +39,10 @@ ObjectPart.__index = ObjectPart
 ]]
 function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject, layer: number, settings: ObjectTypes.ObjectPartSettings): ObjectTypes.ObjectPart
     local self = setmetatable({}, ObjectPart) :: ObjectTypes.ObjectPart
-    self.SELECTION_HIGHLIGHT_COLOR = Color3.new(0, 255, 0)
-    self.SELECTION_HIGHLIGHT_TRANSPARENCY = 0.8
+    self.SELECTION_HIGHLIGHT_COLOR = Color3.fromRGB(0, 255, 0)
+    self.HIGHLIGHT_HIGHLIGHT_COLOR = Color3.fromRGB(25, 200, 25) -- astronomically beautiful naming here
+    self.SELECTION_HIGHLIGHT_TRANSPARENCY = 0.3
+    self.HIGHLIGHT_HIGHLIGHT_TRANSPARENCY = 0.5
     self.DRAGGING_RESPONSIVENESS = 15
 
     self.Part = part
@@ -49,6 +51,7 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.Dragging = false
     self.Frozen = false
     self.Selected = false
+    self.Highlighted = false
     self.AlignPositionInstance = nil :: AlignPosition
     self.AngularVelocityInstance = nil :: AngularVelocity
     self.AttachmentInstance = nil :: Attachment
@@ -94,8 +97,6 @@ function ObjectPart:SetupSelection()
     self.HighlightInstance = Instance.new("Highlight")
     self.HighlightInstance.Name = "SelectionHighlight"
     self.HighlightInstance.FillTransparency = 1
-    self.HighlightInstance.OutlineColor = self.SELECTION_HIGHLIGHT_COLOR
-    self.HighlightInstance.OutlineTransparency = self.SELECTION_HIGHLIGHT_TRANSPARENCY
     self.HighlightInstance.Enabled = false
     self.HighlightInstance.Parent = self.Part
 end
@@ -127,22 +128,50 @@ function ObjectPart:SetupDragging()
     self.AngularVelocityInstance.Parent = self.Part
 end
 
---[[
-    Updates the part.
-]]
-function ObjectPart:Update(startBound: Vector2, endBound: Vector2, dragPosition: Vector2)
-    self.Part.Anchored = self.Frozen
 
+--[[
+    Updates dragging.
+]]
+function ObjectPart:UpdateDragging(dragPosition: Vector2)
     self.AngularVelocityInstance.AngularVelocity = Vector3.new(0, 0, self.RotationForce)
     self.AngularVelocityInstance.Enabled = self.Dragging
 
     self.AlignPositionInstance.Position = Vector3.new(dragPosition.X, dragPosition.Y, 0)
     self.AlignPositionInstance.Enabled = self.Dragging
+end
 
-    self.HighlightInstance.Enabled = self.Selected
+--[[
+    Updates selection/highlight.
+]]
+function ObjectPart:UpdateSelection()
+    if self.Selected then
+        self.HighlightInstance.OutlineColor = self.SELECTION_HIGHLIGHT_COLOR
+        self.HighlightInstance.OutlineTransparency = self.SELECTION_HIGHLIGHT_TRANSPARENCY
+    elseif self.Highlighted then
+        self.HighlightInstance.OutlineColor = self.HIGHLIGHT_HIGHLIGHT_COLOR
+        self.HighlightInstance.OutlineTransparency = self.HIGHLIGHT_HIGHLIGHT_TRANSPARENCY
+    end
+
+    self.HighlightInstance.Enabled = self.Selected or self.Highlighted
+end
+
+--[[
+    Updates physics.
+]]
+function ObjectPart:UpdatePhysics(startBound: Vector2, endBound: Vector2)
+    self.Part.Anchored = self.Frozen
 
     self:Lock()
     self:KeepWithinBounds(startBound, endBound)
+end
+
+--[[
+    Updates the part.
+]]
+function ObjectPart:Update(startBound: Vector2, endBound: Vector2, dragPosition: Vector2)
+    self:UpdateDragging(dragPosition)
+    self:UpdateSelection()
+    self:UpdatePhysics(startBound, endBound)
 end
 
 --[[
@@ -250,6 +279,20 @@ end
 ]]
 function ObjectPart:Deselect()
     self.Selected = false
+end
+
+--[[
+    Highlights the part.
+]]
+function ObjectPart:Highlight()
+    self.Highlighted = true
+end
+
+--[[
+    Unhighlights the part.
+]]
+function ObjectPart:Unhighlight()
+    self.Highlighted = false
 end
 
 --[[

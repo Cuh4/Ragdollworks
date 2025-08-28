@@ -80,7 +80,9 @@ export type SpawnedObject = {
 
 export type ObjectPart = {
     SELECTION_HIGHLIGHT_COLOR: Color3,
+    HIGHLIGHT_HIGHLIGHT_COLOR: Color3,
     SELECTION_HIGHLIGHT_TRANSPARENCY: number,
+    HIGHLIGHT_HIGHLIGHT_TRANSPARENCY: number,
     DRAGGING_RESPONSIVENESS: number,
 
     Part: BasePart,
@@ -90,6 +92,7 @@ export type ObjectPart = {
     Dragging: boolean,
     Frozen: boolean,
     Selected: boolean,
+    Highlighted: boolean,
     AlignPositionInstance: AlignPosition,
     AngularVelocityInstance: AngularVelocity,
     AttachmentInstance: Attachment,
@@ -108,6 +111,9 @@ export type ObjectPart = {
     Setup: (self: ObjectPart) -> nil,
     SetupSelection: (self: ObjectPart) -> nil,
     SetupDragging: (self: ObjectPart) -> nil,
+    UpdateDragging: (self: ObjectPart, dragPosition: Vector2) -> nil,
+    UpdateSelection: (self: ObjectPart) -> nil,
+    UpdatePhysics: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
     Update: (self: ObjectPart, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
     KeepWithinBounds: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
     Lock: (self: ObjectPart) -> nil,
@@ -119,6 +125,8 @@ export type ObjectPart = {
     Unfreeze: (self: ObjectPart) -> nil,
     Select: (self: ObjectPart) -> nil,
     Deselect: (self: ObjectPart) -> nil,
+    Highlight: (self: ObjectPart) -> nil,
+    Unhighlight: (self: ObjectPart) -> nil,
     GetPosition: (self: ObjectPart) -> Vector2,
     GetPosition3D: (self: ObjectPart) -> Vector3,
     GetVelocity: (self: ObjectPart) -> Vector2,
