@@ -22,7 +22,7 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local signal = require(Rage.WallyPackages.signal)
 
-local types = require(script.Parent.Types)
+local ObjectTypes = require(script.Parent.Types)
 
 -------------------------------
 -- // Main
@@ -31,14 +31,14 @@ local types = require(script.Parent.Types)
 --[[
     A class representing a part of a spawned object.
 ]]
-ObjectPart = {} :: types.ObjectPart
+ObjectPart = {} :: ObjectTypes.ObjectPart
 ObjectPart.__index = ObjectPart
 
 --[[
     Creates a new ObjectPart class instance.
 ]]
-function ObjectPart.New(part: BasePart, spawnedObject: types.SpawnedObject, layer: number, settings: types.ObjectPartSettings): types.ObjectPart
-    local self = setmetatable({}, ObjectPart) :: types.ObjectPart
+function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject, layer: number, settings: ObjectTypes.ObjectPartSettings): ObjectTypes.ObjectPart
+    local self = setmetatable({}, ObjectPart) :: ObjectTypes.ObjectPart
     self.Part = part
     self.SpawnedObject = spawnedObject
     self.Settings = settings
@@ -61,7 +61,7 @@ end
 --[[
     Creates a new ObjectPart class instance from a part within a spawned object.
 ]]
-function ObjectPart.FromPart(part: BasePart, spawnedObject: types.SpawnedObject): types.ObjectPart
+function ObjectPart.FromPart(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject): ObjectTypes.ObjectPart
     return ObjectPart.New(
         part,
         spawnedObject,
@@ -84,14 +84,14 @@ end
     Adds dragging capabilities to the part (constraints, etc).
 ]]
 function ObjectPart:SetupDragging()
-    self.Attachment = Instance.new("Attachment")
-    self.Attachment.Name = "DragAttachment"
-    self.Attachment.Parent = self.Part
+    self.AttachmentInstance = Instance.new("Attachment")
+    self.AttachmentInstance.Name = "DragAttachment"
+    self.AttachmentInstance.Parent = self.Part
 
     self.AlignPositionInstance = Instance.new("AlignPosition")
     self.AlignPositionInstance.Name = "DragAlignPosition"
     self.AlignPositionInstance.Mode = Enum.PositionAlignmentMode.OneAttachment
-    self.AlignPositionInstance.Attachment0 = self.Attachment
+    self.AlignPositionInstance.Attachment0 = self.AttachmentInstance
     self.AlignPositionInstance.MaxForce = math.huge
     self.AlignPositionInstance.Responsiveness = 50
     self.AlignPositionInstance.ApplyAtCenterOfMass = true
@@ -100,7 +100,7 @@ function ObjectPart:SetupDragging()
 
     self.AngularVelocityInstance = Instance.new("AngularVelocity")
     self.AngularVelocityInstance.Name = "DragAngularVelocity"
-    self.AngularVelocityInstance.Attachment0 = self.Attachment
+    self.AngularVelocityInstance.Attachment0 = self.AttachmentInstance
     self.AngularVelocityInstance.MaxTorque = math.huge
     self.AngularVelocityInstance.AngularVelocity = Vector3.new(0, 0, 0)
     self.AngularVelocityInstance.Enabled = false
