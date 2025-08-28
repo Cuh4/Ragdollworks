@@ -72,5 +72,29 @@ function Table:Merge(tbl1: table, tbl2: table)
     return tbl
 end
 
+--[[
+    Finds a value in a sequential table and returns the index, or nil if not found.
+]]
+function Table:Find(tbl: table, value: any): number?
+    for index, _value in pairs(tbl) do
+        if _value == value then
+            return index
+        end
+    end
+end
+
+--[[
+    Removes a value from a sequential table.
+]]
+function Table:Remove(tbl: table, value: any)
+    local index = self:Find(tbl, value)
+
+    if not index then
+        return
+    end
+
+    table.remove(tbl, index)
+end
+
 export type Table = typeof(Table)
 return Table
