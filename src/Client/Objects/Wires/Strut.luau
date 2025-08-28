@@ -68,7 +68,7 @@ function Strut:OnConnect()
     self.VisualBeam.Attachment1 = self.ObjectPartB.AttachmentInstance
     self.VisualBeam.Transparency = NumberSequence.new(0)
     self.VisualBeam.TextureSpeed = 0
-    self.VisualBeam.Color = ColorSequence.new(Color3.new(25, 25, 25))
+    self.VisualBeam.Color = ColorSequence.new(Color3.fromRGB(25, 25, 25))
     self.VisualBeam.FaceCamera = true
     self.VisualBeam.Segments = 1
     self.VisualBeam.Width0 = 0.5
