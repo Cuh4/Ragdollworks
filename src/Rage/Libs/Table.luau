@@ -96,5 +96,22 @@ function Table:Remove(tbl: table, value: any)
     table.remove(tbl, index)
 end
 
+--[[
+    Reverse version of ipairs.
+]]
+function Table:IterateReverse(tbl: table, callback: (index: number, value: any) -> nil)
+    if #tbl <= 0 then
+        return
+    end
+
+    for index = #tbl, 1, -1 do
+        local value = tbl[index]
+
+        if value then
+            callback(index, tbl[index])
+        end
+    end
+end
+
 export type Table = typeof(Table)
 return Table
