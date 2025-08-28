@@ -1,0 +1,99 @@
+--------------------------------------------------------
+-- [Ragdollworks] Spawned Wire
+--------------------------------------------------------
+
+--[[
+    ----------------------------
+
+    Copyright (C) 2025 Cuh4 - All Rights Reserved
+        - Unauthorized copying of this file, via any medium is strictly prohibited
+        - Proprietary and confidential
+
+    CREDIT:
+        Author(s): @Cuh4 (GitHub)
+
+    ----------------------------
+]]
+
+-------------------------------
+-- // Variables
+-------------------------------
+
+local Rage = require(game:GetService("ReplicatedStorage").Rage)
+
+local ObjectTypes = require(script.Parent.Types)
+
+-------------------------------
+-- // Main
+-------------------------------
+
+--[[
+    A class representing a wire responsible for connecting two object parts together.
+]]
+SpawnedWire = {} :: ObjectTypes.SpawnedWire
+SpawnedWire.__index = SpawnedWire
+
+--[[
+    Creates a new wire class instance.
+]]
+function SpawnedWire.New(): ObjectTypes.SpawnedWire
+    local self = setmetatable({}, SpawnedWire) :: ObjectTypes.SpawnedWire
+    self.ObjectPartA = nil
+    self.ObjectPartB = nil
+
+    return self
+end
+
+--[[
+    Setups the wire.
+]]
+function SpawnedWire:Setup(objectPartA: ObjectTypes.ObjectPart, objectPartB: ObjectTypes.ObjectPart)
+    self.ObjectPartA = objectPartA
+    self.ObjectPartB = objectPartB
+
+    self:OnConnect()
+end
+
+--[[
+    Removes this wire.
+]]
+function SpawnedWire:Remove()
+    self:OnCleanup()
+end
+
+--[[
+    Returns if this wire is connected to the provided part.
+]]
+function SpawnedWire:IsConnectedToPart(part: ObjectTypes.ObjectPart): boolean
+    return self.ObjectPartA == part or self.ObjectPartB == part
+end
+
+--[[
+    Updates this wire.
+]]
+function SpawnedWire:Update()
+    self:OnUpdate()
+end
+
+--[[
+    Called when the wire needs to be updated.
+]]
+function SpawnedWire:OnUpdate()
+    Rage.Logging:Error(self.Name..": :OnUpdate() not implemented!")
+end
+
+--[[
+    Called when two object parts need to be connected together with this wire.
+]]
+function SpawnedWire:OnConnect()
+    Rage.Logging:Error(self.Name..": :OnConnect() not implemented!")
+end
+
+--[[
+    Called when the wire needs to be cleaned up.
+]]
+function SpawnedWire:OnCleanup()
+    Rage.Logging:Error(self.Name..": :OnCleanup() not implemented!")
+end
+
+return SpawnedWire

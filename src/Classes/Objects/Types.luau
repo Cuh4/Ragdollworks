@@ -59,6 +59,7 @@ export type SpawnedObject = {
     Instance: Model,
     Parts: {[BasePart]: ObjectPart},
     Behaviours: {ObjectBehaviour},
+    IsDespawning: boolean,
 
     _RemovalRequested: signal.Signal,
 
@@ -72,6 +73,7 @@ export type SpawnedObject = {
     FindParts: (self: SpawnedObject) -> {[BasePart]: ObjectPart},
     GetPart: (self: SpawnedObject, part: BasePart) -> ObjectPart?,
     RemovePart: (self: SpawnedObject, part: BasePart) -> nil,
+    HasPart: (self: SpawnedObject, part: ObjectPart) -> boolean,
     Despawn: (self: SpawnedObject) -> nil,
     Remove: (self: SpawnedObject) -> nil
 }
@@ -110,7 +112,7 @@ export type ObjectPart = {
     GetPosition3D: (self: ObjectPart) -> Vector3,
     GetVelocity: (self: ObjectPart) -> Vector2,
     GetVelocity3D: (self: ObjectPart) -> Vector3,
-    Despawn: (self: ObjectPart) -> nil
+    Despawn: (self: ObjectPart) -> nil,
 }
 
 export type ObjectPartSettings = {
@@ -126,6 +128,29 @@ export type ObjectBehaviour = {
     OnPreDespawn: (self: ObjectBehaviour) -> nil,
     OnActivate: (self: ObjectBehaviour, objectPart: ObjectPart) -> nil,
     OnUpdate: (self: ObjectBehaviour) -> nil
+}
+
+export type Wire = {
+    Name: string,
+    Description: string,
+    WireClass: SpawnedWire,
+    IconAssetID: string
+}
+
+export type SpawnedWire = {
+    ObjectPartA: ObjectPart,
+    ObjectPartB: ObjectPart,
+
+    New: () -> SpawnedWire,
+
+    Setup: (self: SpawnedWire, objectPartA: ObjectPart, objectPartB: ObjectPart) -> nil,
+    Remove: (self: SpawnedWire) -> nil,
+    IsConnectedToPart: (self: SpawnedWire, part: ObjectPart) -> boolean,
+    Update: (self: SpawnedWire) -> nil,
+
+    OnUpdate: (self: SpawnedWire) -> nil,
+    OnConnect: (self: SpawnedWire) -> nil,
+    OnCleanup: (self: SpawnedWire) -> nil
 }
 
 return {}

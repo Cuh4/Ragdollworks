@@ -51,26 +51,37 @@ Objects.ROTATION_SPEED_INCREMENT = 0.06
 Objects.DEFAULT_ROTATION_SPEED = 1
 
 Objects.RotationSpeed = 1
-Objects.ExistingObjects = {} :: {ObjectTypes.Object}
+
+Objects.ExistingObjects = {} :: {string: ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
+
 Objects.SpawnedObjectCount = 0
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
 Objects.SpawnedObjectHistory = {} :: {ObjectTypes.SpawnedObject}
 Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
+
 Objects.FollowingPart = nil :: ObjectTypes.ObjectPart
 Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
 Objects.DragPosition = Vector2.new(0, 0)
-Objects.SelectedObjectToSpawn = nil :: ObjectTypes.Object
+
+Objects.SelectedObject = nil :: ObjectTypes.Object
+
+Objects.ExistingWires = {} :: {string: ObjectTypes.Wire}
+Objects.SelectedWire = nil :: ObjectTypes.Wire
+Objects.SpawnedWires = {} :: {ObjectTypes.SpawnedWire}
+Objects.SelectedPartForWiring = nil :: ObjectTypes.ObjectPart
 
 Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
-Objects.OnSelect = signal.new() :: signal.Signal<ObjectTypes.Object>
+Objects.OnObjectSelect = signal.new() :: signal.Signal<ObjectTypes.Object>
+Objects.OnWireSelect = signal.new() :: signal.Signal<ObjectTypes.Wire>
 
 --[[
     Called when the service starts.
 ]]
 function Objects:OnStart()
     self:LoadBehaviours()
+    self:LoadWires()
     self:LoadObjects()
     self:HandleInput()
 
@@ -129,8 +140,12 @@ function Objects:HandleInput()
             self:DespawnLastObject()
         end
 
+        if input.KeyCode == Enum.KeyCode.T then
+            self:SelectPartForWiringUnderMouse()
+        end
+
         if input.KeyCode == Enum.KeyCode.U then
-            if not self:GetPartUnderMouse() then
+            if not self:GetPartUnderMouse() or self.FollowingPart ~= nil then
                 self:StopFollowingPart()
                 return
             end
@@ -142,6 +157,11 @@ function Objects:HandleInput()
     Rage.Input.InputEnded:Connect(function(input, gameProcessedEvent)
         if gameProcessedEvent then
             return
+        end
+
+        if input.KeyCode == Enum.KeyCode.T then
+            self:PlayerWireParts()
+            self:DeselectPartForWiring()
         end
 
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -305,11 +325,7 @@ end
     Gets an object by name.
 ]]
 function Objects:GetObject(name: string): ObjectTypes.Object?
-    for _, object in pairs(self.ExistingObjects) do
-        if object.Name == name then
-            return object
-        end
-    end
+    return self.ExistingObjects[name]
 end
 
 --[[
@@ -333,52 +349,186 @@ function Objects:RegisterBehaviour(name: string, behaviourClass: ObjectTypes.Obj
 end
 
 --[[
-    Spawns an object (player-driven).
+    Selects the part under the mouse to be wired up to.
 ]]
-function Objects:PlayerSpawnObject(position: Vector3?): ObjectTypes.SpawnedObject
+function Objects:SelectPartForWiringUnderMouse()
+    local part = self:GetPartUnderMouse()
+
+    if not part then
+        Rage.Logging:Warn("Objects:SelectPartForWiringUnderMouse(): Attempted to select part for wiring under mouse, but no part was found.")
+        return
+    end
+
+    self:SelectPartForWiring(part)
+end
+
+--[[
+    Selects a part to be wired up to.
+]]
+function Objects:SelectPartForWiring(part: ObjectTypes.ObjectPart)
+    self.SelectedPartForWiring = part
+    Rage.Logging:Info("Objects:SelectPartForWiring(): Selected part "..part.Part:GetFullName())
+end
+
+--[[
+    Deselects a part to be wired up to.
+]]
+function Objects:DeselectPartForWiring()
+    self.SelectedPartForWiring = nil
+    Rage.Logging:Info("Objects:DeselectPartForWiring(): Deselected part.")
+end
+
+--[[
+    Connects two parts together via wire (player-driven).
+]]
+function Objects:PlayerWireParts()
     if not Maps.IsInMap then
         return
     end
 
-    if not self.SelectedObjectToSpawn then
-        Rage.Logging:Warn("Objects:PlayerSpawnObject(): No object selected to spawn.")
-
+    if not self.SelectedWire then
         Toasts:DisplayToast(
             "Objects",
-            "You need to select an object to spawn.",
+            "You need to select a wire to connect parts with.",
             2
         )
 
         return
     end
 
-    if not self.SelectedObjectToSpawn:CanPlayerSpawn() then
-        Rage.Logging:Error("Objects:PlayerSpawnObject(): Object "..self.SelectedObjectToSpawn.Name.." cannot be spawned by the player.")
+    if not self.SelectedPartForWiring then
+        Toasts:DisplayToast(
+            "Objects",
+            "You need to select a part to connect from.",
+            2
+        )
+
+        return
     end
 
-    if not position then
-        position = Camera:CastRayToZ0()
-        Debug:CreateDebugPart(Vector3.new(position.X, position.Y, 0))
+    local part = self:GetPartUnderMouse()
+
+    if not part then
+        Toasts:DisplayToast(
+            "Objects",
+            "Hover your mouse over the part you want to connect a wire to and try again.",
+            2
+        )
+
+        return
     end
+
+    if part == self.SelectedPartForWiring then
+        Toasts:DisplayToast(
+            "Objects",
+            "You cannot connect a part to itself.",
+            2
+        )
+
+        return
+    end
+
+    self:ConnectWireToParts(self.SelectedWire, self.SelectedPartForWiring, part)
 
     Toasts:DisplayToast(
-        "Objects",
-        "You have spawned "..self.SelectedObjectToSpawn.Name..".",
+        "Wires",
+        "Successfully connected the two parts together.",
         2
     )
+end
 
-    Rage.Logging:Info("Objects:PlayerSpawnObject(): Player is spawning object "..self.SelectedObjectToSpawn.Name)
+--[[
+    Loads all wires.
+]]
+function Objects:LoadWires()
+    for _, wireModuleScript: ModuleScript in pairs(script.Wires:GetChildren()) do
+        local wire = require(wireModuleScript) :: ObjectTypes.Wire
+        print(wire)
+        self:RegisterWire(wire)
+    end
 
-    return self:SpawnObject(self.SelectedObjectToSpawn, position)
+    Rage.Logging:Info("Objects:LoadWires(): Loaded all wires.")
+end
+
+--[[
+    Registers a new wire.
+]]
+function Objects:RegisterWire(wire: ObjectTypes.Wire)
+    self.ExistingWires[wire.Name] = wire
+    Rage.Logging:Info(("Objects:RegisterWire(): Registered wire %s."):format(wire.Name))
+end
+
+--[[
+    Retrieves a wire by name.
+]]
+function Objects:GetWire(name: string): ObjectTypes.Wire?
+    return self.ExistingWires[name]
+end
+
+--[[
+    Connects a wire to two object parts.
+]]
+function Objects:ConnectWireToParts(wire: ObjectTypes.Wire, partA: ObjectTypes.ObjectPart, partB: ObjectTypes.ObjectPart)
+    if partA == partB then
+        Rage.Logging:Warn("Objects:ConnectWireToParts(): Attempted to connect wire to same part twice.")
+        return
+    end
+
+    local spawnedWire = wire.WireClass.New()
+    spawnedWire:Setup(partA, partB)
+
+    table.insert(self.SpawnedWires, spawnedWire)
+
+    Rage.Logging:Info("Objects:ConnectWireToParts(): Connected wire "..wire.Name.." to parts "..partA.Part:GetFullName().." and "..partB.Part:GetFullName())
+end
+
+--[[
+    Selects a wire to connect parts with.
+]]
+function Objects:SelectWire(wire: ObjectTypes.Wire)
+    self.SelectedWire = wire
+    self.OnWireSelect:Fire(wire)
+    Rage.Logging:Info("Objects:SelectWire(): Selected wire "..wire.Name)
+
+    Toasts:DisplayToast(
+        "Wires",
+        "You have selected "..wire.Name..".",
+        2
+    )
+end
+
+--[[
+    Removes a spawned wire.
+]]
+function Objects:RemoveWire(wire: ObjectTypes.SpawnedWire)
+    wire:Remove()
+    Rage.Libs.Table:Remove(self.SpawnedWires, wire)
+end
+
+--[[
+    Removes all wires connected to a part.
+]]
+function Objects:RemoveWiresFromPart(part: BasePart)
+    if #self.SpawnedWires <= 0 then
+        return
+    end
+
+    for index = #self.SpawnedWires, 1, -1 do
+        local wire = self.SpawnedWires[index]
+
+        if wire:IsConnectedToPart(part) then
+            self:RemoveWire(wire)
+        end
+    end
 end
 
 --[[
     Selects an object to spawn.
 ]]
-function Objects:SelectObjectToSpawn(object: ObjectTypes.Object)
-    self.SelectedObjectToSpawn = object
-    self.OnSelect:Fire(object)
-    Rage.Logging:Info("Objects:SelectObjectToSpawn(): Selected object "..object.Name)
+function Objects:SelectObject(object: ObjectTypes.Object)
+    self.SelectedObject = object
+    self.OnObjectSelect:Fire(object)
+    Rage.Logging:Info("Objects:SelectObject(): Selected object "..object.Name)
 
     Toasts:DisplayToast(
         "Objects",
@@ -415,22 +565,57 @@ function Objects:DespawnLastObject()
 end
 
 --[[
+    Spawns an object (player-driven).
+]]
+function Objects:PlayerSpawnObject(position: Vector3?): ObjectTypes.SpawnedObject
+    if not Maps.IsInMap then
+        return
+    end
+
+    if not self.SelectedObject then
+        Toasts:DisplayToast(
+            "Objects",
+            "You need to select an object to spawn.",
+            2
+        )
+
+        return
+    end
+
+    if not self.SelectedObject:CanPlayerSpawn() then
+        Toasts:DisplayToast(
+            "Objects",
+            "You cannot spawn this object. Not even sure how you managed to get here.",
+            2
+        )
+
+        return
+    end
+
+    if not position then
+        position = Camera:CastRayToZ0()
+        Debug:CreateDebugPart(Vector3.new(position.X, position.Y, 0))
+    end
+
+    Toasts:DisplayToast(
+        "Objects",
+        "You have spawned "..self.SelectedObject.Name..".",
+        2
+    )
+
+    Rage.Logging:Info("Objects:PlayerSpawnObject(): Player is spawning object "..self.SelectedObject.Name)
+
+    return self:SpawnObject(self.SelectedObject, position)
+end
+
+--[[
     Spawns an object at the specified position.
 ]]
 function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): ObjectTypes.SpawnedObject
     local spawnedObject = SpawnedObject.New(ID:GetID(), object)
     spawnedObject:Setup(position)
 
-    self.SpawnedObjects[spawnedObject.ID] = spawnedObject
-    table.insert(self.SpawnedObjectHistory, spawnedObject)
-
-    spawnedObject._RemovalRequested:Once(function()
-        self:DespawnObject(spawnedObject)
-    end)
-
-    self.SpawnedObjectCount = self.SpawnedObjectCount + 1
-
-    self.OnSpawn:Fire(spawnedObject)
+    self:_RegisterSpawnedObject(spawnedObject)
 
     Rage.Logging:Info(("Objects:SpawnObject(): Spawned object %s (%s) at %s with %d parts"):format(
         object.Name,
@@ -443,6 +628,22 @@ function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): Obj
 end
 
 --[[
+    Registers a spawned object.
+]]
+function Objects:_RegisterSpawnedObject(spawnedObject: ObjectTypes.SpawnedObject)
+    self.SpawnedObjects[spawnedObject.ID] = spawnedObject
+    table.insert(self.SpawnedObjectHistory, spawnedObject)
+
+    spawnedObject._RemovalRequested:Once(function()
+        self:DespawnObject(spawnedObject)
+    end)
+
+    self.SpawnedObjectCount = self.SpawnedObjectCount + 1
+
+    self.OnSpawn:Fire(spawnedObject)
+end
+
+--[[
     Despawns a spawned object.
 ]]
 function Objects:DespawnObject(spawnedObject: ObjectTypes.SpawnedObject)
@@ -450,27 +651,34 @@ function Objects:DespawnObject(spawnedObject: ObjectTypes.SpawnedObject)
         Rage.Logging:Error("Objects:DespawnObject(): Spawned object with ID "..spawnedObject.ID.." does not exist.")
     end
 
-    for _, part in pairs(spawnedObject.Parts) do
-        if part == self.DraggingPart then
-            self:StopDraggingPart()
-            break
-        end
+    if self.DraggingPart and spawnedObject:HasPart(self.DraggingPart) then
+        self:StopDraggingPart()
+    end
 
-        if part == self.FollowingPart then
-            self:StopFollowingPart()
-            break
-        end
+    if self.FollowingPart and spawnedObject:HasPart(self.FollowingPart) then
+        self:StopFollowingPart()
+    end
+
+    for _, part in pairs(spawnedObject.Parts) do
+        self:RemoveWiresFromPart(part)
     end
 
     spawnedObject:Despawn()
+    self:_UnregisterSpawnedObject(spawnedObject)
+
+    Rage.Logging:Info(("Objects:DespawnObject(): Despawned object %s (%s)"):format(spawnedObject.Object.Name, spawnedObject.ID))
+end
+
+--[[
+    Unregisters a spawned object.
+]]
+function Objects:_UnregisterSpawnedObject(spawnedObject: ObjectTypes.SpawnedObject)
     self.SpawnedObjects[spawnedObject.ID] = nil
     self:_RemoveSpawnedObjectFromHistory(spawnedObject)
 
     self.SpawnedObjectCount = self.SpawnedObjectCount - 1
 
     self.OnDespawn:Fire(spawnedObject)
-
-    Rage.Logging:Info(("Objects:DespawnObject(): Despawned object %s (%s)"):format(spawnedObject.Object.Name, spawnedObject.ID))
 end
 
 --[[
@@ -492,39 +700,6 @@ function Objects:DespawnAllObjects()
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
         self:DespawnObject(spawnedObject)
     end
-end
-
---[[
-    Updates everything. To be called every heartbeat.
-]]
-function Objects:Update()
-    if not Maps.IsInMap then
-        return
-    end
-
-    local mapSize = Maps.CurrentMap.Size
-    local mapPos = Maps.MAP_POSITION
-    local startBound = Vector2.new(mapPos.X - mapSize.X / 2, mapPos.Y - mapSize.Y / 2)
-    local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
-
-    self.DragPosition = (Camera:CastRayToZ0() or self.DragPosition) or Vector2.new(0, 0)
-    -- to explain above: raycasting can return nil. so we default to last raycast position, or if that doesnt exist, we default to 0
-
-    for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
-        task.spawn(function()
-            spawnedObject:Update(
-                startBound,
-                endBound,
-                self.DragPosition
-            )
-        end)
-    end
-
-    if self.FollowingPart then
-        Camera.Position = self.FollowingPart:GetPosition()
-    end
-
-    self:HandleInputTick()
 end
 
 --[[
@@ -552,11 +727,68 @@ function Objects:LoadObjects()
         end
 
         -- Register
-        table.insert(self.ExistingObjects, object)
+        self.ExistingObjects[object.Name] = object
         table.insert(self.ExistingObjectsByCategory[object.Category], object)
 
         Rage.Logging:Info("Objects:LoadObjects(): Loaded object: "..object.Name)
     end
+end
+
+--[[
+    Updates spawned objects.
+]]
+function Objects:UpdateSpawnedObjects()
+    local mapSize = Maps.CurrentMap.Size
+    local mapPos = Maps.MAP_POSITION
+    local startBound = Vector2.new(mapPos.X - mapSize.X / 2, mapPos.Y - mapSize.Y / 2)
+    local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
+
+    self.DragPosition = (Camera:CastRayToZ0() or self.DragPosition) or Vector2.new(0, 0)
+    -- to explain above: raycasting can return nil. so we default to last raycast position, or if that doesnt exist, we default to 0
+
+    for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
+        task.spawn(function()
+            spawnedObject:Update(
+                startBound,
+                endBound,
+                self.DragPosition
+            )
+        end)
+    end
+end
+
+--[[
+    Updates all spawned wires.
+]]
+function Objects:UpdateSpawnedWIres()
+    for _, spawnedWire: ObjectTypes.SpawnedWire in pairs(self.SpawnedWires) do
+        task.spawn(function()
+            spawnedWire:Update()
+        end)
+    end
+end
+
+--[[
+    Updates the camera.
+]]
+function Objects:UpdateCamera()
+    if self.FollowingPart then
+        Camera.Position = self.FollowingPart:GetPosition()
+    end
+end
+
+--[[
+    Updates everything. To be called every heartbeat.
+]]
+function Objects:Update()
+    if not Maps.IsInMap then
+        return
+    end
+
+    self:UpdateSpawnedObjects()
+    self:UpdateSpawnedWIres()
+    self:UpdateCamera()
+    self:HandleInputTick()
 end
 
 --[[
@@ -617,7 +849,26 @@ function Objects:_CreateCommands()
                 return
             end
 
-            self:SelectObjectToSpawn(object)
+            self:SelectObject(object)
+        end
+    })
+
+    CLI.Conch.register("select-wire", {
+        description = "Selects a wire to connect parts with.",
+
+        arguments = function()
+            return CLI.Conch.args.string("WireName", "The name of the wire to select.")
+        end,
+
+        callback = function(wireName: string)
+            local wire = self:GetWire(wireName)
+
+            if not wire then
+                Rage.Logging:Warn("No wire found with provided name.")
+                return
+            end
+
+            self:SelectWire(wire)
         end
     })
 end
