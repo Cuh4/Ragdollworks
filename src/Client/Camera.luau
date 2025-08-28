@@ -31,6 +31,7 @@ local Maps = require(Rage.Path.Maps)
     A service for handling the player's camera.
 ]]
 Camera = Rage:Service("Camera") :: Camera
+Camera.CURSOR_ICON = "rbxassetid://98310769591795"
 Camera.CAMERA_FOV = 2
 Camera.ZOOM_Z_MULTIPLIER = 6000
 Camera.CAMERA_SPEED = 0.5
@@ -50,6 +51,8 @@ Camera.LastMousePosition = Vector2.new(0, 0)
     Called when the service starts.
 ]]
 function Camera:OnStart()
+    self:HidePlayer()
+
     self:HandleInputEvents()
 
     self.HeartbeatConnection = Rage.RunService.Heartbeat:Connect(function()
@@ -65,7 +68,7 @@ end
     Updates the camera.
 ]]
 function Camera:Update()
-    self:HidePlayer()
+    self:SetMouseIcon()
     self:HandleInputTick()
 
     Rage.Lighting.FogEnd = math.huge
@@ -169,6 +172,14 @@ function Camera:HandleInputEvents()
             self:SetPanning(false)
         end
     end)
+end
+
+--[[
+    Sets the mouse icon.
+]]
+function Camera:SetMouseIcon()
+    Rage.Input.MouseIconContent = self.CURSOR_ICON
+    Rage.Input.MouseIcon = self.CURSOR_ICON
 end
 
 --[[
