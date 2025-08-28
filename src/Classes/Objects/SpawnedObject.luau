@@ -23,7 +23,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local signal = require(Rage.WallyPackages.signal)
 
 local ObjectPart = require(script.Parent.ObjectPart)
-local types = require(script.Parent.Types)
+local ObjectTypes = require(script.Parent.Types)
 
 -------------------------------
 -- // Main
@@ -32,19 +32,20 @@ local types = require(script.Parent.Types)
 --[[
     A class representing a spawned object.
 ]]
-SpawnedObject = {} :: types.SpawnedObject
+SpawnedObject = {} :: ObjectTypes.SpawnedObject
 SpawnedObject.__index = SpawnedObject
 
 --[[
     Creates a new SpawnedObject class instance.
 ]]
-function SpawnedObject.New(ID: number, object: Object): types.SpawnedObject
-    local self = setmetatable({}, SpawnedObject) :: types.SpawnedObject
+function SpawnedObject.New(ID: number, object: Object): ObjectTypes.SpawnedObject
+    local self = setmetatable({}, SpawnedObject) :: ObjectTypes.SpawnedObject
     self.ID = ID
     self.Object = object
     self.Instance = nil
     self.Parts = nil
     self.Behaviours = {}
+    self.IsDespawning = false
 
     self._RemovalRequested = signal.new()
 
@@ -146,7 +147,7 @@ end
     Finds all parts in the object and constructs data for each part.<br>
     The data is then returned in a table, with indices being the part instances.
 ]]
-function SpawnedObject:FindParts(): {[BasePart]: types.ObjectPart}
+function SpawnedObject:FindParts(): {[BasePart]: ObjectTypes.ObjectPart}
     local partsData = {}
 
     for _, part in pairs(self.Instance:GetDescendants()) do
@@ -161,27 +162,40 @@ end
 --[[
     Returns a ObjectPart instance by the part instance.
 ]]
-function SpawnedObject:GetPart(part: BasePart): types.ObjectPart?
+function SpawnedObject:GetPart(part: BasePart): ObjectTypes.ObjectPart?
     return self.Parts[part]
 end
 
 --[[
     Removes a spawned part from the spawned object.
 ]]
-function SpawnedObject:RemovePart(part: types.ObjectPart)
+function SpawnedObject:RemovePart(part: ObjectTypes.ObjectPart)
     self.Parts[part.Part] = nil
 
-    if Rage.Libs.Table:GetLength(self.Parts) == 0 then
+    if Rage.Libs.Table:GetLength(self.Parts) <= 0 and not self.IsDespawning then
         self:Remove()
     end
+end
+
+--[[
+    Returns if this spawned object has the provided part.
+]]
+function SpawnedObject:HasPart(part: ObjectTypes.ObjectPart): boolean
+    return self.Parts[part.Part] ~= nil
 end
 
 --[[
     Despawns the spawned object, removing all parts and cleaning up.
 ]]
 function SpawnedObject:Despawn()
+    self.IsDespawning = true -- prevent a second despawn due to all parts being removed
+
     for _, behaviour in pairs(self.Behaviours) do
         behaviour:OnPreDespawn()
+    end
+
+    for _, part in pairs(self.Parts) do
+        part:Despawn()
     end
 
     self.Instance:Destroy()
