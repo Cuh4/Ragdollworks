@@ -178,7 +178,6 @@ end
     Sets the mouse icon.
 ]]
 function Camera:SetMouseIcon()
-    Rage.Input.MouseIconContent = self.CURSOR_ICON
     Rage.Input.MouseIcon = self.CURSOR_ICON
 end
 
