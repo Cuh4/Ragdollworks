@@ -76,14 +76,14 @@ end
     Updates the selected object.
 ]]
 function InMapMenu:UpdateSelectedObject()
-    if not Objects.SelectedObjectToSpawn then
+    if not Objects.SelectedObject then
         self.SelectedObjectContainer.Visible = false
         return
     end
 
     self.SelectedObjectContainer.Visible = true
-    self.SelectedObjectText.Text = Objects.SelectedObjectToSpawn.Name
-    self.SelectedObjectIcon.Image = Objects.SelectedObjectToSpawn.IconAssetID or self.DEFAULT_OBJECT_ICON
+    self.SelectedObjectText.Text = Objects.SelectedObject.Name
+    self.SelectedObjectIcon.Image = Objects.SelectedObject.IconAssetID or self.DEFAULT_OBJECT_ICON
 end
 
 --[[
@@ -128,7 +128,7 @@ function InMapMenu:Setup()
         self:UpdateSpawnedObjectsCounter()
     end)
 
-    self.OnObjectSelect = Objects.OnSelect:Connect(function()
+    self.OnObjectSelect = Objects.OnObjectSelect:Connect(function()
         self:UpdateSelectedObject()
     end)
 end
