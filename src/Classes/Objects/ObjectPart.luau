@@ -39,10 +39,9 @@ ObjectPart.__index = ObjectPart
 ]]
 function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject, layer: number, settings: ObjectTypes.ObjectPartSettings): ObjectTypes.ObjectPart
     local self = setmetatable({}, ObjectPart) :: ObjectTypes.ObjectPart
-    self.SELECTION_HIGHLIGHT_COLOR = Color3.fromRGB(0, 255, 0)
-    self.HIGHLIGHT_HIGHLIGHT_COLOR = Color3.fromRGB(25, 200, 25) -- astronomically beautiful naming here
-    self.SELECTION_HIGHLIGHT_TRANSPARENCY = 0.3
-    self.HIGHLIGHT_HIGHLIGHT_TRANSPARENCY = 0.5
+    self.SELECTION_COLOR = Color3.fromRGB(0, 400, 0)
+    self.HIGHLIGHT_COLOR = Color3.fromRGB(50, 200, 50)
+    self.SELECTION_BOX_THICKNESS = 0.2
     self.DRAGGING_RESPONSIVENESS = 15
 
     self.Part = part
@@ -55,7 +54,7 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.AlignPositionInstance = nil :: AlignPosition
     self.AngularVelocityInstance = nil :: AngularVelocity
     self.AttachmentInstance = nil :: Attachment
-    self.HighlightInstance = nil :: Highlight
+    self.SelectionBoxInstance = nil :: SelectionBox
     self.RotationForce = 0
     self.Layer = layer
 
@@ -91,14 +90,17 @@ function ObjectPart:Setup()
 end
 
 --[[
-    Adds selection instances to the part (highlights, etc).
+    Adds selection instances to the part (selection boxes, etc).
 ]]
 function ObjectPart:SetupSelection()
-    self.HighlightInstance = Instance.new("Highlight")
-    self.HighlightInstance.Name = "SelectionHighlight"
-    self.HighlightInstance.FillTransparency = 1
-    self.HighlightInstance.Enabled = false
-    self.HighlightInstance.Parent = self.Part
+    self.SelectionBoxInstance = Instance.new("SelectionBox")
+    self.SelectionBoxInstance.Name = "Selection"
+    self.SelectionBoxInstance.Adornee = self.Part
+    self.SelectionBoxInstance.SurfaceTransparency = 1
+    self.SelectionBoxInstance.Transparency = 0
+    self.SelectionBoxInstance.LineThickness = self.SELECTION_BOX_THICKNESS
+    self.SelectionBoxInstance.Visible = false
+    self.SelectionBoxInstance.Parent = self.Part
 end
 
 --[[
@@ -145,14 +147,12 @@ end
 ]]
 function ObjectPart:UpdateSelection()
     if self.Selected then
-        self.HighlightInstance.OutlineColor = self.SELECTION_HIGHLIGHT_COLOR
-        self.HighlightInstance.OutlineTransparency = self.SELECTION_HIGHLIGHT_TRANSPARENCY
+        self.SelectionBoxInstance.Color3 = self.SELECTION_COLOR
     elseif self.Highlighted then
-        self.HighlightInstance.OutlineColor = self.HIGHLIGHT_HIGHLIGHT_COLOR
-        self.HighlightInstance.OutlineTransparency = self.HIGHLIGHT_HIGHLIGHT_TRANSPARENCY
+        self.SelectionBoxInstance.Color3 = self.HIGHLIGHT_COLOR
     end
 
-    self.HighlightInstance.Enabled = self.Selected or self.Highlighted
+    self.SelectionBoxInstance.Visible = self.Selected or self.Highlighted
 end
 
 --[[

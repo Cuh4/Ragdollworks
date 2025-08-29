@@ -79,10 +79,9 @@ export type SpawnedObject = {
 }
 
 export type ObjectPart = {
-    SELECTION_HIGHLIGHT_COLOR: Color3,
-    HIGHLIGHT_HIGHLIGHT_COLOR: Color3,
-    SELECTION_HIGHLIGHT_TRANSPARENCY: number,
-    HIGHLIGHT_HIGHLIGHT_TRANSPARENCY: number,
+    SELECTION_COLOR: Color3,
+    HIGHLIGHT_COLOR: Color3,
+    SELECTION_BOX_THICKNESS: number,
     DRAGGING_RESPONSIVENESS: number,
 
     Part: BasePart,
@@ -96,7 +95,7 @@ export type ObjectPart = {
     AlignPositionInstance: AlignPosition,
     AngularVelocityInstance: AngularVelocity,
     AttachmentInstance: Attachment,
-    HighlightInstance: Highlight,
+    SelectionBoxInstance: SelectionBox,
     RotationForce: number,
     Layer: number,
 
@@ -153,7 +152,7 @@ export type Wire = {
     Name: string,
     Description: string,
     WireClass: SpawnedWire,
-    IconAssetID: string
+    IconAssetID: string?
 }
 
 export type SpawnedWire = {
