@@ -466,7 +466,6 @@ end
 function Objects:LoadWires()
     for _, wireModuleScript: ModuleScript in pairs(script.Wires:GetChildren()) do
         local wire = require(wireModuleScript) :: ObjectTypes.Wire
-        print(wire)
         self:RegisterWire(wire)
     end
 
@@ -625,9 +624,7 @@ end
 ]]
 function Objects:DespawnObject(spawnedObject: ObjectTypes.SpawnedObject)
     if not self.SpawnedObjects[spawnedObject.ID] then
-        Rage.Logging:Warn([[Objects:DespawnObject(): Attempted to despawn an object that doesn't exist. This can be ignored as this probably
-        occurred from the player selecting multiple object parts belonging to the same spawned object, and deleting the parent spawned object
-        for each of them.]])
+        Rage.Logging:Warn("Objects:DespawnObject(): Attempted to despawn an object that doesn't internally exist.")
         return
     end
 
