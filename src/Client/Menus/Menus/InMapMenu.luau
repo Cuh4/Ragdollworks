@@ -112,7 +112,7 @@ end
 ]]
 function InMapMenu:UpdateObjectsContainer()
     -- to prevent a space in container column
-    self.ObjectsContainer.Visible = self.SelectedWireContainer.Visible and self.SelectedObjectContainer.Visible
+    self.ObjectsContainer.Visible = self.SelectedWireContainer.Visible or self.SelectedObjectContainer.Visible
 end
 
 --[[
