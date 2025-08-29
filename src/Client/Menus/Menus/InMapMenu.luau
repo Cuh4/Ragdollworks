@@ -24,6 +24,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local Maps = require(Rage.Path.Maps)
 local Objects = require(Rage.Path.Objects)
+local RbxAssets = require(Rage.Path.RbxAssets)
 
 local Menu = require(Rage.ReplicatedStorage.Classes.Menu)
 
@@ -46,8 +47,6 @@ setmetatable(InMapMenu, Menu)
 ]]
 function InMapMenu.New(): InMapMenu
     local self = setmetatable(Menu.New("InMap"), InMapMenu) :: InMapMenu
-    self.DEFAULT_OBJECT_ICON = "rbxassetid://403653616" -- question mark image
-
     self.InfoContainer = self.ScreenGUI.Info
     self.PlayerContainer = self.InfoContainer.PlayerContainer
     self.PlayerIcon = self.PlayerContainer.PlayerIcon
@@ -55,12 +54,16 @@ function InMapMenu.New(): InMapMenu
 
     self.ObjectsContainer = self.InfoContainer.ObjectsContainer
 
-    self.ObjectsSpawnedContainer = self.ObjectsContainer.ObjectsSpawned
+    self.ObjectsSpawnedContainer = self.InfoContainer.ObjectsSpawned
     self.ObjectsSpawnedNumberText = self.ObjectsSpawnedContainer.ObjectCountContainer.ObjectCountText
 
     self.SelectedObjectContainer = self.ObjectsContainer.SelectedObjectContainer
     self.SelectedObjectText = self.SelectedObjectContainer.ObjectName
     self.SelectedObjectIcon = self.SelectedObjectContainer.ObjectIcon
+
+    self.SelectedWireContainer = self.ObjectsContainer.SelectedWireContainer
+    self.SelectedWireText = self.SelectedWireContainer.WireName
+    self.SelectedWireIcon = self.SelectedWireContainer.WireIcon
 
     return self
 end
@@ -78,12 +81,38 @@ end
 function InMapMenu:UpdateSelectedObject()
     if not Objects.SelectedObject then
         self.SelectedObjectContainer.Visible = false
+        self:UpdateObjectsContainer()
         return
     end
 
     self.SelectedObjectContainer.Visible = true
     self.SelectedObjectText.Text = Objects.SelectedObject.Name
-    self.SelectedObjectIcon.Image = Objects.SelectedObject.IconAssetID or self.DEFAULT_OBJECT_ICON
+    self.SelectedObjectIcon.Image = Objects.SelectedObject.IconAssetID or RbxAssets.UNKNOWN_ICON
+    self:UpdateObjectsContainer()
+end
+
+--[[
+    Updates the selected wire.
+]]
+function InMapMenu:UpdateSelectedWire()
+    if not Objects.SelectedWire then
+        self.SelectedWireContainer.Visible = false
+        self:UpdateObjectsContainer()
+        return
+    end
+
+    self.SelectedWireContainer.Visible = true
+    self.SelectedWireText.Text = Objects.SelectedWire.Name
+    self.SelectedWireIcon.Image = Objects.SelectedWire.IconAssetID or RbxAssets.UNKNOWN_ICON
+    self:UpdateObjectsContainer()
+end
+
+--[[
+    Update objects container.
+]]
+function InMapMenu:UpdateObjectsContainer()
+    -- to prevent a space in container column
+    self.ObjectsContainer.Visible = self.SelectedWireContainer.Visible and self.SelectedObjectContainer.Visible
 end
 
 --[[
@@ -110,6 +139,7 @@ function InMapMenu:Setup()
     self.PlayerName.Text = Rage.Player.Name
 
     self:UpdateSelectedObject()
+    self:UpdateSelectedWire()
     self:UpdateSpawnedObjectsCounter()
 
     self.OnMapStart = Maps.OnMapStart:Connect(function()
@@ -131,11 +161,13 @@ function InMapMenu:Setup()
     self.OnObjectSelect = Objects.OnObjectSelect:Connect(function()
         self:UpdateSelectedObject()
     end)
+
+    self.OnWireSelect = Objects.OnWireSelect:Connect(function()
+        self:UpdateSelectedWire()
+    end)
 end
 
 export type InMapMenu = {
-    DEFAULT_OBJECT_ICON: string,
-
     InfoContainer: Frame,
     PlayerContainer: Frame,
     PlayerIcon: ImageLabel,
@@ -150,12 +182,17 @@ export type InMapMenu = {
     SelectedObjectText: TextLabel,
     SelectedObjectIcon: ImageLabel,
 
+    SelectedWireContainer: Frame,
+    SelectedWireText: TextLabel,
+    SelectedWireIcon: ImageLabel,
+
     OnMapStart: signal.Connection,
     OnMapExit: signal.Connection,
 
     OnObjectSpawn: signal.Connection,
     OnObjectDespawn: signal.Connection,
-    OnObjectSelect: signal.Connection
+    OnObjectSelect: signal.Connection,
+    OnWireSelect: signal.Connection
 } & typeof(InMapMenu) & Menu.Menu
 
 return InMapMenu
