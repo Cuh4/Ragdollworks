@@ -22,6 +22,7 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local Maps = require(Rage.Path.Maps)
+local RbxAssets = require(Rage.Path.RbxAssets)
 
 -------------------------------
 -- // Main
@@ -31,7 +32,6 @@ local Maps = require(Rage.Path.Maps)
     A service for handling the player's camera.
 ]]
 Camera = Rage:Service("Camera") :: Camera
-Camera.CURSOR_ICON = "rbxassetid://118815884093849"
 Camera.CAMERA_FOV = 2
 Camera.ZOOM_Z_MULTIPLIER = 6000
 Camera.CAMERA_SPEED = 0.5
@@ -177,7 +177,7 @@ end
     Sets the mouse icon.
 ]]
 function Camera:SetMouseIcon()
-    Rage.Input.MouseIcon = self.CURSOR_ICON
+    Rage.Input.MouseIcon = RbxAssets.CURSOR_ICON
 end
 
 --[[
