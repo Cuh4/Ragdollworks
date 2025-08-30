@@ -47,6 +47,8 @@ Camera.MoveFaster = false
 Camera.IsPanning = false
 Camera.LastMousePosition = Vector2.new(0, 0)
 
+Camera.MouseWorldPosition = Vector2.new(0, 0)
+
 --[[
     Called when the service starts.
 ]]
@@ -75,6 +77,12 @@ function Camera:Update()
     Rage.Camera.FieldOfView = self.CAMERA_FOV
     Rage.Camera.CameraType = Enum.CameraType.Scriptable
     Rage.Camera.CFrame = self:GetCamCFrame()
+
+    local mouseWorldPosition = self:CastRayToZ0()
+
+    if mouseWorldPosition then
+        self.MouseWorldPosition = mouseWorldPosition
+    end
 end
 
 --[[
