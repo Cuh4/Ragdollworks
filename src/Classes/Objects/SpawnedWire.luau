@@ -47,9 +47,17 @@ end
 --[[
     Setups the wire.
 ]]
-function SpawnedWire:Setup(objectPartA: ObjectTypes.ObjectPart, objectPartB: ObjectTypes.ObjectPart)
+function SpawnedWire:Setup(
+    partAMousePos: Vector2,
+    objectPartA: ObjectTypes.ObjectPart,
+    partBMousePos: Vector2,
+    objectPartB: ObjectTypes.ObjectPart
+)
     self.ObjectPartA = objectPartA
+    self.ObjectPartA:MoveWireAttachment(partAMousePos)
+
     self.ObjectPartB = objectPartB
+    self.ObjectPartB:MoveWireAttachment(partBMousePos)
 
     self:OnConnect()
 end
