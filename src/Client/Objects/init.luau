@@ -66,13 +66,16 @@ Objects.IsFollowing = false
 
 Objects.IsDragging = false
 Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
-Objects.DragPosition = Vector2.new(0, 0)
 
 Objects.SelectedObject = nil :: ObjectTypes.Object
 
 Objects.ExistingWires = {} :: {string: ObjectTypes.Wire}
 Objects.SelectedWire = nil :: ObjectTypes.Wire
+Objects.SelectedWireSourcePart = nil :: ObjectTypes.ObjectPart
+Objects.SelectedWireSourcePartMousePos = nil :: Vector2
 Objects.SpawnedWires = {} :: {ObjectTypes.SpawnedWire}
+
+Objects.AllFrozen = false
 
 Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
@@ -159,6 +162,14 @@ function Objects:HandleInput()
         if input.KeyCode == Enum.KeyCode.Delete then
             self:DespawnSelectedObjects()
         end
+
+        if input.KeyCode == Enum.KeyCode.T then
+            self:PlayerBeginWiring()
+        end
+
+        if input.KeyCode == Enum.KeyCode.Space then
+            self:PlayerToggleFreezeAllSpawnedObjects()
+        end
     end)
 
     Rage.Input.InputEnded:Connect(function(input, gameProcessedEvent)
@@ -167,7 +178,7 @@ function Objects:HandleInput()
         end
 
         if input.KeyCode == Enum.KeyCode.T then
-            self:PlayerWireParts()
+            self:PlayerStopWiring()
         end
 
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -181,6 +192,65 @@ end
 ]]
 function Objects:OnMapExit()
     self:DespawnAllObjects()
+end
+
+--[[
+    Toggles all spawned objects frozen state (player-driven).
+]]
+function Objects:PlayerToggleFreezeAllSpawnedObjects()
+    if not Maps.IsInMap then
+        return
+    end
+
+    if self.AllFrozen then
+        self:UnfreezeAllSpawnedObjects()
+    else
+        self:FreezeAllSpawnedObjects()
+    end
+end
+
+--[[
+    Set all spawned objects to be frozen.
+]]
+function Objects:FreezeAllSpawnedObjects()
+    if self.AllFrozen then
+        Rage.Logging:Warn("Objects:FreezeAllSpawnedObjects(): Attempted to freeze all spawned objects when already frozen.")
+        return
+    end
+
+    self.AllFrozen = true
+
+    for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
+        spawnedObject:Freeze()
+    end
+
+    Toasts:DisplayToast(
+        "Objects",
+        "All objects frozen.",
+        2
+    )
+end
+
+--[[
+    Set all spawned objects to be unfrozen.
+]]
+function Objects:UnfreezeAllSpawnedObjects()
+    if not self.AllFrozen then
+        Rage.Logging:Warn("Objects:UnfreezeAllSpawnedObjects(): Attempted to unfreeze all spawned objects when not frozen.")
+        return
+    end
+
+    self.AllFrozen = false
+
+    for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
+        spawnedObject:Unfreeze()
+    end
+
+    Toasts:DisplayToast(
+        "Objects",
+        "All objects unfrozen.",
+        2
+    )
 end
 
 --[[
@@ -202,7 +272,7 @@ function Objects:DragObjectPart(part: ObjectTypes.ObjectPart)
     end
 
     self.DraggingPart = part
-    self.DraggingPart:Drag()
+    self.DraggingPart:Drag(Camera.MouseWorldPosition)
 
     self.IsDragging = true
 
@@ -383,9 +453,9 @@ function Objects:RegisterBehaviour(name: string, behaviourClass: ObjectTypes.Obj
 end
 
 --[[
-    Connects two parts together via wire (player-driven).
+    Begin wiring two parts (player-driven)
 ]]
-function Objects:PlayerWireParts()
+function Objects:PlayerBeginWiring()
     if not Maps.IsInMap then
         return
     end
@@ -400,19 +470,38 @@ function Objects:PlayerWireParts()
         return
     end
 
-    if not self:IsAnyObjectPartSelected() then
+    local sourcePart = self:GetPartUnderMouse()
+
+    if not sourcePart then
         Toasts:DisplayToast(
             "Objects",
-            "You need to select at least one part to connect the wire(s) from.",
+            "Hover your mouse over the part you want to connect a wire from and try again.",
             2
         )
 
         return
     end
 
-    local part = self:GetPartUnderMouse()
+    self.SelectedWireSourcePart = sourcePart
+    self.SelectedWireSourcePartMousePos = Camera.MouseWorldPosition
+end
 
-    if not part then
+--[[
+    Stops wiring two parts (player-driven)
+]]
+function Objects:PlayerStopWiring()
+    if not Maps.IsInMap then
+        return
+    end
+
+    if not self.SelectedWireSourcePart then
+        Rage.Logging:Warn("Objects:PlayerStopWiring(): Attempted to stop wiring, but no source part was selected.")
+        return
+    end
+
+    local targetPart = self:GetPartUnderMouse()
+
+    if not targetPart then
         Toasts:DisplayToast(
             "Objects",
             "Hover your mouse over the part you want to connect a wire to and try again.",
@@ -422,7 +511,7 @@ function Objects:PlayerWireParts()
         return
     end
 
-    if self:IsObjectPartSelected(part) then
+    if self.SelectedWireSourcePart == targetPart then
         Toasts:DisplayToast(
             "Objects",
             "You cannot connect a part to itself.",
@@ -432,13 +521,20 @@ function Objects:PlayerWireParts()
         return
     end
 
-    for _, selectedPart in pairs(self.SelectedObjectParts) do
-        self:ConnectWireToParts(self.SelectedWire, selectedPart, part)
-    end
+    self:ConnectWireToParts(
+        self.SelectedWire,
+        self.SelectedWireSourcePart,
+        self.SelectedWireSourcePartMousePos,
+        targetPart,
+        Camera.MouseWorldPosition
+    )
+
+    self.SelectedWireSourcePart = nil
+    self.SelectedWireSourcePartMousePos = nil
 
     Toasts:DisplayToast(
-        "Wires",
-        "Successfully connected all selected parts to the part under your mouse.",
+        "Objects",
+        "Successfully wired both parts together.",
         2
     )
 end
@@ -446,14 +542,20 @@ end
 --[[
     Connects a wire to two object parts.
 ]]
-function Objects:ConnectWireToParts(wire: ObjectTypes.Wire, partA: ObjectTypes.ObjectPart, partB: ObjectTypes.ObjectPart)
+function Objects:ConnectWireToParts(wire: ObjectTypes.Wire, partA: ObjectTypes.ObjectPart, partAMousePos: Vector2, partB: ObjectTypes.ObjectPart, partBMousePos: Vector2)
     if partA == partB then
         Rage.Logging:Warn("Objects:ConnectWireToParts(): Attempted to connect wire to same part twice.")
         return
     end
 
     local spawnedWire = wire.WireClass.New()
-    spawnedWire:Setup(partA, partB)
+
+    spawnedWire:Setup(
+        partAMousePos,
+        partA,
+        partBMousePos,
+        partB
+    )
 
     table.insert(self.SpawnedWires, spawnedWire)
 
@@ -590,6 +692,10 @@ end
 function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): ObjectTypes.SpawnedObject
     local spawnedObject = SpawnedObject.New(ID:GetID(), object)
     spawnedObject:Setup(position)
+
+    if self.AllFrozen then
+        spawnedObject:Freeze()
+    end
 
     self:_RegisterSpawnedObject(spawnedObject)
 
@@ -833,13 +939,6 @@ function Objects:LoadObjects()
 end
 
 --[[
-    Updates object part selection.
-]]
-function Objects:UpdateSelection()
-    self:SelectObjectPartUnderMouse()
-end
-
---[[
     Updates spawned objects.
 ]]
 function Objects:UpdateSpawnedObjects()
@@ -848,15 +947,12 @@ function Objects:UpdateSpawnedObjects()
     local startBound = Vector2.new(mapPos.X - mapSize.X / 2, mapPos.Y - mapSize.Y / 2)
     local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
 
-    self.DragPosition = (Camera:CastRayToZ0() or self.DragPosition) or Vector2.new(0, 0)
-    -- to explain above: raycasting can return nil. so we default to last raycast position, or if that doesnt exist, we default to 0
-
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
         task.spawn(function()
             spawnedObject:Update(
                 startBound,
                 endBound,
-                self.DragPosition
+                Camera.MouseWorldPosition
             )
         end)
     end
