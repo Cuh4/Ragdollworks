@@ -911,6 +911,11 @@ end
 ]]
 function Objects:LoadObjects()
     for _, objectInstance: Model in pairs(self.OBJECT_FOLDER:GetChildren()) do
+        -- Check for primary part
+        if not objectInstance.PrimaryPart then
+            Rage.Logging:Error("Objects:LoadObjects(): Object has no primary part: "..objectInstance:GetFullName())
+        end
+
         -- Find object behaviours this object has
         local objectBehaviours: {ObjectTypes.ObjectBehaviour} = {}
 
