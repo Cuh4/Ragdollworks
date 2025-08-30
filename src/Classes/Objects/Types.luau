@@ -74,6 +74,8 @@ export type SpawnedObject = {
     GetPart: (self: SpawnedObject, part: BasePart) -> ObjectPart?,
     RemovePart: (self: SpawnedObject, part: BasePart) -> nil,
     HasPart: (self: SpawnedObject, part: ObjectPart) -> boolean,
+    Freeze: (self: SpawnedObject) -> nil,
+    Unfreeze: (self: SpawnedObject) -> nil,
     Despawn: (self: SpawnedObject) -> nil,
     Remove: (self: SpawnedObject) -> nil
 }
@@ -94,7 +96,8 @@ export type ObjectPart = {
     Highlighted: boolean,
     AlignPositionInstance: AlignPosition,
     AngularVelocityInstance: AngularVelocity,
-    AttachmentInstance: Attachment,
+    WireAttachmentInstance: Attachment,
+    DraggingAttachmentInstance: Attachment,
     SelectionBoxInstance: SelectionBox,
     RotationForce: number,
     Layer: number,
@@ -108,6 +111,7 @@ export type ObjectPart = {
     FromPart: (part: BasePart, spawnedObject: SpawnedObject) -> ObjectPart,
 
     Setup: (self: ObjectPart) -> nil,
+    SetupAttachments: (self: ObjectPart) -> nil,
     SetupSelection: (self: ObjectPart) -> nil,
     SetupDragging: (self: ObjectPart) -> nil,
     UpdateDragging: (self: ObjectPart, dragPosition: Vector2) -> nil,
@@ -118,8 +122,9 @@ export type ObjectPart = {
     Lock: (self: ObjectPart) -> nil,
     Activate: (self: ObjectPart) -> nil,
     SetRotationForce: (self: ObjectPart, force: number) -> nil,
-    Drag: (self: ObjectPart) -> nil,
+    Drag: (self: ObjectPart, position: Vector2) -> nil,
     StopDragging: (self: ObjectPart) -> nil,
+    MoveWireAttachment: (self: ObjectPart, position: Vector2) -> nil,
     Freeze: (self: ObjectPart) -> nil,
     Unfreeze: (self: ObjectPart) -> nil,
     Select: (self: ObjectPart) -> nil,
@@ -161,7 +166,7 @@ export type SpawnedWire = {
 
     New: () -> SpawnedWire,
 
-    Setup: (self: SpawnedWire, objectPartA: ObjectPart, objectPartB: ObjectPart) -> nil,
+    Setup: (self: SpawnedWire, partAMousePos: Vector2, objectPartA: ObjectPart, partBMousePos: Vector2, objectPartB: ObjectPart) -> nil,
     Remove: (self: SpawnedWire) -> nil,
     IsConnectedToPart: (self: SpawnedWire, part: ObjectPart) -> boolean,
     Update: (self: SpawnedWire) -> nil,
@@ -169,6 +174,19 @@ export type SpawnedWire = {
     OnUpdate: (self: SpawnedWire) -> nil,
     OnConnect: (self: SpawnedWire) -> nil,
     OnCleanup: (self: SpawnedWire) -> nil
+}
+
+export type ContextMenu = {
+    
+}
+
+export type ContextMenuItem = {
+    Name: string,
+    OnTrigger: signal.Signal,
+
+    New: (name: string) -> ContextMenuItem,
+
+    Trigger: (self: ContextMenuItem) -> nil
 }
 
 return {}
