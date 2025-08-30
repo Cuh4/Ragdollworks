@@ -53,7 +53,8 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.Highlighted = false
     self.AlignPositionInstance = nil :: AlignPosition
     self.AngularVelocityInstance = nil :: AngularVelocity
-    self.AttachmentInstance = nil :: Attachment
+    self.GeneralAttachmentInstance = nil :: Attachment
+    self.DraggingAttachmentInstance = nil :: Attachment
     self.SelectionBoxInstance = nil :: SelectionBox
     self.RotationForce = 0
     self.Layer = layer
@@ -85,8 +86,22 @@ end
     Setups the part.
 ]]
 function ObjectPart:Setup()
+    self:SetupAttachments()
     self:SetupSelection()
     self:SetupDragging()
+end
+
+--[[
+    Adds attachments to the part.
+]]
+function ObjectPart:SetupAttachments()
+    self.WireAttachmentInstance = Instance.new("Attachment")
+    self.WireAttachmentInstance.Name = "GeneralAttachment"
+    self.WireAttachmentInstance.Parent = self.Part
+
+    self.DraggingAttachmentInstance = Instance.new("Attachment")
+    self.DraggingAttachmentInstance.Name = "DraggingAttachment"
+    self.DraggingAttachmentInstance.Parent = self.Part
 end
 
 --[[
@@ -107,23 +122,18 @@ end
     Adds dragging capabilities to the part (constraints, etc).
 ]]
 function ObjectPart:SetupDragging()
-    self.AttachmentInstance = Instance.new("Attachment")
-    self.AttachmentInstance.Name = "DragAttachment"
-    self.AttachmentInstance.Parent = self.Part
-
     self.AlignPositionInstance = Instance.new("AlignPosition")
     self.AlignPositionInstance.Name = "DragAlignPosition"
     self.AlignPositionInstance.Mode = Enum.PositionAlignmentMode.OneAttachment
-    self.AlignPositionInstance.Attachment0 = self.AttachmentInstance
+    self.AlignPositionInstance.Attachment0 = self.DraggingAttachmentInstance
     self.AlignPositionInstance.MaxForce = math.huge
     self.AlignPositionInstance.Responsiveness = self.DRAGGING_RESPONSIVENESS
-    self.AlignPositionInstance.ApplyAtCenterOfMass = true
     self.AlignPositionInstance.Enabled = false
     self.AlignPositionInstance.Parent = self.Part
 
     self.AngularVelocityInstance = Instance.new("AngularVelocity")
     self.AngularVelocityInstance.Name = "DragAngularVelocity"
-    self.AngularVelocityInstance.Attachment0 = self.AttachmentInstance
+    self.AngularVelocityInstance.Attachment0 = self.DraggingAttachmentInstance
     self.AngularVelocityInstance.MaxTorque = math.huge
     self.AngularVelocityInstance.AngularVelocity = Vector3.new(0, 0, 0)
     self.AngularVelocityInstance.Enabled = false
@@ -225,9 +235,11 @@ function ObjectPart:SetRotationForce(force: number)
 end
 
 --[[
-    Drag the part.
+    Drag the part.<br>
+    `position` is the mouse position in world space. Used to get relative position for
+    dragging attachment.
 ]]
-function ObjectPart:Drag()
+function ObjectPart:Drag(position: Vector2)
     if not self.Settings.IsDraggable then
         return
     end
@@ -235,6 +247,12 @@ function ObjectPart:Drag()
     if self.Dragging then
         return
     end
+
+    self.DraggingAttachmentInstance.WorldCFrame = CFrame.new(Vector3.new(
+        position.X,
+        position.Y,
+        self.DraggingAttachmentInstance.WorldCFrame.Position.Z
+    ))
 
     self.Dragging = true
     self.OnDragStart:Fire()
@@ -251,6 +269,17 @@ function ObjectPart:StopDragging()
     self.Dragging = false
     self:SetRotationForce(0)
     self.OnDragEnd:Fire()
+end
+
+--[[
+    Moves the wire attachment instance to the provided Vector2 coordinates.
+]]
+function ObjectPart:MoveWireAttachment(position: Vector2)
+    self.WireAttachmentInstance.WorldCFrame = CFrame.new(Vector3.new(
+        position.X,
+        position.Y,
+        self.WireAttachmentInstance.WorldCFrame.Position.Z
+    ))
 end
 
 --[[
