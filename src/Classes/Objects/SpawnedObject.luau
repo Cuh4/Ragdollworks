@@ -185,6 +185,24 @@ function SpawnedObject:HasPart(part: ObjectTypes.ObjectPart): boolean
 end
 
 --[[
+    Freezes all parts in the spawned object.
+]]
+function SpawnedObject:Freeze()
+    for _, part in pairs(self.Parts) do
+        part:Freeze()
+    end
+end
+
+--[[
+    Unfreezes all parts in the spawned object.
+]]
+function SpawnedObject:Unfreeze()
+    for _, part in pairs(self.Parts) do
+        part:Unfreeze()
+    end
+end
+
+--[[
     Despawns the spawned object, removing all parts and cleaning up.
 ]]
 function SpawnedObject:Despawn()
