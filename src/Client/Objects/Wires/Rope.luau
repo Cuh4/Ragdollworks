@@ -57,8 +57,8 @@ function Rope:OnUpdate() end
 function Rope:OnConnect()
     self.RopeConstraint = Instance.new("RopeConstraint")
     self.RopeConstraint.Name = "Rope"
-    self.RopeConstraint.Attachment0 = self.ObjectPartA.AttachmentInstance
-    self.RopeConstraint.Attachment1 = self.ObjectPartB.AttachmentInstance
+    self.RopeConstraint.Attachment0 = self.ObjectPartA.WireAttachmentInstance
+    self.RopeConstraint.Attachment1 = self.ObjectPartB.WireAttachmentInstance
     self.RopeConstraint.Restitution = 0.3
     self.RopeConstraint.Visible = true
     self.RopeConstraint.Thickness = 0.5

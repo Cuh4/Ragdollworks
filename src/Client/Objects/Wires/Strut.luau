@@ -64,8 +64,8 @@ function Strut:OnConnect()
 
     self.VisualBeam = Instance.new("Beam")
     self.VisualBeam.Name = "StrutVisuals"
-    self.VisualBeam.Attachment0 = self.ObjectPartA.AttachmentInstance
-    self.VisualBeam.Attachment1 = self.ObjectPartB.AttachmentInstance
+    self.VisualBeam.Attachment0 = self.ObjectPartA.WireAttachmentInstance
+    self.VisualBeam.Attachment1 = self.ObjectPartB.WireAttachmentInstance
     self.VisualBeam.Transparency = NumberSequence.new(0)
     self.VisualBeam.TextureSpeed = 0
     self.VisualBeam.Color = ColorSequence.new(Color3.fromRGB(25, 25, 25))

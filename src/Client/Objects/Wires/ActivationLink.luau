@@ -69,8 +69,8 @@ end
 ]]
 function ActivationLink:OnConnect()
     self.Beam = Rage.Assets:GetAsset("ActivationLinkWireBeam"):Clone()
-    self.Beam.Attachment0 = self.ObjectPartB.AttachmentInstance -- texture is flipped lmao
-    self.Beam.Attachment1 = self.ObjectPartA.AttachmentInstance
+    self.Beam.Attachment0 = self.ObjectPartB.WireAttachmentInstance -- texture is flipped lmao
+    self.Beam.Attachment1 = self.ObjectPartA.WireAttachmentInstance
     self.Beam.Parent = self.ObjectPartA.Part
 end
 
