@@ -42,7 +42,7 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.SELECTION_COLOR = Color3.fromRGB(0, 400, 0)
     self.HIGHLIGHT_COLOR = Color3.fromRGB(50, 200, 50)
     self.SELECTION_BOX_THICKNESS = 0.2
-    self.DRAGGING_RESPONSIVENESS = 15
+    self.DRAGGING_RESPONSIVENESS = 25
 
     self.Part = part
     self.SpawnedObject = spawnedObject
