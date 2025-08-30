@@ -628,6 +628,15 @@ function Objects:RemoveWiresFromPart(part: BasePart)
 end
 
 --[[
+    Removes all wires.
+]]
+function Objects:RemoveAllWires()
+    Rage.Libs.Table:IterateReverse(self.SpawnedWires, function(_, wire)
+        self:RemoveWire(wire)
+    end)
+end
+
+--[[
     Selects an object to spawn.
 ]]
 function Objects:SelectObject(object: ObjectTypes.Object)
@@ -1015,6 +1024,15 @@ function Objects:_CreateCommands()
 
         callback = function()
             self:DespawnAllObjects()
+        end
+    })
+
+    CLI.Conch.register("remove-all-wires", {
+        description = "Removes all wires.",
+        arguments = function() end,
+
+        callback = function()
+            self:RemoveAllWires()
         end
     })
 
