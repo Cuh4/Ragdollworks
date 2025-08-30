@@ -146,10 +146,18 @@ end
 ]]
 function ObjectPart:UpdateDragging(dragPosition: Vector2)
     self.AngularVelocityInstance.AngularVelocity = Vector3.new(0, 0, self.RotationForce)
-    self.AngularVelocityInstance.Enabled = self.Dragging
+    self.AngularVelocityInstance.Enabled = self.Dragging and not self.Frozen
 
     self.AlignPositionInstance.Position = Vector3.new(dragPosition.X, dragPosition.Y, 0)
-    self.AlignPositionInstance.Enabled = self.Dragging
+    self.AlignPositionInstance.Enabled = self.Dragging and not self.Frozen
+
+    if self.Dragging and self.Frozen then
+        self.SpawnedObject:MoveTo(dragPosition)
+
+        if self.RotationForce ~= 0 then
+            self.SpawnedObject:RotateBy(self.RotationForce)
+        end
+    end
 end
 
 --[[
