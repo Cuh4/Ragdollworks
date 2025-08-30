@@ -68,6 +68,8 @@ export type SpawnedObject = {
     Update: (self: SpawnedObject, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
     Setup: (self: SpawnedObject, spawnPos: Vector3) -> nil,
     MoveTo: (self: SpawnedObject, position: Vector2) -> nil,
+    RotateTo: (self: SpawnedObject, radians: number) -> nil,
+    RotateBy: (self: SpawnedObject, radians: number) -> nil,
     SetupAttributes: (self: SpawnedObject) -> nil,
     CreateNoCollideConstraints: (self: SpawnedObject) -> nil,
     FindParts: (self: SpawnedObject) -> {[BasePart]: ObjectPart},

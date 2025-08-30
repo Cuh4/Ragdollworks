@@ -109,7 +109,21 @@ end
     Moves the spawned object to the specified position.
 ]]
 function SpawnedObject:MoveTo(position: Vector2)
-    self.Instance:PivotTo(CFrame.new(Vector3.new(position.X, position.Y, 0)))
+    self.Instance:PivotTo(CFrame.new(Vector3.new(position.X, position.Y, 0)) * self.Instance:GetPivot().Rotation)
+end
+
+--[[
+    Rotates the spawned object.
+]]
+function SpawnedObject:RotateTo(radians: number)
+    self.Instance:PivotTo(self.Instance:GetPivot() * CFrame.Angles(0, 0, math.rad(radians)))
+end
+
+--[[
+    Rotates the spawned object by the provided radians.
+]]
+function SpawnedObject:RotateBy(radians: number)
+    self:RotateTo(self.Instance:GetPivot().Rotation.Z + radians)
 end
 
 --[[
