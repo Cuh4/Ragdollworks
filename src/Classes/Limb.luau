@@ -41,37 +41,49 @@ Limb.__index = Limb
 --[[
     Creates a new Limb class instance.
 ]]
-function Limb.New(objectPart: ObjectTypes.ObjectPart, maxHealth: number, maxStabilizationAngularVelocity: number, maxStabilizationTorque: number): Limb
+function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: number, maxStabilizationAngularVelocity: number, maxStabilizationTorque: number, bloodDecalCount: number): Limb
     local self = setmetatable({}, Limb) :: Limb
-    self.LimbName = objectPart.Part.Name
+    self.BLOOD_DECAL_MIN_TRANSPARENCY = 0.3
+    self.BRUISE_DECAL_MIN_TRANSPARENCY = 0.55
+
+    self.IMPACT_THRESHOLD = 15
+    self.IMPACT_COOLDOWN = 0.3
+    self.IMPACT_DAMAGE_MULTIPLIER = 1.3
+
+    self.IMPACT_BRUISING_THRESHOLD = 20
+    self.IMPACT_BRUISING_MULTIPLIER = 0.007
+
+    self.BLEEDING_IMPACT_THRESHOLD = 55
+    self.BLEEDING_IMPACT_HEALTH_THRESHOLD = 0.6 -- % of health needed until impacts can cause bleeding
+    self.BLEEDING_IMPACT_MULTIPLIER = 0.001
+    self.BLEEDING_HEALTH_LOSS_RATE = 0.012 -- per update (* 60 for a rough per-second estimate)
+
+    self.BRAIN_DEAD_HEALTH_LOSS_RATE = 0.35 -- per update
+    self.HEART_DEAD_HEALTH_LOSS_RATE = 0.1 -- per update
+
+    self.UNGROUNDED_STABILIZATION_MULTIPLIER = 0.04
+
+    self.LimbName = name
     self.ObjectPart = objectPart
     self.Health = maxHealth
     self.MaxHealth = maxHealth
+    self.BloodDecalCount = bloodDecalCount
     self.Limbs = {}
 
-    self.ImpactThreshold = 15
     self.LastImpact = 0
-    self.ImpactCooldown = 0.3
-    self.ImpactDamageMultiplier = 1.3
 
-    self.IsBleeding = false
-    self.BleedingImpactThreshold = 55
-    self.BleedingImpactHealthThreshold = 0.6 -- % of health needed until impacts can cause bleeding
-    self.BleedingHealthLossRate = 0.012 -- per update (* 60 for a rough per-second estimate)
-
+    self.Bruising = 0
+    self.Bleeding = 0
     self.IsLimbAlive = true
     self.IsGrounded = false
     self.IsForceLimp = false
     self.IsBrainAlive = true
     self.IsHeartBeating = true
-    self.BrainDeadHealthLossRate = 0.35 -- per update
-    self.HeartDeadHealthLossRate = 0.1 -- per update
 
     self.StabilizationForce = nil :: AlignOrientation
     self.Attachment = nil :: Attachment
     self.MaxStabilizationAngularVelocity = maxStabilizationAngularVelocity
     self.MaxStabilizationTorque = maxStabilizationTorque
-    self.UngroundedStabilizationMultiplier = 0.04
 
     local _impactSettings = {
         Volume = 0.06
@@ -91,19 +103,23 @@ function Limb.New(objectPart: ObjectTypes.ObjectPart, maxHealth: number, maxStab
     }
 
     self.BleedingEffect = nil :: ParticleEmitter
+    self.BleedingEffectDefaultRate = nil :: number
+    self.BruiseDecal = nil :: Decal
 
     return self
 end
 
 --[[
-    Creates a new Limb instance from an ObjectPart..
+    Creates a new Limb instance from an ObjectPart.
 ]]
 function Limb.FromObjectPart(objectPart: ObjectTypes.ObjectPart): Limb
     return Limb.New(
+        objectPart.Part.Name,
         objectPart,
         objectPart.Part:GetAttribute("MaxHealth") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `MaxHealth` attribute."),
         objectPart.Part:GetAttribute("MaxStabilizationAngularVelocity") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `MaxStabilizationAngularVelocity` attribute."),
-        objectPart.Part:GetAttribute("MaxStabilizationTorque") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `MaxStabilizationTorque` attribute.")
+        objectPart.Part:GetAttribute("MaxStabilizationTorque") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `MaxStabilizationTorque` attribute."),
+        objectPart.Part:GetAttribute("BloodDecalCount") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `BloodDecalCount` attribute.")
     )
 end
 
@@ -114,7 +130,7 @@ function Limb:GetStabilizationForceResponsiveness(): number
     local responsiveness = 10 * self:GetHealthPercentage()
 
     if not self.IsGrounded then
-        responsiveness *= self.UngroundedStabilizationMultiplier
+        responsiveness *= self.UNGROUNDED_STABILIZATION_MULTIPLIER
     end
 
     return responsiveness
@@ -124,10 +140,10 @@ end
     Returns the stabilization force's max torque.
 ]]
 function Limb:GetStabilizationForceMaxTorque(): number
-    local maxForce = 2500 * self:GetHealthPercentage()
+    local maxForce = self.MaxStabilizationTorque * self:GetHealthPercentage()
 
     if not self.IsGrounded then
-        maxForce *= self.UngroundedStabilizationMultiplier
+        maxForce *= self.UNGROUNDED_STABILIZATION_MULTIPLIER
     end
 
     return maxForce
@@ -158,27 +174,19 @@ function Limb:GetLimbParts(): {Part}
 end
 
 --[[
-    Makes this limb bleed.
+    Applies bleeding.
 ]]
-function Limb:StartBleeding()
-    if self.IsBleeding then
-        return
-    end
-
-    Rage.Logging:Info(self.LimbName..": Bleeding started")
-    self.IsBleeding = true
+function Limb:ApplyBleeding(amount)
+    self.Bleeding = math.clamp(self.Bleeding + amount, 0, 1)
+    Rage.Logging:Info(self.LimbName..": Bleeding += "..amount)
 end
 
 --[[
-    Stops the limb from bleeding.
+    Applies bruising.
 ]]
-function Limb:StopBleeding()
-    if not self.IsBleeding then
-        return
-    end
-
-    Rage.Logging:Info(self.LimbName..": Bleeding stopped")
-    self.IsBleeding = false
+function Limb:ApplyBruising(amount: number)
+    self.Bruising = math.clamp(self.Bruising + amount, 0, 1)
+    Rage.Logging:Info(self.LimbName..": Bruising += "..amount)
 end
 
 --[[
@@ -232,7 +240,7 @@ function Limb:TrackImpacts()
             return
         end
 
-        if time() - self.LastImpact < self.ImpactCooldown then
+        if time() - self.LastImpact < self.IMPACT_COOLDOWN then
             return
         end
 
@@ -240,8 +248,8 @@ function Limb:TrackImpacts()
 
         local delta = (self.ObjectPart:GetVelocity3D() - part.AssemblyLinearVelocity).Magnitude
 
-        if delta >= self.ImpactThreshold then
-            local impactAmount = delta - self.ImpactThreshold
+        if delta >= self.IMPACT_THRESHOLD then
+            local impactAmount = delta - self.IMPACT_THRESHOLD
             self:HandleImpact(impactAmount)
         end
     end)
@@ -255,11 +263,16 @@ function Limb:HandleImpact(amount: number)
     Rage.Logging:Info(self.LimbName..": Impact, amount: "..amount)
 
     -- Inflict damage
-    self:Damage(amount * self.ImpactDamageMultiplier)
+    self:Damage(amount * self.IMPACT_DAMAGE_MULTIPLIER)
 
     -- Trigger bleeding
-    if amount > self.BleedingImpactThreshold and self:GetHealthPercentage() < self.BleedingImpactHealthThreshold then
-        self:StartBleeding()
+    if amount > self.BLEEDING_IMPACT_THRESHOLD and self:GetHealthPercentage() < self.BLEEDING_IMPACT_HEALTH_THRESHOLD then
+        self:ApplyBleeding(amount * self.BLEEDING_IMPACT_MULTIPLIER)
+    end
+
+    -- Bruising
+    if amount > self.IMPACT_BRUISING_THRESHOLD then
+        self:ApplyBruising(amount * self.IMPACT_BRUISING_MULTIPLIER)
     end
 
     -- SFX
@@ -335,6 +348,19 @@ function Limb:Damage(amount: number)
 end
 
 --[[
+    Returns the blood decal at the provided index.
+]]
+function Limb:GetBloodDecal(index: number): Decal
+    local decal = self.ObjectPart.Part:FindFirstChild("Blood"..index)
+
+    if not decal then
+        Rage.Logging:Error(self.LimbName..": Missing blood decal at index #"..index)
+    end
+
+    return decal
+end
+
+--[[
     Returns whether or not the limb is alive.
 ]]
 function Limb:IsAlive(): boolean
@@ -354,12 +380,14 @@ end
     Handles limb bleeding. Call in `:Update()`.
 ]]
 function Limb:HandleBleeding()
-    if not self.IsBleeding then
+    if self.Bleeding <= 0 then
+        self.BleedingEffect.Enabled = false
         return
     end
 
-    self:Damage(self.BleedingHealthLossRate)
-    self.BleedingEffect.Enabled = self.IsBleeding
+    self:Damage(self.BLEEDING_HEALTH_LOSS_RATE * self.Bleeding)
+    self.BleedingEffect.Rate = self.BleedingEffectDefaultRate * self.Bleeding
+    self.BleedingEffect.Enabled = true
 end
 
 --[[
@@ -386,15 +414,36 @@ function Limb:HandleState()
 end
 
 --[[
-    Handle passive damage.
+    Handles damage visuals. Call in `:Update()`.
+]]
+function Limb:HandleDamageVisuals()
+    -- Bruising decal
+    self.BruiseDecal.Transparency = Rage.Libs.Math:Lerp(1, self.BRUISE_DECAL_MIN_TRANSPARENCY, self.Bruising)
+
+    -- Blood decals
+    local step = self.MaxHealth / self.BloodDecalCount -- 33.3
+
+    for index = 1, self.BloodDecalCount do
+        local decal = self:GetBloodDecal(index)
+        local startBound = (index - 1) * step
+        local endBound = index * step
+        local damage = self.MaxHealth - self.Health
+
+        local progress = math.clamp((damage - startBound) / (endBound - startBound), 0, 1)
+        decal.Transparency = Rage.Libs.Math:Lerp(1, self.BLOOD_DECAL_MIN_TRANSPARENCY, progress)
+    end
+end
+
+--[[
+    Handle passive damage. Call in `:Update()`.
 ]]
 function Limb:HandlePassiveDamage()
     if not self.IsBrainAlive then
-        self:Damage(self.BrainDeadHealthLossRate)
+        self:Damage(self.BRAIN_DEAD_HEALTH_LOSS_RATE)
     end
 
     if not self.IsHeartBeating then
-        self:Damage(self.HeartDeadHealthLossRate)
+        self:Damage(self.HEART_DEAD_HEALTH_LOSS_RATE)
     end
 end
 
@@ -421,7 +470,10 @@ function Limb:Setup(limbs: {[ObjectTypes.ObjectPart]: Limb})
     self.HealthContainer = self.BillboardGUI:FindFirstChild("Container") or Rage.Logging:Error(self.LimbName..": Missing `Container` object in health billboard GUI.") :: Frame
 
     self.BleedingEffect = Effects:SpawnEffect("Bleeding", -1, self.ObjectPart.Part)
+    self.BleedingEffectDefaultRate = self.BleedingEffect.Rate
     self.BleedingEffect.Enabled = false
+
+    self.BruiseDecal = self.ObjectPart.Part:FindFirstChild("Bruise") or Rage.Logging:Error(self.LimbName..": Missing `Bruise` decal.") :: Decal
 
     self:TrackImpacts()
 end
@@ -430,6 +482,7 @@ end
     Updates this limb.
 ]]
 function Limb:Update()
+    self:HandleDamageVisuals()
     self:HandleState()
     self:HandleHealthUI()
     self:HandleStabilization()
@@ -445,43 +498,56 @@ function Limb:Cleanup()
 end
 
 export type Limb = {
+    BLOOD_DECAL_MIN_TRANSPARENCY: number,
+    BRUISE_DECAL_MIN_TRANSPARENCY: number,
+
+    IMPACT_THRESHOLD: number,
+    IMPACT_COOLDOWN: number,
+    IMPACT_DAMAGE_MULTIPLIER: number,
+    IMPACT_BRUISING_THRESHOLD: number,
+    IMPACT_BRUISING_MULTIPLIER: number,
+
+    BLEEDING_IMPACT_THRESHOLD: number,
+    BLEEDING_IMPACT_HEALTH_THRESHOLD: number,
+    BLEEDING_IMPACT_MULTIPLIER: number,
+    BLEEDING_HEALTH_LOSS_RATE: number,
+
+    BRAIN_DEAD_HEALTH_LOSS_RATE: number,
+    HEART_DEAD_HEALTH_LOSS_RATE: number,
+
+    UNGROUNDED_STABILIZATION_MULTIPLIER: number,
+
     LimbName: string,
     ObjectPart: ObjectTypes.ObjectPart,
     Health: number,
     MaxHealth: number,
+    BloodDecalCount: number,
     Limbs: {[ObjectTypes.ObjectPart]: Limb},
 
     BillboardGUI: BillboardGui,
     HealthContainer: Frame,
 
-    ImpactThreshold: number,
     LastImpact: number,
-    ImpactCooldown: number,
-    ImpactDamageMultiplier: number,
 
-    IsBleeding: boolean,
-    BleedingImpactThreshold: number,
-    BleedingImpactHealthThreshold: number,
-    BleedingHealthLossRate: number,
-
+    Bruising: number,
+    Bleeding: number,
     IsLimbAlive: boolean,
     Grounded: boolean,
     IsForceLimp: boolean,
     IsBrainAlive: boolean,
     IsHeartBeating: boolean,
-    BrainDeadHealthLossRate: number,
-    HeartDeadHealthLossRate: number,
 
     StabilizationForce: AlignOrientation,
     Attachment: Attachment,
     MaxStabilizationAngularVelocity: number,
     MaxStabilizationTorque: number,
-    UngroundedStabilizationMultiplier: number,
 
     ImpactSounds: SoundCollection.SoundCollection,
 
     ImpactEffects: {string},
     BleedingEffect: ParticleEmitter,
+    BleedingEffectDefaultRate: number,
+    BruiseDecal: Decal,
 
     TouchConnection: RBXScriptConnection
 } & typeof(Limb)
