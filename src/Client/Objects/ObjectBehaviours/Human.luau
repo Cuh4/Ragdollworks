@@ -56,7 +56,7 @@ function HumanObjectBehaviour:CreateLimb(objectPart: ObjectTypes.ObjectPart)
     local limb = Limb.FromObjectPart(objectPart)
     self.Limbs[objectPart] = limb
 
-    Rage.Logging:Info("Created limb: "..limb.LimbName)
+    Rage.Logging:Info("HumanObjectBehaviour: Created limb: "..limb.LimbName)
 end
 
 --[[
