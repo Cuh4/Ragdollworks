@@ -987,7 +987,12 @@ end
     Updates the camera.
 ]]
 function Objects:UpdateCamera()
-    if self.IsFollowing and self:IsAnyObjectPartSelected() then
+    if self.IsFollowing then
+        if not self:IsAnyObjectPartSelected() then
+            self:SetFollowing(false)
+            return
+        end
+
         local average = Vector2.new(0, 0)
 
         for _, objectPart: ObjectTypes.ObjectPart in pairs(self.SelectedObjectParts) do
