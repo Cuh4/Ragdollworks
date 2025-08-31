@@ -49,6 +49,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.IMPACT_THRESHOLD = 15
     self.IMPACT_COOLDOWN = 0.3
     self.IMPACT_DAMAGE_MULTIPLIER = 1.3
+    self.IMPACT_MASS_MULTIPLIER = 0.1
 
     self.IMPACT_BRUISING_THRESHOLD = 20
     self.IMPACT_BRUISING_MULTIPLIER = 0.007
@@ -247,9 +248,10 @@ function Limb:TrackImpacts()
         self.LastImpact = time()
 
         local delta = (self.ObjectPart:GetVelocity3D() - part.AssemblyLinearVelocity).Magnitude
+        local mass = part.Anchored and 1 or part.Mass
 
         if delta >= self.IMPACT_THRESHOLD then
-            local impactAmount = delta - self.IMPACT_THRESHOLD
+            local impactAmount = (delta - self.IMPACT_THRESHOLD) + (mass * self.IMPACT_MASS_MULTIPLIER)
             self:HandleImpact(impactAmount)
         end
     end)
@@ -504,6 +506,8 @@ export type Limb = {
     IMPACT_THRESHOLD: number,
     IMPACT_COOLDOWN: number,
     IMPACT_DAMAGE_MULTIPLIER: number,
+    IMPACT_MASS_MULTIPLIER: number,
+
     IMPACT_BRUISING_THRESHOLD: number,
     IMPACT_BRUISING_MULTIPLIER: number,
 
