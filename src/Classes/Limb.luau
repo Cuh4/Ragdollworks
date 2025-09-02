@@ -196,23 +196,6 @@ end
 function Limb:DetectIsGrounded(): boolean
     if Rage.Libs.String:EndsWith(self.LimbName, "Foot") then
         return self:IsTouchingBeneath()
-        -- local raycastParams = RaycastParams.new()
-        -- raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-        -- raycastParams.FilterDescendantsInstances = self:GetLimbParts()
-
-        -- local result = game.Workspace:Raycast(
-        --     self.ObjectPart.Part.Position,
-        --     -self.ObjectPart.Part.CFrame.UpVector * 2,
-        --     raycastParams
-        -- )
-
-        -- Debug:CreateDebugPart(self.ObjectPart.Part.Position - (self.ObjectPart.Part.CFrame.UpVector * 2))
-
-        -- if result then
-        --     return true
-        -- else
-        --     return false
-        -- end
     else
         return self:FindLimbByName("LeftFoot").IsGrounded or self:FindLimbByName("RightFoot").IsGrounded
     end
