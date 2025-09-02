@@ -681,7 +681,7 @@ function Objects:PlayerSpawnObject(position: Vector3?): ObjectTypes.SpawnedObjec
 
     if not position then
         position = Camera:CastRayToZ0()
-        Debug:CreateDebugPart(Vector3.new(position.X, position.Y, 0))
+        Debug:CreateDebugPart(CFrame.new(Vector3.new(position.X, position.Y, 0)))
     end
 
     Toasts:DisplayToast(
