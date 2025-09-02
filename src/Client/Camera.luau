@@ -21,6 +21,7 @@
 -------------------------------
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
+
 local Maps = require(Rage.Path.Maps)
 local RbxAssets = require(Rage.Path.RbxAssets)
 
@@ -261,10 +262,18 @@ function Camera:CastRay(distance: number): RaycastResult?
     local mouseLocation = Rage.Input:GetMouseLocation()
     local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
 
-    return game.Workspace:Raycast(
+    if viewportRay.Direction.Z == 0 then
+        return nil
+    end
+
+    local direction = viewportRay.Direction * distance
+
+    local raycastResult = game.Workspace:Raycast(
         viewportRay.Origin,
-        viewportRay.Direction * distance
+        direction
     )
+
+    return raycastResult
 end
 
 --[[
@@ -273,6 +282,12 @@ end
 function Camera:CastRayAll(distance: number): {RaycastResult}
     local mouseLocation = Rage.Input:GetMouseLocation()
     local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
+
+    if viewportRay.Direction.Z == 0 then
+        return nil
+    end
+
+    local direction = viewportRay.Direction * distance
 
     local raycastParams = RaycastParams.new()
     raycastParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -284,7 +299,7 @@ function Camera:CastRayAll(distance: number): {RaycastResult}
     repeat
         local raycastResult = game.Workspace:Raycast(
             viewportRay.Origin,
-            viewportRay.Direction * distance,
+            direction,
             raycastParams
         )
 
@@ -302,14 +317,14 @@ end
 --[[
     Casts a ray to Z 0.
 ]]
-function Camera:CastRayToZ0(): Vector2
+function Camera:CastRayToZ0(): Vector2?
     local mouseLocation = Rage.Input:GetMouseLocation()
     local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
 
     local origin = viewportRay.Origin
     local direction = viewportRay.Direction
 
-    if direction .Z == 0 then
+    if direction.Z == 0 then
         return nil
     end
 
