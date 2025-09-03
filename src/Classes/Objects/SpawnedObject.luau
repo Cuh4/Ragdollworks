@@ -217,6 +217,15 @@ function SpawnedObject:Unfreeze()
 end
 
 --[[
+    Adds a context menu item to all parts within this spawned object.
+]]
+function SpawnedObject:AddContextMenuItem(name: string, onTrigger: ObjectTypes.ContextMenuItemCallback)
+    for _, part in pairs(self.Parts) do
+        part.ContextMenu:AddContextMenuItem(name, onTrigger)
+    end
+end
+
+--[[
     Despawns the spawned object, removing all parts and cleaning up.
 ]]
 function SpawnedObject:Despawn()

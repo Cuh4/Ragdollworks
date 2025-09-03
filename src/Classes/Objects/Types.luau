@@ -78,6 +78,7 @@ export type SpawnedObject = {
     HasPart: (self: SpawnedObject, part: ObjectPart) -> boolean,
     Freeze: (self: SpawnedObject) -> nil,
     Unfreeze: (self: SpawnedObject) -> nil,
+    AddContextMenuItem: (self: SpawnedObject, name: string, onTrigger: ContextMenuItemCallback) -> nil,
     Despawn: (self: SpawnedObject) -> nil,
     Remove: (self: SpawnedObject) -> nil
 }
@@ -103,6 +104,7 @@ export type ObjectPart = {
     SelectionBoxInstance: SelectionBox,
     RotationForce: number,
     Layer: number,
+    ContextMenu: ContextMenu,
 
     OnDragStart: signal.Signal,
     OnDragEnd: signal.Signal,
@@ -113,6 +115,7 @@ export type ObjectPart = {
     FromPart: (part: BasePart, spawnedObject: SpawnedObject) -> ObjectPart,
 
     Setup: (self: ObjectPart) -> nil,
+    SetupContextMenu: (self: ObjectPart) -> nil,
     SetupAttachments: (self: ObjectPart) -> nil,
     SetupSelection: (self: ObjectPart) -> nil,
     SetupDragging: (self: ObjectPart) -> nil,
@@ -179,16 +182,37 @@ export type SpawnedWire = {
 }
 
 export type ContextMenu = {
-    
+    ObjectPart: ObjectPart,
+    Items: {ContextMenuItem},
+    Visible: boolean,
+
+    OnShow: signal.Signal,
+    OnHide: signal.Signal,
+
+    ScreenGUI: ScreenGui,
+    ContextMenuUI: ScrollingFrame,
+
+    New: (objectPart: ObjectPart) -> ContextMenu,
+
+    AddContextMenuItem: (self: ContextMenu, name: string, onTrigger: ContextMenuItemCallback) -> ContextMenuItem,
+    _AddUIItems: (self: ContextMenu) -> nil,
+    _RemoveUIItems: (self: ContextMenu) -> nil,
+    Show: (self: ContextMenu, position: UDim2) -> nil,
+    Hide: (self: ContextMenu) -> nil
 }
 
 export type ContextMenuItem = {
     Name: string,
+    ContextMenu: ContextMenu,
     OnTrigger: signal.Signal,
+    _ContextMenuItemUI: Frame,
 
-    New: (name: string) -> ContextMenuItem,
+    New: (name: string, contextMenu: ContextMenu) -> ContextMenuItem,
 
+    GetUI: (self: ContextMenuItem) -> (Frame, TextButton),
     Trigger: (self: ContextMenuItem) -> nil
 }
+
+export type ContextMenuItemCallback = (contextMenuItem: ContextMenuItem) -> nil
 
 return {}

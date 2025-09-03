@@ -69,6 +69,8 @@ Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
 
 Objects.SelectedObject = nil :: ObjectTypes.Object
 
+Objects.ContextMenuActivePart = nil :: ObjectTypes.ObjectPart
+
 Objects.ExistingWires = {} :: {string: ObjectTypes.Wire}
 Objects.SelectedWire = nil :: ObjectTypes.Wire
 Objects.SelectedWireSourcePart = nil :: ObjectTypes.ObjectPart
@@ -139,12 +141,21 @@ function Objects:HandleInput()
         end
 
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            self:SelectObjectPartUnderMouse(not Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift))
-            self:DragPartUnderMouse()
+            self:SelectHighlightedObjectPart(not Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift))
+            self:DragHighlightedPart()
+
+            if not self.HighlightedPart then
+                self:HideContextMenu()
+            end
+        end
+
+        if input.UserInputType == Enum.UserInputType.MouseButton2 then
+            self:SelectHighlightedObjectPart(true)
+            self:PlayerHandleContextMenu()
         end
 
         if input.KeyCode == Enum.KeyCode.F then
-            self:ActivatePartUnderMouse()
+            self:ActivateHighlightedPart()
         end
 
         if input.KeyCode == Enum.KeyCode.E then
@@ -192,6 +203,75 @@ end
 ]]
 function Objects:OnMapExit()
     self:DespawnAllObjects()
+end
+
+--[[
+    Manages context menu showing/hiding (player-driven).
+]]
+function Objects:PlayerHandleContextMenu()
+    if self.ContextMenuActivePart then
+        self:HideContextMenu()
+    end
+
+    if not self.HighlightedPart then
+        return
+    end
+
+    self:ShowContextMenu(self.HighlightedPart)
+end
+
+--[[
+    Shows the context menu for provided part.
+]]
+function Objects:ShowContextMenu(part: ObjectTypes.ObjectPart)
+    if self.ContextMenuActivePart then
+        Rage.Logging:Warn("Objects:ShowContextMenu(): Attempted to show context menu, but another part has context menu active.")
+        return
+    end
+
+    local screenPosition = Rage.Camera:WorldToScreenPoint(part:GetPosition3D())
+    part.ContextMenu:Show(UDim2.new(0, screenPosition.X, 0, screenPosition.Y))
+
+    part.ContextMenu.OnHide:Once(function()
+        self:DeregisterContextMenuActivePart()
+    end)
+
+    self.ContextMenuActivePart = part
+
+    Rage.Logging:Info("Objects:ShowContextMenu(): Showing context menu.")
+end
+
+--[[
+    Returns if the provided part has their context menu active and recognised.
+]]
+function Objects:HasContextMenuActive(part: ObjectTypes.ObjectPart): boolean
+    return self.ContextMenuActivePart == part
+end
+
+--[[
+    Deregisters the active context menu part.
+]]
+function Objects:DeregisterContextMenuActivePart()
+    if not self.ContextMenuActivePart then
+        return
+    end
+
+    self.ContextMenuActivePart = nil
+end
+
+--[[
+    Hides the context menu.
+]]
+function Objects:HideContextMenu()
+    if not self.ContextMenuActivePart then
+        Rage.Logging:Warn("Objects:HideContextMenu(): Attempted to hide context menu, but no part has context menu active.")
+        return
+    end
+
+    self.ContextMenuActivePart.ContextMenu:Hide()
+    self.ContextMenuActivePart = nil
+
+    Rage.Logging:Info("Objects:HideContextMenu(): Hiding context menu.")
 end
 
 --[[
@@ -280,17 +360,15 @@ function Objects:DragObjectPart(part: ObjectTypes.ObjectPart)
 end
 
 --[[
-    Drags the part under the mouse.
+    Drags the highlighted part.
 ]]
-function Objects:DragPartUnderMouse()
-    local part = self:GetPartUnderMouse()
-
-    if not part then
-        Rage.Logging:Warn("Objects:DragPartUnderMouse(): Attempted to drag part under mouse, but no part was found.")
+function Objects:DragHighlightedPart()
+    if not self.HighlightedPart then
+        Rage.Logging:Warn("Objects:DragHighlightedPart(): Attempted to drag highlighted part, but no part is highlighted.")
         return
     end
 
-    self:DragObjectPart(part)
+    self:DragObjectPart(self.HighlightedPart)
 end
 
 --[[
@@ -357,18 +435,16 @@ function Objects:IsPartHighlighted(part: ObjectTypes.ObjectPart): boolean
 end
 
 --[[
-    Activates the part under the mouse cursor, if it exists.
+    Activates the highlighted part.
 ]]
-function Objects:ActivatePartUnderMouse()
-    local part = self:GetPartUnderMouse()
-
-    if not part then
-        Rage.Logging:Warn("Objects:ActivatePartUnderMouse(): Attempted to activate part under mouse, but no part was found.")
+function Objects:ActivateHighlightedPart()
+    if not self.HighlightedPart then
+        Rage.Logging:Warn("Objects:ActivateHighlightedPart(): Attempted to activate highlighted part, but no part is highlighted.")
         return
     end
 
-    Rage.Logging:Info("Objects:ActivatePartUnderMouse(): Activating part "..part.Part:GetFullName())
-    part:Activate()
+    Rage.Logging:Info("Objects:ActivateHighlightedPart(): Activating part "..self.HighlightedPart.Part:GetFullName())
+    self.HighlightedPart:Activate()
 end
 
 --[[
@@ -470,9 +546,7 @@ function Objects:PlayerBeginWiring()
         return
     end
 
-    local sourcePart = self:GetPartUnderMouse()
-
-    if not sourcePart then
+    if not self.HighlightedPart then
         Toasts:DisplayToast(
             "Objects",
             "Hover your mouse over the part you want to connect a wire from and try again.",
@@ -482,7 +556,7 @@ function Objects:PlayerBeginWiring()
         return
     end
 
-    self.SelectedWireSourcePart = sourcePart
+    self.SelectedWireSourcePart = self.HighlightedPart
     self.SelectedWireSourcePartMousePos = Camera.MouseWorldPosition
 end
 
@@ -499,9 +573,7 @@ function Objects:PlayerStopWiring()
         return
     end
 
-    local targetPart = self:GetPartUnderMouse()
-
-    if not targetPart then
+    if not self.HighlightedPart then
         Toasts:DisplayToast(
             "Objects",
             "Hover your mouse over the part you want to connect a wire to and try again.",
@@ -511,7 +583,7 @@ function Objects:PlayerStopWiring()
         return
     end
 
-    if self.SelectedWireSourcePart == targetPart then
+    if self.SelectedWireSourcePart == self.HighlightedPart then
         Toasts:DisplayToast(
             "Objects",
             "You cannot connect a part to itself.",
@@ -525,7 +597,7 @@ function Objects:PlayerStopWiring()
         self.SelectedWire,
         self.SelectedWireSourcePart,
         self.SelectedWireSourcePartMousePos,
-        targetPart,
+        self.HighlightedPart,
         Camera.MouseWorldPosition
     )
 
@@ -701,6 +773,7 @@ end
 function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): ObjectTypes.SpawnedObject
     local spawnedObject = SpawnedObject.New(ID:GetID(), object)
     spawnedObject:Setup(position)
+    self:_AddContextMenuItems(spawnedObject)
 
     if self.AllFrozen then
         spawnedObject:Freeze()
@@ -716,6 +789,15 @@ function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): Obj
     ))
 
     return spawnedObject
+end
+
+--[[
+    Adds default context menu items to a newly spawned object.
+]]
+function Objects:_AddContextMenuItems(spawnedObject: ObjectTypes.SpawnedObject)
+    spawnedObject:AddContextMenuItem("Remove Wires", function(item)
+        self:RemoveWiresFromPart(item.ContextMenu.ObjectPart)
+    end)
 end
 
 --[[
@@ -750,6 +832,10 @@ function Objects:DespawnObject(spawnedObject: ObjectTypes.SpawnedObject)
 
         if self:IsPartHighlighted(part) then
             self:UnhighlightPart()
+        end
+
+        if self:HasContextMenuActive(part) then
+            self:HideContextMenu()
         end
 
         self:RemoveWiresFromPart(part)
@@ -852,29 +938,27 @@ function Objects:SelectObjectPart(objectPart: ObjectTypes.ObjectPart, overwrite:
 end
 
 --[[
-    Selects the object part under the mouse.
+    Selects the highlighted object part.
 ]]
-function Objects:SelectObjectPartUnderMouse(overwrite: boolean)
-    local objectPart = self:GetPartUnderMouse()
-
-    if not objectPart then
-        Rage.Logging:Warn("Objects:SelectObjectPartUnderMouse(): No object part under mouse. Deselecting all (QOL).")
+function Objects:SelectHighlightedObjectPart(overwrite: boolean)
+    if not self.HighlightedPart then
+        Rage.Logging:Warn("Objects:SelectHighlightedObjectPart(): No highlighted part. Deselecting all (QOL).")
 
         self:DeselectObjectParts()
         return
     end
 
-    if self:IsObjectPartSelected(objectPart) then
-        Rage.Logging:Warn("Objects:SelectObjectPartUnderMouse(): Attempted to select an object part that was already selected. Deselecting as a QOL (if not overwrite, otherwise ignoring).")
+    if self:IsObjectPartSelected(self.HighlightedPart) then
+        Rage.Logging:Warn("Objects:SelectHighlightedObjectPart(): Attempted to select an object part that was already selected. Deselecting as a QOL (if not overwrite, otherwise ignoring).")
 
         if not overwrite then
-            self:DeselectObjectPart(objectPart)
+            self:DeselectObjectPart(self.HighlightedPart)
         end
 
         return
     end
 
-    self:SelectObjectPart(objectPart, overwrite)
+    self:SelectObjectPart(self.HighlightedPart, overwrite)
 end
 
 --[[

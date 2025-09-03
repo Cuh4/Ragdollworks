@@ -23,6 +23,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local signal = require(Rage.WallyPackages.signal)
 
 local ObjectTypes = require(script.Parent.Types)
+local ContextMenu = require(script.Parent.ContextMenu)
 
 -------------------------------
 -- // Main
@@ -58,6 +59,7 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.SelectionBoxInstance = nil :: SelectionBox
     self.RotationForce = 0
     self.Layer = layer
+    self.ContextMenu = ContextMenu.New(self)
 
     self.OnDragStart = signal.new()
     self.OnDragEnd = signal.new()
@@ -86,9 +88,39 @@ end
     Setups the part.
 ]]
 function ObjectPart:Setup()
+    self:SetupContextMenu()
     self:SetupAttachments()
     self:SetupSelection()
     self:SetupDragging()
+end
+
+--[[
+    Adds default context menu items.
+]]
+function ObjectPart:SetupContextMenu()
+    self.ContextMenu:AddContextMenuItem("Despawn", function()
+        self.SpawnedObject:Remove()
+    end)
+
+    self.ContextMenu:AddContextMenuItem("Activate", function()
+        self:Activate()
+    end)
+
+    self.ContextMenu:AddContextMenuItem("Freeze", function()
+        self:Freeze()
+    end)
+
+    self.ContextMenu:AddContextMenuItem("Unfreeze", function()
+        self:Unfreeze()
+    end)
+
+    self.ContextMenu:AddContextMenuItem("Freeze All", function()
+        self.SpawnedObject:Freeze()
+    end)
+
+    self.ContextMenu:AddContextMenuItem("Unfreeze All", function()
+        self.SpawnedObject:Unfreeze()
+    end)
 end
 
 --[[
