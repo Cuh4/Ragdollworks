@@ -181,6 +181,10 @@ function Objects:HandleInput()
         if input.KeyCode == Enum.KeyCode.Space then
             self:PlayerToggleFreezeAllSpawnedObjects()
         end
+
+        if input.KeyCode == Enum.KeyCode.Y then
+            self:PlayerPipette()
+        end
     end)
 
     Rage.Input.InputEnded:Connect(function(input, gameProcessedEvent)
@@ -203,6 +207,41 @@ end
 ]]
 function Objects:OnMapExit()
     self:DespawnAllObjects()
+end
+
+--[[
+    Handles pipetting (player-driven).
+]]
+function Objects:PlayerPipette()
+    if not self.HighlightedPart then
+        Toasts:DisplayToast(
+            "Pipette",
+            "Hover your mouse over a part to pipette.",
+            2
+        )
+    end
+
+    self:PipetteHighlightedPart()
+end
+
+--[[
+    Sets the selected object as the object of the provided part.
+]]
+function Objects:Pipette(objectPart: ObjectTypes.ObjectPart)
+    self:SelectObject(objectPart.SpawnedObject.Object)
+    Rage.Logging:Info("Objects:Pipette(): Pipetting "..objectPart.SpawnedObject.Object.Name)
+end
+
+--[[
+    Sets the selected object as the object of the highlighted part.
+]]
+function Objects:PipetteHighlightedPart()
+    if not self.HighlightedPart then
+        Rage.Logging:Warn("Objects:PipetteHighlightedPart(): Attempted to pipette highlighted part, but no part is highlighted.")
+        return
+    end
+
+    self:Pipette(self.HighlightedPart)
 end
 
 --[[
