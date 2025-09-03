@@ -53,16 +53,7 @@ end
 --[[
     Called every update.
 ]]
-function ActivationLink:OnUpdate()
-    self.OnActivationConnection = self.ObjectPartA.OnActivate:Connect(function()
-        if os.clock() - (self.LastActivation or 0) < self.ACTIVATION_DELAY then
-            return
-        end
-
-        self.LastActivation = os.clock()
-        self.ObjectPartB:Activate()
-    end)
-end
+function ActivationLink:OnUpdate() end
 
 --[[
     Called on instantiation.
@@ -72,6 +63,15 @@ function ActivationLink:OnConnect()
     self.Beam.Attachment0 = self.ObjectPartB.WireAttachmentInstance -- texture is flipped lmao
     self.Beam.Attachment1 = self.ObjectPartA.WireAttachmentInstance
     self.Beam.Parent = self.ObjectPartA.Part
+
+    self.OnActivationConnection = self.ObjectPartA.OnActivate:Connect(function()
+        if os.clock() - (self.LastActivation or 0) < self.ACTIVATION_DELAY then
+            return
+        end
+
+        self.LastActivation = os.clock()
+        self.ObjectPartB:Activate()
+    end)
 end
 
 --[[
