@@ -43,7 +43,7 @@ setmetatable(ActivationLink, SpawnedWire)
 ]]
 function ActivationLink.New(): ActivationLink
     local self = setmetatable(SpawnedWire.New(), ActivationLink) :: ActivationLink
-    self.ACTIVATION_DELAY = 0.05
+    self.ACTIVATION_DELAY = 0.1
     self.Beam = nil :: Beam
     self.LastActivation = nil
 
