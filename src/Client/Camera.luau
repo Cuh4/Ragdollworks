@@ -250,7 +250,7 @@ end
     Locks and hides the player.
 ]]
 function Camera:HidePlayer()
-    local root: BasePart = Rage:Character().HumanoidRootPart
+    local root: BasePart = Rage:Character().PrimaryPart
     root.Anchored = true
     root.CFrame = CFrame.new(0, 0, -1000) -- out of the way
 end
