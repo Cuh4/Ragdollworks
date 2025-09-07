@@ -231,6 +231,10 @@ end
     Keeps the part within the provided bounds.
 ]]
 function ObjectPart:KeepWithinBounds(startBound: Vector2, endBound: Vector2)
+    if self.Paused then
+        return
+    end
+
     local rotation = self.Part.CFrame - self.Part.CFrame.Position -- orientation only
     local position = self.Part.CFrame.Position
 
