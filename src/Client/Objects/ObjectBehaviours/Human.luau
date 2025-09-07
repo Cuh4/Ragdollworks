@@ -69,11 +69,52 @@ function HumanObjectBehaviour:SetupLimbs()
 end
 
 --[[
+    Returns a limb from an object part.
+]]
+function HumanObjectBehaviour:GetLimb(objectPart: ObjectTypes.ObjectPart): Limb.Limb?
+    return self.Limbs[objectPart]
+end
+
+--[[
+    Creates context menu items.
+]]
+function HumanObjectBehaviour:CreateContextMenuItems(objectPart: ObjectTypes.ObjectPart)
+    local limb = self:GetLimb(objectPart)
+
+    if not limb then
+        Rage.Logging:Error("HumanObjectBehaviour:CreateContextMenuItems(): Missing limb for object part: "..objectPart.Part:GetFullName())
+    end
+
+    objectPart.ContextMenu:AddContextMenuItem("Force Limp", function()
+        limb:SetIsForceLimp(true)
+    end)
+
+    objectPart.ContextMenu:AddContextMenuItem("Unforce Limp", function()
+        limb:SetIsForceLimp(false)
+    end)
+
+    objectPart.ContextMenu:AddContextMenuItem("Toggle Limb", function()
+        limb:SetIsForceLimp(not limb.IsForceLimp)
+    end)
+
+    objectPart.ContextMenu:AddContextMenuItem("Heal Limb", function()
+        limb:Heal()
+    end)
+
+    objectPart.ContextMenu:AddContextMenuItem("Heal Human", function()
+        for _, _limb in pairs(self.Limbs) do
+            _limb:Heal()
+        end
+    end)
+end
+
+--[[
     Called when an object using this behaviour is spawned.
 ]]
 function HumanObjectBehaviour:OnSpawn()
     for _, objectPart in pairs(self.SpawnedObject.Parts) do
         self:CreateLimb(objectPart)
+        self:CreateContextMenuItems(objectPart)
     end
 
     self:SetupLimbs()
