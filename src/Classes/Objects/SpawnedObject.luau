@@ -217,6 +217,24 @@ function SpawnedObject:Unfreeze()
 end
 
 --[[
+    Pauses all parts in the spawned object.
+]]
+function SpawnedObject:Pause()
+    for _, part in pairs(self.Parts) do
+        part:Pause()
+    end
+end
+
+--[[
+    Unpauses all parts in the spawned object.
+]]
+function SpawnedObject:Unpause()
+    for _, part in pairs(self.Parts) do
+        part:Unpause()
+    end
+end
+
+--[[
     Adds a context menu item to all parts within this spawned object.
 ]]
 function SpawnedObject:AddContextMenuItem(name: string, onTrigger: ObjectTypes.ContextMenuItemCallback)

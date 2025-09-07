@@ -50,6 +50,7 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.Settings = settings
     self.Dragging = false
     self.Frozen = false
+    self.Paused = false
     self.Selected = false
     self.Highlighted = false
     self.AlignPositionInstance = nil :: AlignPosition
@@ -183,7 +184,7 @@ function ObjectPart:UpdateDragging(dragPosition: Vector2)
     self.AlignPositionInstance.Position = Vector3.new(dragPosition.X, dragPosition.Y, 0)
     self.AlignPositionInstance.Enabled = self.Dragging and not self.Frozen
 
-    if self.Dragging and self.Frozen then
+    if self.Dragging and self.Paused then
         self.SpawnedObject:MoveTo(dragPosition)
 
         if self.RotationForce ~= 0 then
@@ -209,7 +210,7 @@ end
     Updates physics.
 ]]
 function ObjectPart:UpdatePhysics(startBound: Vector2, endBound: Vector2)
-    self.Part.Anchored = self.Frozen
+    self.Part.Anchored = self.Frozen or self.Paused
 
     self:Lock()
     self:KeepWithinBounds(startBound, endBound)
@@ -334,6 +335,20 @@ end
 ]]
 function ObjectPart:Unfreeze()
     self.Frozen = false
+end
+
+--[[
+    Pauses the part.
+]]
+function ObjectPart:Pause()
+    self.Paused = true
+end
+
+--[[
+    Unpauses the part.
+]]
+function ObjectPart:Unpause()
+    self.Paused = false
 end
 
 --[[

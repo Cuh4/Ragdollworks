@@ -77,7 +77,7 @@ Objects.SelectedWireSourcePart = nil :: ObjectTypes.ObjectPart
 Objects.SelectedWireSourcePartMousePos = nil :: Vector2
 Objects.SpawnedWires = {} :: {ObjectTypes.SpawnedWire}
 
-Objects.AllFrozen = false
+Objects.Paused = false
 
 Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
@@ -179,7 +179,7 @@ function Objects:HandleInput()
         end
 
         if input.KeyCode == Enum.KeyCode.Space then
-            self:PlayerToggleFreezeAllSpawnedObjects()
+            self:PlayerTogglePaused()
         end
 
         if input.KeyCode == Enum.KeyCode.Y then
@@ -314,60 +314,60 @@ function Objects:HideContextMenu()
 end
 
 --[[
-    Toggles all spawned objects frozen state (player-driven).
+    Toggles whether the physics of all spawned objects are paused.
 ]]
-function Objects:PlayerToggleFreezeAllSpawnedObjects()
+function Objects:PlayerTogglePaused()
     if not Maps.IsInMap then
         return
     end
 
-    if self.AllFrozen then
-        self:UnfreezeAllSpawnedObjects()
+    if self.Paused then
+        self:UnpauseAllSpawnedObjects()
     else
-        self:FreezeAllSpawnedObjects()
+        self:PauseAllSpawnedObjects()
     end
 end
 
 --[[
-    Set all spawned objects to be frozen.
+    Pauses the physics of all spawned objects.
 ]]
-function Objects:FreezeAllSpawnedObjects()
-    if self.AllFrozen then
-        Rage.Logging:Warn("Objects:FreezeAllSpawnedObjects(): Attempted to freeze all spawned objects when already frozen.")
+function Objects:PauseAllSpawnedObjects()
+    if self.Paused then
+        Rage.Logging:Warn("Objects:PauseAllSpawnedObjects(): Attempted to pause all spawned objects when already paused.")
         return
     end
 
-    self.AllFrozen = true
+    self.Paused = true
 
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
-        spawnedObject:Freeze()
+        spawnedObject:Pause()
     end
 
     Toasts:DisplayToast(
         "Objects",
-        "All objects frozen.",
+        "All object physics have been paused.",
         2
     )
 end
 
 --[[
-    Set all spawned objects to be unfrozen.
+    Unpauses the physics of all spawned objects.
 ]]
-function Objects:UnfreezeAllSpawnedObjects()
-    if not self.AllFrozen then
-        Rage.Logging:Warn("Objects:UnfreezeAllSpawnedObjects(): Attempted to unfreeze all spawned objects when not frozen.")
+function Objects:UnpauseAllSpawnedObjects()
+    if not self.Paused then
+        Rage.Logging:Warn("Objects:UnpauseAllSpawnedObjects(): Attempted to unpause all spawned objects when not paused.")
         return
     end
 
-    self.AllFrozen = false
+    self.Paused = false
 
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
-        spawnedObject:Unfreeze()
+        spawnedObject:Unpause()
     end
 
     Toasts:DisplayToast(
         "Objects",
-        "All objects unfrozen.",
+        "All object physics have been unpaused.",
         2
     )
 end
@@ -814,8 +814,8 @@ function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): Obj
     spawnedObject:Setup(position)
     self:_AddContextMenuItems(spawnedObject)
 
-    if self.AllFrozen then
-        spawnedObject:Freeze()
+    if self.Paused then
+        spawnedObject:Pause()
     end
 
     self:_RegisterSpawnedObject(spawnedObject)
