@@ -66,8 +66,11 @@ function ActivationLink:OnConnect()
 
     self.OnActivationConnection = self.ObjectPartA.OnActivate:Connect(function()
         if os.clock() - (self.LastActivation or 0) < self.ACTIVATION_DELAY then
+            Rage.Logging:Info("ActivationLink: Activation cooldown")
             return
         end
+
+        task.wait(self.ACTIVATION_DELAY)
 
         self.LastActivation = os.clock()
         self.ObjectPartB:Activate()
