@@ -32,6 +32,16 @@ local signal = require(Rage.WallyPackages.signal)
 -- the (almost) same code in two places. this is so fucking stupid and ive been endlessly thinking of alternatives to get around this and the only one ive come to
 -- is this shitty fucking file
 
+export type Entity = {
+    Name: string,
+
+    New: (name: string) -> Entity,
+
+    GetName: (self: Entity) -> string,
+    Despawn: (self: Entity) -> nil, -- removes instances, etc
+    Remove: (self: Entity) -> nil -- despawns and removes data
+}
+
 export type Object = {
     Name: string,
     Description: string,
@@ -61,8 +71,6 @@ export type SpawnedObject = {
     Behaviours: {ObjectBehaviour},
     IsDespawning: boolean,
 
-    _RemovalRequested: signal.Signal,
-
     New: (ID: number, object: Object) -> SpawnedObject,
 
     Update: (self: SpawnedObject, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
@@ -83,7 +91,7 @@ export type SpawnedObject = {
     AddContextMenuItem: (self: SpawnedObject, name: string, onTrigger: ContextMenuItemCallback) -> nil,
     Despawn: (self: SpawnedObject) -> nil,
     Remove: (self: SpawnedObject) -> nil
-}
+} & Entity
 
 export type ObjectPart = {
     SELECTION_COLOR: Color3,
@@ -145,7 +153,7 @@ export type ObjectPart = {
     GetPosition3D: (self: ObjectPart) -> Vector3,
     GetVelocity: (self: ObjectPart) -> Vector2,
     GetVelocity3D: (self: ObjectPart) -> Vector3,
-    Despawn: (self: ObjectPart) -> nil,
+    Despawn: (self: ObjectPart) -> nil
 }
 
 export type ObjectPartSettings = {
@@ -178,13 +186,14 @@ export type SpawnedWire = {
 
     Setup: (self: SpawnedWire, partAMousePos: Vector2, objectPartA: ObjectPart, partBMousePos: Vector2, objectPartB: ObjectPart) -> nil,
     Remove: (self: SpawnedWire) -> nil,
+    Despawn: (self: SpawnedWire) -> nil,
     IsConnectedToPart: (self: SpawnedWire, part: ObjectPart) -> boolean,
     Update: (self: SpawnedWire) -> nil,
 
     OnUpdate: (self: SpawnedWire) -> nil,
     OnConnect: (self: SpawnedWire) -> nil,
     OnCleanup: (self: SpawnedWire) -> nil
-}
+}  & Entity
 
 export type ContextMenu = {
     ObjectPart: ObjectPart,

@@ -21,6 +21,7 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
+local Entity = require(script.Parent.Entity)
 local ObjectTypes = require(script.Parent.Types)
 
 -------------------------------
@@ -32,12 +33,13 @@ local ObjectTypes = require(script.Parent.Types)
 ]]
 SpawnedWire = {} :: ObjectTypes.SpawnedWire
 SpawnedWire.__index = SpawnedWire
+setmetatable(SpawnedWire, Entity)
 
 --[[
     Creates a new wire class instance.
 ]]
 function SpawnedWire.New(): ObjectTypes.SpawnedWire
-    local self = setmetatable({}, SpawnedWire) :: ObjectTypes.SpawnedWire
+    local self = setmetatable(Entity.New("SpawnedWire"), SpawnedWire) :: ObjectTypes.SpawnedWire
     self.ObjectPartA = nil
     self.ObjectPartB = nil
 
@@ -63,10 +65,17 @@ function SpawnedWire:Setup(
 end
 
 --[[
-    Removes this wire.
+    Despawns the wire.
+]]
+function SpawnedWire:Despawn()
+    self:OnCleanup()
+end
+
+--[[
+    Despawns the wire and removes it from the game itself.
 ]]
 function SpawnedWire:Remove()
-    self:OnCleanup()
+    require(Rage.Path.Objects):RemoveWire(self)
 end
 
 --[[

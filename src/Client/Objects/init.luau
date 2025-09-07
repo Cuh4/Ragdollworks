@@ -58,9 +58,10 @@ Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
 
 Objects.SpawnedObjectCount = 0
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
-Objects.SpawnedObjectHistory = {} :: {ObjectTypes.SpawnedObject}
 Objects.SelectedObjectParts = {} :: {ObjectTypes.ObjectPart}
 Objects.HighlightedPart = nil :: ObjectTypes.ObjectPart
+
+Objects.EntityHistory = {} :: {ObjectTypes.Entity}
 
 Objects.IsFollowing = false
 
@@ -163,7 +164,7 @@ function Objects:HandleInput()
         end
 
         if input.KeyCode == Enum.KeyCode.Z then
-            self:DespawnLastObject()
+            self:Undo()
         end
 
         if input.KeyCode == Enum.KeyCode.U then
@@ -669,6 +670,7 @@ function Objects:ConnectWireToParts(wire: ObjectTypes.Wire, partA: ObjectTypes.O
     )
 
     table.insert(self.SpawnedWires, spawnedWire)
+    self:AddToHistory(spawnedWire)
 
     Rage.Logging:Info("Objects:ConnectWireToParts(): Connected wire "..wire.Name.." to parts "..partA.Part:GetFullName().." and "..partB.Part:GetFullName())
 end
@@ -719,7 +721,7 @@ end
     Removes a spawned wire.
 ]]
 function Objects:RemoveWire(wire: ObjectTypes.SpawnedWire)
-    wire:Remove()
+    wire:Despawn()
     Rage.Libs.Table:Remove(self.SpawnedWires, wire)
 end
 
@@ -760,6 +762,29 @@ function Objects:SelectObject(object: ObjectTypes.Object)
         "You have selected "..object.Name..".",
         2
     )
+end
+
+--[[
+    Adds an entity to the history.
+]]
+function Objects:AddToHistory(entity: ObjectTypes.Entity)
+    table.insert(self.EntityHistory, entity)
+    Rage.Logging:Info(("Objects:AddToHistory(): Added %s to history."):format(entity:GetName()))
+end
+
+--[[
+    Removes an entity from the history.
+]]
+function Objects:RemoveFromHistory(entity: ObjectTypes.Entity)
+    Rage.Libs.Table:Remove(self.EntityHistory, entity)
+    Rage.Logging:Info(("Objects:RemoveFromHistory(): Removed %s from history."):format(entity:GetName()))
+end
+
+--[[
+    Returns the last entity in the history.
+]]
+function Objects:GetLastEntity(): ObjectTypes.Entity?
+    return Rage.Libs.Table:GetLast(self.EntityHistory)
 end
 
 --[[
@@ -844,11 +869,7 @@ end
 ]]
 function Objects:_RegisterSpawnedObject(spawnedObject: ObjectTypes.SpawnedObject)
     self.SpawnedObjects[spawnedObject.ID] = spawnedObject
-    table.insert(self.SpawnedObjectHistory, spawnedObject)
-
-    spawnedObject._RemovalRequested:Once(function()
-        self:DespawnObject(spawnedObject)
-    end)
+    self:AddToHistory(spawnedObject)
 
     self.SpawnedObjectCount = self.SpawnedObjectCount + 1
 
@@ -891,23 +912,11 @@ end
 ]]
 function Objects:_UnregisterSpawnedObject(spawnedObject: ObjectTypes.SpawnedObject)
     self.SpawnedObjects[spawnedObject.ID] = nil
-    self:_RemoveSpawnedObjectFromHistory(spawnedObject)
+    self:RemoveFromHistory(spawnedObject)
 
     self.SpawnedObjectCount = self.SpawnedObjectCount - 1
 
     self.OnDespawn:Fire(spawnedObject)
-end
-
---[[
-    Removes a spawned object from history.
-]]
-function Objects:_RemoveSpawnedObjectFromHistory(spawnedObject: ObjectTypes.SpawnedObject)
-    for index, _spawnedObject in pairs(self.SpawnedObjectHistory) do
-        if _spawnedObject == spawnedObject then
-            table.remove(self.SpawnedObjectHistory, index)
-            break
-        end
-    end
 end
 
 --[[
@@ -920,28 +929,29 @@ function Objects:DespawnAllObjects()
 end
 
 --[[
-    Despawns the most recent spawned object.
+    Despawns the most recently spawned entity (objects, wires, etc).
 ]]
-function Objects:DespawnLastObject()
-    local recent = Rage.Libs.Table:GetLast(self.SpawnedObjectHistory) :: ObjectTypes.SpawnedObject
+function Objects:Undo()
+    local recent = self:GetLastEntity()
 
     if not recent then
-        Rage.Logging:Warn("Objects:DespawnLastObject(): No recent spawned object to despawn.")
+        Rage.Logging:Warn("Objects:Undo(): No recent last entity.")
 
         Toasts:DisplayToast(
             "Objects",
-            "No object to undo.",
+            "Nothing to undo.",
             2
         )
 
         return
     end
 
-    self:DespawnObject(recent)
+    recent:Remove()
+    self:RemoveFromHistory(recent)
 
     Toasts:DisplayToast(
         "Objects",
-        "Successfully despawned last object.",
+        "Successfully undo'd.",
         2
     )
 end

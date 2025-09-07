@@ -20,8 +20,8 @@
 -------------------------------
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
-local signal = require(Rage.WallyPackages.signal)
 
+local Entity = require(script.Parent.Entity)
 local ObjectPart = require(script.Parent.ObjectPart)
 local ObjectTypes = require(script.Parent.Types)
 
@@ -34,20 +34,19 @@ local ObjectTypes = require(script.Parent.Types)
 ]]
 SpawnedObject = {} :: ObjectTypes.SpawnedObject
 SpawnedObject.__index = SpawnedObject
+setmetatable(SpawnedObject, Entity)
 
 --[[
     Creates a new SpawnedObject class instance.
 ]]
 function SpawnedObject.New(ID: number, object: Object): ObjectTypes.SpawnedObject
-    local self = setmetatable({}, SpawnedObject) :: ObjectTypes.SpawnedObject
+    local self = setmetatable(Entity.New("SpawnedObject"), SpawnedObject) :: ObjectTypes.SpawnedObject
     self.ID = ID
     self.Object = object
     self.Instance = nil
     self.Parts = nil
     self.Behaviours = {}
     self.IsDespawning = false
-
-    self._RemovalRequested = signal.new()
 
     return self
 end
@@ -264,8 +263,7 @@ end
     Removes the spawned object. Despawns and removes from Objects service.
 ]]
 function SpawnedObject:Remove()
-    self:Despawn()
-    self._RemovalRequested:Fire()
+    require(Rage.Path.Objects):DespawnObject(self)
 end
 
 return SpawnedObject
