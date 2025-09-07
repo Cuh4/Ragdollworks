@@ -28,7 +28,17 @@ Classes = {}
     Returns if a class instance is of the provided class.
 ]]
 function Classes:IsClassInstance(instance: table, class: table): boolean
-    return getmetatable(instance) == class
+    local metatable = getmetatable(instance)
+
+    while metatable do
+        if metatable == class then
+            return true
+        end
+
+        metatable = getmetatable(metatable) -- go up the chain
+    end
+
+    return false
 end
 
 export type Classes = typeof(Classes)
