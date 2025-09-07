@@ -183,11 +183,25 @@ function Limb:ApplyBleeding(amount)
 end
 
 --[[
+    Removes all bleeding.
+]]
+function Limb:RemoveBleeding()
+    self.Bleeding = 0
+end
+
+--[[
     Applies bruising.
 ]]
 function Limb:ApplyBruising(amount: number)
     self.Bruising = math.clamp(self.Bruising + amount, 0, 1)
     Rage.Logging:Info(self.LimbName..": Bruising += "..amount)
+end
+
+--[[
+    Removes all bruising.
+]]
+function Limb:RemoveBruising()
+    self.Bruising = 0
 end
 
 --[[
@@ -358,8 +372,8 @@ end
 ]]
 function Limb:Heal()
     self.Health = self.MaxHealth
-    self.Bruising = 0
-    self.Bleeding = 0
+    self:RemoveBleeding()
+    self:RemoveBruising()
 end
 
 --[[
