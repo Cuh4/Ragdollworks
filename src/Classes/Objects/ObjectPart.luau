@@ -25,6 +25,8 @@ local signal = require(Rage.WallyPackages.signal)
 local ObjectTypes = require(script.Parent.Types)
 local ContextMenu = require(script.Parent.ContextMenu)
 
+local Effects = require(Rage.Path.Effects)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -265,6 +267,13 @@ end
 ]]
 function ObjectPart:Activate()
     self.OnActivate:Fire()
+
+    -- FX
+    Effects:SpawnEffect(
+        "ObjectPartActivation",
+        0.07,
+        self.Part
+    )
 end
 
 --[[

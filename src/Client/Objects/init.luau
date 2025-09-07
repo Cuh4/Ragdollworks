@@ -30,6 +30,7 @@ local Camera = require(Rage.Path.Camera)
 local Maps = require(Rage.Path.Maps)
 local Debug = require(Rage.Path.Debug)
 local Toasts = require(Rage.Path.Toasts)
+local Effects = require(Rage.Path.Effects)
 
 local Object = require(Rage.ReplicatedStorage.Classes.Objects.Object)
 local SpawnedObject = require(Rage.ReplicatedStorage.Classes.Objects.SpawnedObject)
@@ -844,6 +845,13 @@ function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): Obj
     end
 
     self:_RegisterSpawnedObject(spawnedObject)
+
+    Effects:SpawnEffect(
+        "ObjectSpawn",
+        0.07,
+        nil,
+        Vector3.new(position.X, position.Y, 0)
+    )
 
     Rage.Logging:Info(("Objects:SpawnObject(): Spawned object %s (%s) at %s with %d parts"):format(
         object.Name,
