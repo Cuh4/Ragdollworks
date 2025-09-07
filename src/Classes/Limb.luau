@@ -346,6 +346,23 @@ function Limb:GetBloodDecal(index: number): Decal
 end
 
 --[[
+    Returns a random blood decal.
+]]
+function Limb:GetRandomBloodDecal(): (Decal, number)
+    local index = math.random(1, self.BloodDecalCount)
+    return self:GetBloodDecal(index), index
+end
+
+--[[
+    Heals the limb.
+]]
+function Limb:Heal()
+    self.Health = self.MaxHealth
+    self.Bruising = 0
+    self.Bleeding = 0
+end
+
+--[[
     Returns whether or not the limb is alive.
 ]]
 function Limb:IsAlive(): boolean
@@ -405,17 +422,18 @@ function Limb:HandleDamageVisuals()
     -- Bruising decal
     self.BruiseDecal.Transparency = Rage.Libs.Math:Lerp(1, self.BRUISE_DECAL_MIN_TRANSPARENCY, self.Bruising)
 
-    -- Blood decals
-    local step = self.MaxHealth / self.BloodDecalCount -- 33.3
+    -- Blood decals (OLD APPROACH)
+    local damage = self.MaxHealth - self.Health
+    local globalOffset = (damage / self.MaxHealth) / 2 -- so all decals are used even with minor damage
+    local step = self.MaxHealth / self.BloodDecalCount
 
     for index = 1, self.BloodDecalCount do
         local decal = self:GetBloodDecal(index)
         local startBound = (index - 1) * step
         local endBound = index * step
-        local damage = self.MaxHealth - self.Health
 
         local progress = math.clamp((damage - startBound) / (endBound - startBound), 0, 1)
-        decal.Transparency = Rage.Libs.Math:Lerp(1, self.BLOOD_DECAL_MIN_TRANSPARENCY, progress)
+        decal.Transparency = Rage.Libs.Math:Lerp(1, self.BLOOD_DECAL_MIN_TRANSPARENCY, math.clamp(progress + globalOffset, 0, 1))
     end
 end
 
