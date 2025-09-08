@@ -34,7 +34,7 @@ Sound.__index = Sound
 --[[
     Creates a new Sound class instance.
 ]]
-function Sound.New(soundID: number, settings: SoundSettings): Sound
+function Sound.New(soundID: string, settings: SoundSettings): Sound
     local self = setmetatable({}, Sound) :: Sound
     self.SoundID = soundID
     self.Settings = settings
@@ -60,7 +60,7 @@ function Sound:CreateInstance(modifiers: {Instance}?): Sound
     end
 
     sound.Name = self.SoundID
-    sound.SoundId = "rbxassetid://" .. self.SoundID
+    sound.SoundId = self.SoundID
     sound.Parent = Rage.Player
 
     local endedConnection, stoppedConnection
@@ -91,7 +91,7 @@ function Sound:Play(modifiers: {Instance}?): Sound
 end
 
 export type Sound = {
-    SoundID: number,
+    SoundID: string,
     Settings: SoundSettings,
     Instances: {Sound}
 } & typeof(Sound)
