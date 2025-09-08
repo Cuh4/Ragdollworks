@@ -31,5 +31,13 @@ function Math:Lerp(a: number, b: number, t: number): number
     return a + (b - a) * t
 end
 
+--[[
+    Returns a random number between the ranges, with better randomness.
+]]
+function Math:Random(min: number, max: number): number
+    math.randomseed(os.time() * math.random())
+    return math.random(min, max)
+end
+
 export type Math = typeof(Math)
 return Math
