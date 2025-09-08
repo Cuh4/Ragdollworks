@@ -16,6 +16,12 @@
 ]]
 
 -------------------------------
+-- // Variables
+-------------------------------
+
+local Math = require(script.Parent.Math)
+
+-------------------------------
 -- // Main
 -------------------------------
 
@@ -56,7 +62,7 @@ function Table:GetRandom(tbl: table): any
         return
     end
 
-    return tbl[math.random(1, #tbl)]
+    return tbl[Math:Random(1, #tbl)]
 end
 
 --[[
