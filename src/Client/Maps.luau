@@ -112,6 +112,10 @@ function Maps:_SetupMapInstance()
         self.MapInstance.PrimaryPart = background
     end
 
+    background.CanCollide = false
+    background.CanTouch = false
+    background.CanQuery = true
+
     self.MapInstance.Parent = game.Workspace
 
     self.MapInstance:MoveTo(Vector3.new(
