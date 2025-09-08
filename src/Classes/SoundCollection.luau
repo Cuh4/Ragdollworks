@@ -39,6 +39,7 @@ SoundCollection.__index = SoundCollection
 function SoundCollection.New(...: Sound.Sound): SoundCollection
     local self = setmetatable({}, SoundCollection) :: SoundCollection
     self.Sounds = {...}
+    self.LastPlayedRandom = nil :: Sound.Sound
 
     return self
 end
@@ -47,17 +48,22 @@ end
     Plays a random sound.
 ]]
 function SoundCollection:PlayRandom(modifiers: {Instance}?)
-    local sound = Rage.Libs.Table:GetRandom(self.Sounds) :: Sound
+    local sound = Rage.Libs.Table:GetRandom(self.Sounds) :: Sound.Sound
 
     if not sound then
         Rage.Logging:Error("SoundCollection:Play(): No sound found.")
     end
 
+    if #self.Sounds >= 2 and sound == self.LastPlayedRandom then -- prevent playing same sound twice
+        return self:PlayRandom(modifiers)
+    end
+
     sound:Play(modifiers)
+    self.LastPlayedRandom = sound
 end
 
 export type SoundCollection = {
-    Sounds: {Sound}
+    Sounds: {Sound.Sound}
 } & typeof(SoundCollection)
 
 return SoundCollection
