@@ -24,6 +24,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local Sounds = require(Rage.Path.Sounds)
 local UI = require(Rage.Path.UI)
 local Effects = require(Rage.Path.Effects)
+local RbxAssets = require(Rage.Path.RbxAssets)
 
 local Sound, SoundCollection = require(script.Parent.Sound), require(script.Parent.SoundCollection) -- purely for types
 local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
@@ -45,6 +46,9 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     local self = setmetatable({}, Limb) :: Limb
     self.BLOOD_DECAL_MIN_TRANSPARENCY = 0.3
     self.BRUISE_DECAL_MIN_TRANSPARENCY = 0.55
+
+    self.GRUNT_IMPACT_THRESHOLD = 12
+    self.GRUNT_COOLDOWN = 0.3
 
     self.IMPACT_THRESHOLD = 15
     self.IMPACT_COOLDOWN = 0.3
@@ -71,6 +75,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.BloodDecalCount = bloodDecalCount
     self.Limbs = {}
 
+    self.LastGrunt = 0
     self.LastImpact = 0
 
     self.Bruising = 0
@@ -80,6 +85,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.IsForceLimp = false
     self.IsBrainAlive = true
     self.IsHeartBeating = true
+    self.PlayedDeathScream = false
 
     self.StabilizationForce = nil :: AlignOrientation
     self.Attachment = nil :: Attachment
@@ -91,17 +97,28 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     } :: Sound.SoundSettings
 
     self.ImpactSounds = Sounds:CreateSoundCollection(
-        Sounds:CreateSound(7446607140, _impactSettings),
-        Sounds:CreateSound(7446609932, _impactSettings),
-        Sounds:CreateSound(7446609976, _impactSettings),
-        Sounds:CreateSound(7446606796, _impactSettings),
-        Sounds:CreateSound(7446606976, _impactSettings),
-        Sounds:CreateSound(7446606925, _impactSettings)
+        Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_1, _impactSettings),
+        Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_2, _impactSettings),
+        Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_3, _impactSettings),
+        Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_4, _impactSettings),
+        Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_5, _impactSettings),
+        Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_6, _impactSettings)
     )
 
     self.ImpactEffects = {
         "Impact1"
     }
+
+    self.GruntSounds = Sounds:CreateSoundCollection(
+        Sounds:CreateSound(RbxAssets.HUMAN_GRUNT_1, {Volume = 0.7}),
+        Sounds:CreateSound(RbxAssets.HUMAN_GRUNT_2, {Volume = 1.2}),
+        Sounds:CreateSound(RbxAssets.HUMAN_GRUNT_3, {Volume = 0.2})
+    )
+
+    self.DeathSounds = Sounds:CreateSoundCollection(
+        Sounds:CreateSound(RbxAssets.HUMAN_DEATH_1, {Volume = 1.2}),
+        Sounds:CreateSound(RbxAssets.HUMAN_DEATH_2, {Volume = 1})
+    )
 
     self.BleedingEffect = nil :: ParticleEmitter
     self.BleedingEffectDefaultRate = nil :: number
@@ -122,6 +139,25 @@ function Limb.FromObjectPart(objectPart: ObjectTypes.ObjectPart): Limb
         objectPart.Part:GetAttribute("MaxStabilizationTorque") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `MaxStabilizationTorque` attribute."),
         objectPart.Part:GetAttribute("BloodDecalCount") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `BloodDecalCount` attribute.")
     )
+end
+
+--[[
+    Helper method to make a method only run on a certain limb.<br>
+    Returns false if the method was attempted to be called on the wrong limb.
+]]
+function Limb:OnlyRunOnLimb(limbName: string, methodName: string, ...): boolean
+    if self.LimbName ~= limbName then
+        local limb = self:FindLimbByName(limbName)
+
+        if not limb then
+            Rage.Logging:Error("Limb:OnlyRunOnLimb(): Limb `"..limbName.."` does not exist.")
+        end
+
+        limb[methodName](limb, ...)
+        return false
+    end
+
+    return true
 end
 
 --[[
@@ -172,6 +208,48 @@ function Limb:GetLimbParts(): {Part}
     end
 
     return parts
+end
+
+--[[
+    Plays a grunt sound if possible.
+]]
+function Limb:Grunt()
+    if not self:OnlyRunOnLimb("Head", "Grunt") then
+        return
+    end
+
+    if os.clock() - self.LastGrunt < self.GRUNT_COOLDOWN then
+        Rage.Logging:Warn(self.LimbName..": Grunt on cooldown")
+        return -- still on cooldown
+    end
+
+    if not self:IsAlive() then
+        Rage.Logging:Warn(self.LimbName..": Attempted to grunt while dead")
+        return
+    end
+
+    self.LastGrunt = os.clock()
+    self.GruntSounds:PlayRandom()
+
+    Rage.Logging:Info(self.LimbName..": Grunted")
+end
+
+--[[
+    Plays a death sound if possible.
+]]
+function Limb:DeathScream()
+    if not self:OnlyRunOnLimb("Head", "DeathScream") then
+        return
+    end
+
+    if self.PlayedDeathScream then
+        return
+    end
+
+    self.DeathSounds:PlayRandom()
+    self.PlayedDeathScream = true
+
+    Rage.Logging:Info(self.LimbName..": Playing death scream")
 end
 
 --[[
@@ -255,37 +333,6 @@ function Limb:TrackImpacts()
 end
 
 --[[
-    Called when the limb received an impact.
-]]
-function Limb:HandleImpact(amount: number)
-    -- Log
-    Rage.Logging:Info(self.LimbName..": Impact, amount: "..amount)
-
-    -- Inflict damage
-    self:Damage(amount * self.IMPACT_DAMAGE_MULTIPLIER)
-
-    -- Trigger bleeding
-    if amount > self.BLEEDING_IMPACT_THRESHOLD and self:GetHealthPercentage() < self.BLEEDING_IMPACT_HEALTH_THRESHOLD then
-        self:ApplyBleeding(amount * self.BLEEDING_IMPACT_MULTIPLIER)
-    end
-
-    -- Bruising
-    if amount > self.IMPACT_BRUISING_THRESHOLD then
-        self:ApplyBruising(amount * self.IMPACT_BRUISING_MULTIPLIER)
-    end
-
-    -- SFX
-    self.ImpactSounds:PlayRandom({
-        Sounds:CreateSoundModifier("PitchShiftSoundEffect", {
-            Octave = math.clamp(1 - (amount / 175), 0.75, 1)
-        })
-    })
-
-    -- VFX
-    Effects:SpawnEffect(Rage.Libs.Table:GetRandom(self.ImpactEffects), 0.07, self.ObjectPart.Part)
-end
-
---[[
     Returns if a part belongs to a limb of the human this limb belongs to.
 ]]
 function Limb:DoesPartBelongsToLimb(part: BasePart): boolean
@@ -363,7 +410,7 @@ end
     Returns a random blood decal.
 ]]
 function Limb:GetRandomBloodDecal(): (Decal, number)
-    local index = math.random(1, self.BloodDecalCount)
+    local index = Rage.Libs.Math:Random(1, self.BloodDecalCount)
     return self:GetBloodDecal(index), index
 end
 
@@ -381,6 +428,41 @@ end
 ]]
 function Limb:IsAlive(): boolean
     return self.IsLimbAlive and self.IsBrainAlive and self.IsHeartBeating
+end
+
+--[[
+    Called when the limb received an impact.
+]]
+function Limb:HandleImpact(amount: number)
+    -- Log
+    Rage.Logging:Info(self.LimbName..": Impact, amount: "..amount)
+
+    -- Inflict damage
+    self:Damage(amount * self.IMPACT_DAMAGE_MULTIPLIER)
+
+    -- Trigger bleeding
+    if amount > self.BLEEDING_IMPACT_THRESHOLD and self:GetHealthPercentage() < self.BLEEDING_IMPACT_HEALTH_THRESHOLD then
+        self:ApplyBleeding(amount * self.BLEEDING_IMPACT_MULTIPLIER)
+    end
+
+    -- Bruising
+    if amount > self.IMPACT_BRUISING_THRESHOLD then
+        self:ApplyBruising(amount * self.IMPACT_BRUISING_MULTIPLIER)
+    end
+
+    -- SFX
+    self.ImpactSounds:PlayRandom({
+        Sounds:CreateSoundModifier("PitchShiftSoundEffect", {
+            Octave = math.clamp(1 - (amount / 175), 0.75, 1)
+        })
+    })
+
+    if amount > self.GRUNT_IMPACT_THRESHOLD then
+        self:Grunt()
+    end
+
+    -- VFX
+    Effects:SpawnEffect(Rage.Libs.Table:GetRandom(self.ImpactEffects), 0.07, self.ObjectPart.Part)
 end
 
 --[[
@@ -427,6 +509,16 @@ function Limb:HandleState()
     self.IsLimbAlive = self.Health > 0
     self.IsBrainAlive = self:FindLimbByName("Head").IsLimbAlive
     self.IsHeartBeating = self:FindLimbByName("UpperTorso").IsLimbAlive
+
+    if not self.IsBrainAlive then
+        if self.PlayedDeathScream then
+            return
+        end
+
+        self:DeathScream()
+    else
+        self.PlayedDeathScream = false
+    end
 end
 
 --[[
@@ -518,6 +610,9 @@ export type Limb = {
     BLOOD_DECAL_MIN_TRANSPARENCY: number,
     BRUISE_DECAL_MIN_TRANSPARENCY: number,
 
+    GRUNT_IMPACT_THRESHOLD: number,
+    GRUNT_COOLDOWN: number,
+
     IMPACT_THRESHOLD: number,
     IMPACT_COOLDOWN: number,
     IMPACT_DAMAGE_MULTIPLIER: number,
@@ -546,6 +641,7 @@ export type Limb = {
     BillboardGUI: BillboardGui,
     HealthContainer: Frame,
 
+    LastGrunt: number,
     LastImpact: number,
 
     Bruising: number,
@@ -555,6 +651,7 @@ export type Limb = {
     IsForceLimp: boolean,
     IsBrainAlive: boolean,
     IsHeartBeating: boolean,
+    PlayedDeathScream: boolean,
 
     StabilizationForce: AlignOrientation,
     Attachment: Attachment,
@@ -562,8 +659,9 @@ export type Limb = {
     MaxStabilizationTorque: number,
 
     ImpactSounds: SoundCollection.SoundCollection,
-
     ImpactEffects: {string},
+    GruntSounds: SoundCollection.SoundCollection,
+    DeathSounds: SoundCollection.SoundCollection,
     BleedingEffect: ParticleEmitter,
     BleedingEffectDefaultRate: number,
     BruiseDecal: Decal,
