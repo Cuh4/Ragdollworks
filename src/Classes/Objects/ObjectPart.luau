@@ -131,7 +131,7 @@ end
 ]]
 function ObjectPart:SetupAttachments()
     self.WireAttachmentInstance = Instance.new("Attachment")
-    self.WireAttachmentInstance.Name = "GeneralAttachment"
+    self.WireAttachmentInstance.Name = "WireAttachment"
     self.WireAttachmentInstance.Parent = self.Part
 
     self.DraggingAttachmentInstance = Instance.new("Attachment")
