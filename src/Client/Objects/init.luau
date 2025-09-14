@@ -82,7 +82,7 @@ Objects.SpawnedWires = {} :: {ObjectTypes.SpawnedWire}
 Objects.Paused = false
 
 Objects.SlowMotion = false
-Objects.SlomoSpeed = 0.25
+Objects.SlomoSpeed = 0.5
 Objects._HeartbeatFrame = 0
 
 Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
