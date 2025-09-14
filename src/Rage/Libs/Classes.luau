@@ -25,20 +25,39 @@
 Classes = {}
 
 --[[
-    Returns if a class instance is of the provided class.
+    Recursively gets the class (metatable) of a class instance by going upstream until
+    the condition is met.
 ]]
-function Classes:IsClassInstance(instance: table, class: table): boolean
+function Classes:_GetClass(instance: table, condition: (table) -> boolean): table?
     local metatable = getmetatable(instance)
 
     while metatable do
-        if metatable == class then
-            return true
+        if condition(metatable) then
+            return metatable
         end
 
         metatable = getmetatable(metatable) -- go up the chain
     end
 
-    return false
+    return nil
+end
+
+--[[
+    Returns if a class instance is of the provided class.
+]]
+function Classes:IsClassInstance(instance: table, class: table): boolean
+    local metatable = self:_GetClass(instance, function(metatable)
+        return metatable == class
+    end)
+
+    return metatable ~= nil
+end
+
+--[[
+    Returns if two instances are of the same class.
+]]
+function Classes:AreSameClass(instanceA: table, instanceB: table): boolean
+    return getmetatable(instanceA) == getmetatable(instanceB)
 end
 
 export type Classes = typeof(Classes)
