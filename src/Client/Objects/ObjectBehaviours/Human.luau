@@ -149,9 +149,9 @@ function HumanObjectBehaviour:OnUpdate()
     end
 end
 
-export type HumanObjectBehaviour = {
+export type HumanObjectBehaviour = ObjectTypes.ObjectBehaviour & typeof(HumanObjectBehaviour) & {
     Limbs: {[ObjectTypes.ObjectPart]: Limb.Limb},
     IsForceLimp: boolean
-} & typeof(HumanObjectBehaviour) & ObjectTypes.ObjectBehaviour
+}
 
 return HumanObjectBehaviour

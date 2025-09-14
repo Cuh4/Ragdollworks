@@ -136,13 +136,13 @@ function ExplosiveObjectBehaviour:OnUpdate()
     self:UpdateLastPosition()
 end
 
-export type ExplosiveObjectBehaviour = {
+export type ExplosiveObjectBehaviour = ObjectTypes.ObjectBehaviour & typeof(ExplosiveObjectBehaviour) & {
     LastPosition: Vector2,
     MainPart: ObjectTypes.ObjectPart,
     ExplosionRadius: number,
     ExplosionPressure: number,
     PositionDeltaThreshold: number,
     ExplodeOnActivation: boolean
-} & typeof(ExplosiveObjectBehaviour) & ObjectTypes.ObjectBehaviour
+}
 
 return ExplosiveObjectBehaviour

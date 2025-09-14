@@ -63,11 +63,11 @@ function Map:CreateInstance(): Model
     return self.Instance:Clone()
 end
 
-export type Map = {
+export type Map = typeof(Map) & {
     Name: string,
     Description: string,
     Size: Vector2,
     Instance: Model
-} & typeof(Map)
+}
 
 return Map

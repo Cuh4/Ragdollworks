@@ -42,9 +42,9 @@ function Service:GetName(): string
     return self.Name
 end
 
-export type Service = {
+export type Service = typeof(Service) & {
     Name: string,
     OnStart: ((self: Service) -> nil)|nil
-} & typeof(Service)
+}
 
 return Service

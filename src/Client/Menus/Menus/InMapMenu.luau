@@ -167,7 +167,7 @@ function InMapMenu:Setup()
     end)
 end
 
-export type InMapMenu = {
+export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
     InfoContainer: Frame,
     PlayerContainer: Frame,
     PlayerIcon: ImageLabel,
@@ -193,6 +193,6 @@ export type InMapMenu = {
     OnObjectDespawn: signal.Connection,
     OnObjectSelect: signal.Connection,
     OnWireSelect: signal.Connection
-} & typeof(InMapMenu) & Menu.Menu
+}
 
 return InMapMenu

@@ -62,8 +62,8 @@ function SoundCollection:PlayRandom(modifiers: {Instance}?)
     self.LastPlayedRandom = sound
 end
 
-export type SoundCollection = {
+export type SoundCollection = typeof(SoundCollection) & {
     Sounds: {Sound.Sound}
-} & typeof(SoundCollection)
+}
 
 return SoundCollection

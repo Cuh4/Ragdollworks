@@ -81,8 +81,8 @@ function ContextMenu:_AddUIItems()
         local frame, button = item:GetUI()
 
         button.MouseButton1Click:Once(function()
-            item:Trigger()
             self:Hide()
+            item:Trigger()
         end)
 
         frame.Parent = self.ContextMenuUI

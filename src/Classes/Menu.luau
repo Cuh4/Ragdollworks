@@ -73,10 +73,10 @@ function Menu:Update()
     self.ScreenGUI.Enabled = self.Visible
 end
 
-export type Menu = {
+export type Menu = typeof(Menu) & {
     Name: string,
     ScreenGUI: ScreenGui,
     Visible: boolean
-} & typeof(Menu)
+}
 
 return Menu

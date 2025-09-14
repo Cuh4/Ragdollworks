@@ -120,11 +120,11 @@ end
 ]]
 function LightObjectBehaviour:OnUpdate() end
 
-export type LightObjectBehaviour = {
+export type LightObjectBehaviour = ObjectTypes.ObjectBehaviour & typeof(LightObjectBehaviour) & {
     LIGHT_MATERIAL_ON: Enum.Material,
     LIGHT_MATERIAL_OFF: Enum.Material,
 
     LightParts: {[ObjectTypes.ObjectPart]: ObjectTypes.ObjectPart}
-} & typeof(LightObjectBehaviour) & ObjectTypes.ObjectBehaviour
+}
 
 return LightObjectBehaviour

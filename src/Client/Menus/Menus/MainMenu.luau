@@ -78,12 +78,12 @@ function MainMenu:Setup()
     end)
 end
 
-export type MainMenu = {
+export type MainMenu = Menu.Menu & typeof(MainMenu) & {
     RootContainer: Frame,
     Buttons: Frame,
 
     OnMapStart: signal.Connection,
     OnMapExit: signal.Connection
-} & typeof(MainMenu) & Menu.Menu
+}
 
 return MainMenu

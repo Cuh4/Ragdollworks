@@ -90,11 +90,11 @@ function Sound:Play(modifiers: {Instance}?): Sound
     return instance
 end
 
-export type Sound = {
+export type Sound = typeof(Sound) & {
     SoundID: string,
     Settings: SoundSettings,
     Instances: {Sound}
-} & typeof(Sound)
+}
 
 export type SoundSettings = {
     RollOffMaxDistance: number,

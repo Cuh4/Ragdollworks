@@ -606,7 +606,7 @@ function Limb:Cleanup()
     self.TouchConnection:Disconnect()
 end
 
-export type Limb = {
+export type Limb = typeof(Limb) & {
     BLOOD_DECAL_MIN_TRANSPARENCY: number,
     BRUISE_DECAL_MIN_TRANSPARENCY: number,
 
@@ -667,6 +667,6 @@ export type Limb = {
     BruiseDecal: Decal,
 
     TouchConnection: RBXScriptConnection
-} & typeof(Limb)
+}
 
 return Limb
