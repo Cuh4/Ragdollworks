@@ -12,6 +12,10 @@
         "$path": "src/Classes"
       },
 
+      "Enums": {
+        "$path": "src/Enums"
+      },
+
       "Packages": {
         "$path": "Packages"
       }
