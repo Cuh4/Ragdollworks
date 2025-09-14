@@ -235,6 +235,17 @@ function Limb:Grunt()
 end
 
 --[[
+    Plays an impact sound.
+]]
+function Limb:PlayImpactSound(impactAmount: number)
+    self.ImpactSounds:PlayRandom({
+        Sounds:CreateSoundModifier("PitchShiftSoundEffect", {
+            Octave = math.clamp(1 - (impactAmount / 175), 0.75, 1)
+        })
+    })
+end
+
+--[[
     Plays a death sound if possible.
 ]]
 function Limb:DeathScream()
@@ -280,17 +291,6 @@ end
 ]]
 function Limb:RemoveBruising()
     self.Bruising = 0
-end
-
---[[
-    Returns if the human this limb belongs to is grounded (feet touching ground).
-]]
-function Limb:DetectIsGrounded(): boolean
-    if Rage.Libs.String:EndsWith(self.LimbName, "Foot") then
-        return self:IsTouchingBeneath()
-    else
-        return self:FindLimbByName("LeftFoot").IsGrounded or self:FindLimbByName("RightFoot").IsGrounded
-    end
 end
 
 --[[
@@ -370,16 +370,47 @@ function Limb:IsTouching(): boolean
 end
 
 --[[
-    Returns if the limb is touching anything beneath it.
+    Returns if the human this limb belongs to is grounded (feet touching ground).
+]]
+function Limb:DetectIsGrounded(): boolean
+    if Rage.Libs.String:EndsWith(self.LimbName, "Foot") then
+        return self:IsTouchingBeneath()
+    else
+        return self:FindLimbByName("LeftFoot").IsGrounded or self:FindLimbByName("RightFoot").IsGrounded
+    end
+end
+
+--[[
+    Returns if the limb is touching anything beneath it.<br>
+    Returns false if this is not called on a foot limb.
 ]]
 function Limb:IsTouchingBeneath(): boolean
-    for _, part in pairs(self:GetTouchingParts()) do
-        if part.Position.Y < self.ObjectPart.Part.Position.Y then
-            return true
-        end
+    if not Rage.Libs.String:EndsWith(self.LimbName, "Foot") then
+        return false
     end
 
-    return false
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    raycastParams.FilterDescendantsInstances = self:GetLimbParts()
+
+    local raycastResult = Rage.Workspace:Raycast(
+        self.ObjectPart.Part.Position,
+        Vector3.new(0, -self.ObjectPart.Part.Size.Y * 2, 0),
+        raycastParams
+    )
+
+    return raycastResult ~= nil
+
+    -- below is old and doesn't work when the feet are touching
+    -- a rotated object below the center point
+
+    -- for _, part in pairs(self:GetTouchingParts()) do
+    --     if part.Position.Y < self.ObjectPart.Part.Position.Y then
+    --         return true
+    --     end
+    -- end
+
+    -- return false
 end
 
 --[[
@@ -451,11 +482,7 @@ function Limb:HandleImpact(amount: number)
     end
 
     -- SFX
-    self.ImpactSounds:PlayRandom({
-        Sounds:CreateSoundModifier("PitchShiftSoundEffect", {
-            Octave = math.clamp(1 - (amount / 175), 0.75, 1)
-        })
-    })
+    self:PlayImpactSound(amount)
 
     if amount > self.GRUNT_IMPACT_THRESHOLD then
         self:Grunt()
