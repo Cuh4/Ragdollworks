@@ -268,7 +268,7 @@ function Camera:CastRay(distance: number): RaycastResult?
 
     local direction = viewportRay.Direction * distance
 
-    local raycastResult = game.Workspace:Raycast(
+    local raycastResult = Rage.Workspace:Raycast(
         viewportRay.Origin,
         direction
     )
@@ -297,7 +297,7 @@ function Camera:CastRayAll(distance: number): {RaycastResult}
     local _exclude = {} :: {Instance}
 
     repeat
-        local raycastResult = game.Workspace:Raycast(
+        local raycastResult = Rage.Workspace:Raycast(
             viewportRay.Origin,
             direction,
             raycastParams

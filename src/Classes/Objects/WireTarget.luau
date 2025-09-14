@@ -73,7 +73,7 @@ function WireTarget:_CreateWorldPart(): BasePart
     part.CanTouch = false
     part.Transparency = 1
     part.Size = Vector3.new(0.1, 0.1, 0.1)
-    part.Parent = game.Workspace
+    part.Parent = Rage.Workspace
 
     return part
 end
@@ -95,7 +95,7 @@ function WireTarget:CreateAttachment(mousePos: Vector2): Attachment
 
     if self.Type == WireTargetType.WORLD then
         self.Attachment.WorldCFrame = CFrame.new(Vector3.new(self.Target.X, self.Target.Y, 0))
-        self.Attachment.Parent = game.Workspace.Terrain
+        self.Attachment.Parent = Rage.Workspace.Terrain
     elseif self.Type == WireTargetType.OBJECT_PART then
         self.Attachment.Parent = self.Target.Part -- important parent is set first!
         self.Attachment.WorldCFrame = CFrame.new(Vector3.new(mousePos.X, mousePos.Y, self.Attachment.WorldCFrame.Z))

@@ -23,6 +23,7 @@
     Rage, a minimal framework for Roblox games.
 ]]
 Rage = {}
+Rage.Workspace = game:GetService("Workspace")
 Rage.RunService = game:GetService("RunService")
 Rage.IsServer = Rage.RunService:IsServer()
 Rage.IsClient = not Rage.IsServer
@@ -34,7 +35,8 @@ Rage.Players = game:GetService("Players")
 Rage.Camera = Rage.Workspace.CurrentCamera
 Rage.Input = game:GetService("UserInputService")
 Rage.Debris = game:GetService("Debris")
-Rage.TweenService = game:GetService("TweenService")
+Rage.Tweening = game:GetService("TweenService")
+Rage.ContentProvider = game:GetService("ContentProvider")
 
 if Rage.IsServer then
     Rage.ServerScriptService = game:GetService("ServerScriptService")

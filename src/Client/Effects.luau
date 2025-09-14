@@ -62,7 +62,7 @@ function Effects:SpawnEffect(name: string, lifetime: number, parent: Instance?, 
         parent.Size = Vector3.new(1, 1, 1)
         parent.Position = position
         parent.Transparency = 1
-        parent.Parent = game.Workspace
+        parent.Parent = Rage.Workspace
 
         effect.Destroying:Once(function()
             parent:Destroy()

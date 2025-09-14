@@ -89,7 +89,7 @@ function ExplosiveObjectBehaviour:Explode()
     explosion.ExplosionType = Enum.ExplosionType.NoCraters
     explosion.DestroyJointRadiusPercent = 0
     explosion.Position = self.MainPart.Part.Position
-    explosion.Parent = game.Workspace
+    explosion.Parent = Rage.Workspace
 
     self.MainPart:Despawn()
     self.MainPart = nil

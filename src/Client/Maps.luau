@@ -116,7 +116,7 @@ function Maps:_SetupMapInstance()
     background.CanTouch = false
     background.CanQuery = true
 
-    self.MapInstance.Parent = game.Workspace
+    self.MapInstance.Parent = Rage.Workspace
 
     self.MapInstance:MoveTo(Vector3.new(
         self.MAP_POSITION.X,

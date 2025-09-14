@@ -58,7 +58,7 @@ function Toasts:DisplayToast(title: string, message: string, lifetime: number)
 
     toast.Parent = self.TOAST_CONTAINER
 
-    local animateIn = Rage.TweenService:Create(container, TweenInfo.new(
+    local animateIn = Rage.Tweening:Create(container, TweenInfo.new(
         self.ANIMATE_TIME,
         Enum.EasingStyle.Cubic,
         Enum.EasingDirection.InOut
@@ -68,7 +68,7 @@ function Toasts:DisplayToast(title: string, message: string, lifetime: number)
 
     animateIn:Play()
 
-    local animateOut = Rage.TweenService:Create(container, TweenInfo.new(
+    local animateOut = Rage.Tweening:Create(container, TweenInfo.new(
         self.ANIMATE_TIME,
         Enum.EasingStyle.Cubic,
         Enum.EasingDirection.InOut

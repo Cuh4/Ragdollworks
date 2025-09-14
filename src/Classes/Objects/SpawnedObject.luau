@@ -101,7 +101,7 @@ function SpawnedObject:Setup(spawnPos: Vector3)
         end)
     end
 
-    self.Instance.Parent = game.Workspace
+    self.Instance.Parent = Rage.Workspace
 end
 
 --[[

@@ -68,7 +68,7 @@ function Debug:CreateDebugPart(partCFrame: CFrame, size: Vector3?): Part
     part.Transparency = self.DEBUG_PART_TRANSPARENCY
     part.Color = self.DEBUG_PART_COLOR
 
-    part.Parent = game.Workspace
+    part.Parent = Rage.Workspace
 
     Rage.Debris:AddItem(part, self.DEBUG_PART_EXPIRATION_TIME)
 
