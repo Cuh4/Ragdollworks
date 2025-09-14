@@ -24,6 +24,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local Maps = require(Rage.Path.Maps)
 local RbxAssets = require(Rage.Path.RbxAssets)
+local CLI = require(Rage.Path.CLI)
 
 -------------------------------
 -- // Main
@@ -33,13 +34,12 @@ local RbxAssets = require(Rage.Path.RbxAssets)
     A service for handling the player's camera.
 ]]
 Camera = Rage:Service("Camera") :: Camera
-Camera.CAMERA_FOV = 2
-Camera.ZOOM_Z_MULTIPLIER = 6000
-Camera.CAMERA_SPEED = 0.5
+Camera.CAMERA_FOV = 30
+Camera.CAMERA_SPEED = 1
 Camera.CAMERA_SPEED_ZOOMED_OUT = 7
-Camera.SCROLL_ZOOM_SENSITIVITY = 0.02
-Camera.CAMERA_Z_ZOOMED_IN = 430
-Camera.CAMERA_Z_ZOOMED_OUT = 9000
+Camera.SCROLL_ZOOM_SENSITIVITY = 0.06
+Camera.CAMERA_Z_ZOOMED_IN = 30
+Camera.CAMERA_Z_ZOOMED_OUT = 500
 Camera.DEFAULT_ZOOM = 0.5
 
 Camera.Position = Maps.MAP_POSITION
@@ -54,6 +54,7 @@ Camera.MouseWorldPosition = Vector2.new(0, 0)
     Called when the service starts.
 ]]
 function Camera:OnStart()
+    self:_CreateCommands()
     self:HidePlayer()
     self:SetMouseIcon()
     self:HandleInputEvents()
@@ -336,6 +337,58 @@ function Camera:CastRayToZ0(): Vector2?
 
     local hitPos = origin + direction * scalar
     return Vector2.new(hitPos.X, hitPos.Y)
+end
+
+--[[
+    Creates CLI commands.
+]]
+function Camera:_CreateCommands()
+    CLI.Conch.register("set-cam-fov", {
+        description = "Sets camera FOV.",
+
+        arguments = function()
+            return CLI.Conch.args.number("FOV", "The new FOV.")
+        end,
+
+        callback = function(FOV: number)
+            self.CAMERA_FOV = FOV
+        end
+    })
+
+    CLI.Conch.register("set-cam-zoomed-in-z", {
+        description = "Sets camera Z when all the way zoomed in.",
+
+        arguments = function()
+            return CLI.Conch.args.number("CameraZZoomedIn", "The camera Z when fully zoomed in.")
+        end,
+
+        callback = function(cameraZZoomedIn: number)
+            self.CAMERA_Z_ZOOMED_IN = cameraZZoomedIn
+        end
+    })
+
+    CLI.Conch.register("set-cam-zoomed-out-z", {
+        description = "Sets camera Z when all the way zoomed out.",
+
+        arguments = function()
+            return CLI.Conch.args.number("CameraZZoomedOut", "The camera Z when fully zoomed out.")
+        end,
+
+        callback = function(cameraZZoomedOut: number)
+            self.CAMERA_Z_ZOOMED_OUT = cameraZZoomedOut
+        end
+    })
+
+    CLI.Conch.register("get-cam-values", {
+        description = "Shows camera values.",
+        arguments = function() end,
+
+        callback = function()
+            Rage.Logging:Info("FOV: "..self.CAMERA_FOV)
+            Rage.Logging:Info("Z Zoomed In: "..self.CAMERA_Z_ZOOMED_IN)
+            Rage.Logging:Info("Z Zoomed Out: "..self.CAMERA_Z_ZOOMED_OUT)
+        end
+    })
 end
 
 export type Camera = typeof(Camera)
