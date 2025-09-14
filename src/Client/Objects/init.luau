@@ -81,10 +81,15 @@ Objects.SpawnedWires = {} :: {ObjectTypes.SpawnedWire}
 
 Objects.Paused = false
 
+Objects.SlowMotion = false
+Objects.SlomoSpeed = 0.25
+Objects._HeartbeatFrame = 0
+
 Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnObjectSelect = signal.new() :: signal.Signal<ObjectTypes.Object>
 Objects.OnWireSelect = signal.new() :: signal.Signal<ObjectTypes.Wire>
+Objects.OnPauseStateChange = signal.new() :: signal.Signal<boolean>
 
 --[[
     Called when the service starts.
@@ -164,6 +169,10 @@ function Objects:HandleInput()
             self:PlayerSpawnObject()
         end
 
+        if input.KeyCode == Enum.KeyCode.G then
+            self:PlayerToggleSlowMotion()
+        end
+
         if input.KeyCode == Enum.KeyCode.Z then
             self:Undo()
         end
@@ -209,6 +218,35 @@ end
 ]]
 function Objects:OnMapExit()
     self:DespawnAllObjects()
+end
+
+--[[
+    Sets slow motion.
+]]
+function Objects:SetSlowMotion(slowMotion: boolean)
+    self.SlowMotion = slowMotion
+    Rage.Logging:Info("Objects:SetSlowMotion(): Slow motion: "..tostring(self.SlowMotion))
+end
+
+--[[
+    Toggles slow motion (player-driven).
+]]
+function Objects:PlayerToggleSlowMotion()
+    self:SetSlowMotion(not self.SlowMotion)
+
+    Toasts:DisplayToast(
+        "Slo-Mo",
+        "Slow motion is now "..(self.SlowMotion and "enabled" or "disabled")..".",
+        2
+    )
+end
+
+--[[
+    Sets the slow motion speed.
+]]
+function Objects:SetSlowMotionSpeed(slowMotionSpeed: number)
+    self.SlomoSpeed = math.clamp(slowMotionSpeed, 0, 1)
+    Rage.Logging:Info("Objects:SetSlowMotionSpeed(): Slow motion speed: "..tostring(self.SlomoSpeed))
 end
 
 --[[
@@ -345,6 +383,8 @@ function Objects:PauseAllSpawnedObjects()
         spawnedObject:Pause()
     end
 
+    self.OnPauseStateChange:Fire(self.Paused)
+
     Toasts:DisplayToast(
         "Objects",
         "All object physics have been paused.",
@@ -366,6 +406,8 @@ function Objects:UnpauseAllSpawnedObjects()
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
         spawnedObject:Unpause()
     end
+
+    self.OnPauseStateChange:Fire(self.Paused)
 
     Toasts:DisplayToast(
         "Objects",
@@ -1088,6 +1130,37 @@ function Objects:LoadObjects()
 end
 
 --[[
+    Handles slow motion for an object part.<br>
+    Essentially anchors and unanchors the part at a fixed rate to simulate slow motion
+    because that's the best we can do with Roblox's limits.
+]]
+function Objects:HandleSlowMotionForObjectPart(objectPart: ObjectTypes.ObjectPart)
+    if not self.SlowMotion then
+        if objectPart.SlomoLock then
+            objectPart:UnsetSlomoLock()
+        end
+
+        return
+    end
+
+    if self._HeartbeatFrame % math.floor((1 / self.SlomoSpeed) + 0.5) ~= 0 then
+        objectPart:SetSlomoLock()
+    else
+        objectPart:UnsetSlomoLock()
+    end
+end
+
+--[[
+    Handles slow motion for all object parts of a spawned object.<br>
+    oopsies for the very verbose name
+]]
+function Objects:HandleSlowMotionForSpawnedObject(spawnedObject: ObjectTypes.SpawnedObject)
+    for _, objectPart: ObjectTypes.ObjectPart in pairs(spawnedObject.Parts) do
+        self:HandleSlowMotionForObjectPart(objectPart)
+    end
+end
+
+--[[
     Updates spawned objects.
 ]]
 function Objects:UpdateSpawnedObjects()
@@ -1097,13 +1170,13 @@ function Objects:UpdateSpawnedObjects()
     local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
 
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
-        task.spawn(function()
-            spawnedObject:Update(
-                startBound,
-                endBound,
-                Camera.MouseWorldPosition
-            )
-        end)
+        self:HandleSlowMotionForSpawnedObject(spawnedObject)
+
+        spawnedObject:Update(
+            startBound,
+            endBound,
+            Camera.MouseWorldPosition
+        )
     end
 end
 
@@ -1148,6 +1221,8 @@ function Objects:Update()
         return
     end
 
+    self._HeartbeatFrame += 1
+
     self:UpdateSpawnedObjects()
     self:UpdateSpawnedWIres()
     self:UpdateCamera()
@@ -1158,6 +1233,17 @@ end
     Creates commands.
 ]]
 function Objects:_CreateCommands()
+    CLI.Conch.register("set-slomo-speed", {
+        description = "Sets the slomo speed.",
+        arguments = function()
+            return CLI.Conch.args.number("Speed", "The speed, 0 - 1")
+        end,
+
+        callback = function(speed: number)
+            self:SetSlowMotionSpeed(speed)
+        end
+    })
+
     CLI.Conch.register("despawn-all-objects", {
         description = "Despawns all spawned objects.",
         arguments = function() end,

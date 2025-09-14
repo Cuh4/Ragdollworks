@@ -53,6 +53,7 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.Dragging = false
     self.Frozen = false
     self.Paused = false
+    self.SlomoLock = false
     self.Selected = false
     self.Highlighted = false
     self.AlignPositionInstance = nil :: AlignPosition
@@ -208,7 +209,7 @@ end
     Updates physics.
 ]]
 function ObjectPart:UpdatePhysics(startBound: Vector2, endBound: Vector2)
-    self.Part.Anchored = self.Frozen or self.Paused
+    self.Part.Anchored = self.Frozen or self.Paused or self.SlomoLock
 
     self:Lock()
     self:KeepWithinBounds(startBound, endBound)
@@ -333,6 +334,20 @@ end
 ]]
 function ObjectPart:Unfreeze()
     self.Frozen = false
+end
+
+--[[
+    Sets slomo lock.
+]]
+function ObjectPart:SetSlomoLock()
+    self.SlomoLock = true
+end
+
+--[[
+    Unsets slomo lock.
+]]
+function ObjectPart:UnsetSlomoLock()
+    self.SlomoLock = false
 end
 
 --[[
