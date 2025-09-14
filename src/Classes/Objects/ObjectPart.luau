@@ -130,10 +130,6 @@ end
     Adds attachments to the part.
 ]]
 function ObjectPart:SetupAttachments()
-    self.WireAttachmentInstance = Instance.new("Attachment")
-    self.WireAttachmentInstance.Name = "WireAttachment"
-    self.WireAttachmentInstance.Parent = self.Part
-
     self.DraggingAttachmentInstance = Instance.new("Attachment")
     self.DraggingAttachmentInstance.Name = "DraggingAttachment"
     self.DraggingAttachmentInstance.Parent = self.Part
@@ -323,17 +319,6 @@ function ObjectPart:StopDragging()
     self.Dragging = false
     self:SetRotationForce(0)
     self.OnDragEnd:Fire()
-end
-
---[[
-    Moves the wire attachment instance to the provided Vector2 coordinates.
-]]
-function ObjectPart:MoveWireAttachment(position: Vector2)
-    self.WireAttachmentInstance.WorldCFrame = CFrame.new(Vector3.new(
-        position.X,
-        position.Y,
-        self.WireAttachmentInstance.WorldCFrame.Position.Z
-    ))
 end
 
 --[[

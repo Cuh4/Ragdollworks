@@ -26,6 +26,10 @@ local signal = require(Rage.WallyPackages.signal)
 local SpawnedWire = require(Rage.ReplicatedStorage.Classes.Objects.SpawnedWire)
 local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
 
+local Toasts = require(Rage.Path.Toasts)
+
+local WireTargetType = require(Rage.ReplicatedStorage.Enums.WireTargetType)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -60,11 +64,21 @@ function ActivationLink:OnUpdate() end
 ]]
 function ActivationLink:OnConnect()
     self.Beam = Rage.Assets:GetAsset("ActivationLinkWireBeam"):Clone()
-    self.Beam.Attachment0 = self.ObjectPartB.WireAttachmentInstance -- texture is flipped lmao
-    self.Beam.Attachment1 = self.ObjectPartA.WireAttachmentInstance
-    self.Beam.Parent = self.ObjectPartA.Part
+    self.Beam.Attachment0 = self.TargetB.Attachment -- texture is flipped lmao
+    self.Beam.Attachment1 = self.TargetA.Attachment
+    self.Beam.Parent = self.StorageInstance
 
-    self.OnActivationConnection = self.ObjectPartA.OnActivate:Connect(function()
+    if self.TargetA.Type == WireTargetType.WORLD or self.TargetB.Type == WireTargetType.WORLD then
+        Toasts:DisplayToast(
+            "Activation Link",
+            "This wire is only functional when connected to two parts.",
+            2
+        )
+
+        return
+    end
+
+    self.OnActivationConnection = self.TargetA.Target.OnActivate:Connect(function()
         if os.clock() - (self.LastActivation or 0) < self.ACTIVATION_DELAY then
             Rage.Logging:Info("ActivationLink: Activation cooldown")
             return
@@ -73,7 +87,7 @@ function ActivationLink:OnConnect()
         task.wait(self.ACTIVATION_DELAY)
 
         self.LastActivation = os.clock()
-        self.ObjectPartB:Activate()
+        self.TargetB.Target:Activate()
     end)
 end
 
@@ -82,14 +96,17 @@ end
 ]]
 function ActivationLink:OnCleanup()
     self.Beam:Destroy()
-    self.OnActivationConnection:Disconnect()
+
+    if self.OnActivationConnection then
+        self.OnActivationConnection:Disconnect()
+    end
 end
 
-export type ActivationLink = {
+export type ActivationLink = ObjectTypes.SpawnedWire & typeof(ActivationLink) &  {
     ACTIVATION_DELAY: number,
     Beam: Beam,
-    OnActivationConnection: signal.Connection
-} & typeof(ActivationLink) & ObjectTypes.SpawnedWire
+    OnActivationConnection: signal.Connection?
+}
 
 return {
     Name = "Activation Link",

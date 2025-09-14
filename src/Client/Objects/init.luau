@@ -75,8 +75,8 @@ Objects.ContextMenuActivePart = nil :: ObjectTypes.ObjectPart
 
 Objects.ExistingWires = {} :: {string: ObjectTypes.Wire}
 Objects.SelectedWire = nil :: ObjectTypes.Wire
-Objects.SelectedWireSourcePart = nil :: ObjectTypes.ObjectPart
-Objects.SelectedWireSourcePartMousePos = nil :: Vector2
+Objects.SelectedWireSource = nil :: ObjectTypes.WireTargetInstance
+Objects.SelectedWireSourceMousePos = nil :: Vector2
 Objects.SpawnedWires = {} :: {ObjectTypes.SpawnedWire}
 
 Objects.Paused = false
@@ -570,7 +570,7 @@ function Objects:RegisterBehaviour(name: string, behaviourClass: ObjectTypes.Obj
 end
 
 --[[
-    Begin wiring two parts (player-driven)
+    Begin wiring two targets (player-driven)
 ]]
 function Objects:PlayerBeginWiring()
     if not Maps.IsInMap then
@@ -587,44 +587,34 @@ function Objects:PlayerBeginWiring()
         return
     end
 
-    if not self.HighlightedPart then
-        Toasts:DisplayToast(
-            "Objects",
-            "Hover your mouse over the part you want to connect a wire from and try again.",
-            2
-        )
-
-        return
-    end
-
-    self.SelectedWireSourcePart = self.HighlightedPart
-    self.SelectedWireSourcePartMousePos = Camera.MouseWorldPosition
+    self.SelectedWireSource = self.HighlightedPart or Camera.MouseWorldPosition
+    self.SelectedWireSourceMousePos = Camera.MouseWorldPosition
 end
 
 --[[
-    Stops wiring two parts (player-driven)
+    Stops wiring two targets (player-driven)
 ]]
 function Objects:PlayerStopWiring()
     if not Maps.IsInMap then
         return
     end
 
-    if not self.SelectedWireSourcePart then
-        Rage.Logging:Warn("Objects:PlayerStopWiring(): Attempted to stop wiring, but no source part was selected.")
+    if not self.SelectedWireSource then
+        Rage.Logging:Warn("Objects:PlayerStopWiring(): Attempted to stop wiring, but no source is selected.")
         return
     end
 
-    if not self.HighlightedPart then
+    if not self.HighlightedPart and typeof(self.SelectedWireSource) == "Vector2" then
         Toasts:DisplayToast(
             "Objects",
-            "Hover your mouse over the part you want to connect a wire to and try again.",
+            "You must connect a wire to a part.",
             2
         )
 
         return
     end
 
-    if self.SelectedWireSourcePart == self.HighlightedPart then
+    if self.SelectedWireSource == self.HighlightedPart then
         Toasts:DisplayToast(
             "Objects",
             "You cannot connect a part to itself.",
@@ -634,46 +624,55 @@ function Objects:PlayerStopWiring()
         return
     end
 
-    self:ConnectWireToParts(
+    self:ConnectWire(
         self.SelectedWire,
-        self.SelectedWireSourcePart,
-        self.SelectedWireSourcePartMousePos,
-        self.HighlightedPart,
+        self.SelectedWireSource,
+        self.SelectedWireSourceMousePos,
+        self.HighlightedPart or Camera.MouseWorldPosition,
         Camera.MouseWorldPosition
     )
 
-    self.SelectedWireSourcePart = nil
-    self.SelectedWireSourcePartMousePos = nil
+    self.SelectedWireSource = nil
+    self.SelectedWireSourceMousePos = nil
 
     Toasts:DisplayToast(
         "Objects",
-        "Successfully wired both parts together.",
+        "Successfully wired up!",
         2
     )
 end
 
 --[[
-    Connects a wire to two object parts.
+    Connects a wire to two targets.
 ]]
-function Objects:ConnectWireToParts(wire: ObjectTypes.Wire, partA: ObjectTypes.ObjectPart, partAMousePos: Vector2, partB: ObjectTypes.ObjectPart, partBMousePos: Vector2)
-    if partA == partB then
-        Rage.Logging:Warn("Objects:ConnectWireToParts(): Attempted to connect wire to same part twice.")
-        return
+function Objects:ConnectWire(
+    wire: ObjectTypes.Wire,
+    targetA: ObjectTypes.WireTargetInstance,
+    targetAMousePos: Vector2,
+    targetB: ObjectTypes.WireTargetInstance,
+    targetBMousePos: Vector2
+)
+    if targetA == targetB then
+        Rage.Logging:Error("Objects:ConnectWire(): Attempted to connect wire to same part twice.")
+    end
+
+    if typeof(targetA) == "Vector2" and typeof(targetB) == "Vector2" then
+        Rage.Logging:Error("Objects:ConnectWire(): Cannot connect a wire between two Vector2s.")
     end
 
     local spawnedWire = wire.WireClass.New()
 
     spawnedWire:Setup(
-        partAMousePos,
-        partA,
-        partBMousePos,
-        partB
+        targetA,
+        targetAMousePos,
+        targetB,
+        targetBMousePos
     )
 
     table.insert(self.SpawnedWires, spawnedWire)
     self:AddToHistory(spawnedWire)
 
-    Rage.Logging:Info("Objects:ConnectWireToParts(): Connected wire "..wire.Name.." to parts "..partA.Part:GetFullName().." and "..partB.Part:GetFullName())
+    Rage.Logging:Info("Objects:ConnectWire(): Created a new wire.")
 end
 
 --[[
@@ -729,12 +728,12 @@ end
 --[[
     Removes all wires connected to a part.
 ]]
-function Objects:RemoveWiresFromPart(part: BasePart)
+function Objects:RemoveWiresFromPart(part: ObjectTypes.ObjectPart)
     if #self.SpawnedWires <= 0 then
         return
     end
 
-    Rage.Libs.Table:IterateReverse(self.SpawnedWires, function(_, wire)
+    Rage.Libs.Table:IterateReverse(self.SpawnedWires, function(_, wire: ObjectTypes.SpawnedWire)
         if wire:IsConnectedToPart(part) then
             self:RemoveWire(wire)
         end
@@ -745,7 +744,7 @@ end
     Removes all wires.
 ]]
 function Objects:RemoveAllWires()
-    Rage.Libs.Table:IterateReverse(self.SpawnedWires, function(_, wire)
+    Rage.Libs.Table:IterateReverse(self.SpawnedWires, function(_, wire: ObjectTypes.SpawnedWire)
         self:RemoveWire(wire)
     end)
 end
@@ -791,7 +790,7 @@ end
 --[[
     Spawns an object (player-driven).
 ]]
-function Objects:PlayerSpawnObject(position: Vector3?): ObjectTypes.SpawnedObject
+function Objects:PlayerSpawnObject(position: Vector2?): ObjectTypes.SpawnedObject
     if not Maps.IsInMap then
         return
     end
@@ -816,11 +815,6 @@ function Objects:PlayerSpawnObject(position: Vector3?): ObjectTypes.SpawnedObjec
         return
     end
 
-    if not position then
-        position = Camera:CastRayToZ0()
-        Debug:CreateDebugPart(CFrame.new(Vector3.new(position.X, position.Y, 0)))
-    end
-
     Toasts:DisplayToast(
         "Objects",
         "You have spawned "..self.SelectedObject.Name..".",
@@ -829,7 +823,7 @@ function Objects:PlayerSpawnObject(position: Vector3?): ObjectTypes.SpawnedObjec
 
     Rage.Logging:Info("Objects:PlayerSpawnObject(): Player is spawning object "..self.SelectedObject.Name)
 
-    return self:SpawnObject(self.SelectedObject, position)
+    return self:SpawnObject(self.SelectedObject, position or Camera.MouseWorldPosition)
 end
 
 --[[
@@ -1203,7 +1197,7 @@ function Objects:_CreateCommands()
         end,
 
         callback = function(amount: number, padding: number)
-            local at = Camera:CastRayToZ0()
+            local at = Camera.MouseWorldPosition
 
             for _ = 1, amount do
                 self:PlayerSpawnObject(at)

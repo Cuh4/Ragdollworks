@@ -58,14 +58,14 @@ function Strut:OnUpdate() end
 function Strut:OnConnect()
     self.WeldConstraint = Instance.new("WeldConstraint")
     self.WeldConstraint.Name = "Strut"
-    self.WeldConstraint.Part0 = self.ObjectPartA.Part
-    self.WeldConstraint.Part1 = self.ObjectPartB.Part
-    self.WeldConstraint.Parent = self.ObjectPartA.Part
+    self.WeldConstraint.Part0 = self.TargetA.Part
+    self.WeldConstraint.Part1 = self.TargetB.Part
+    self.WeldConstraint.Parent = self.StorageInstance
 
     self.VisualBeam = Instance.new("Beam")
     self.VisualBeam.Name = "StrutVisuals"
-    self.VisualBeam.Attachment0 = self.ObjectPartA.WireAttachmentInstance
-    self.VisualBeam.Attachment1 = self.ObjectPartB.WireAttachmentInstance
+    self.VisualBeam.Attachment0 = self.TargetA.Attachment
+    self.VisualBeam.Attachment1 = self.TargetB.Attachment
     self.VisualBeam.Transparency = NumberSequence.new(0)
     self.VisualBeam.TextureSpeed = 0
     self.VisualBeam.Color = ColorSequence.new(Color3.fromRGB(25, 25, 25))
@@ -73,7 +73,7 @@ function Strut:OnConnect()
     self.VisualBeam.Segments = 1
     self.VisualBeam.Width0 = 0.5
     self.VisualBeam.Width1 = 0.5
-    self.VisualBeam.Parent = self.ObjectPartA.Part
+    self.VisualBeam.Parent = self.StorageInstance
 end
 
 --[[
@@ -84,10 +84,10 @@ function Strut:OnCleanup()
     self.VisualBeam:Destroy()
 end
 
-export type Strut = {
+export type Strut = ObjectTypes.SpawnedWire & typeof(Strut) & {
     WeldConstraint: WeldConstraint,
     VisualBeam: Beam
-} & typeof(Strut) & ObjectTypes.SpawnedWire
+}
 
 return {
     Name = "Strut",

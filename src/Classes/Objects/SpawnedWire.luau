@@ -21,8 +21,12 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
+local WireTarget = require(script.Parent.WireTarget)
 local Entity = require(script.Parent.Entity)
+local ObjectPart = require(script.Parent.ObjectPart)
 local ObjectTypes = require(script.Parent.Types)
+
+local WireTargetType = require(Rage.ReplicatedStorage.Enums.WireTargetType)
 
 -------------------------------
 -- // Main
@@ -40,26 +44,33 @@ setmetatable(SpawnedWire, Entity)
 ]]
 function SpawnedWire.New(): ObjectTypes.SpawnedWire
     local self = setmetatable(Entity.New("SpawnedWire"), SpawnedWire) :: ObjectTypes.SpawnedWire
-    self.ObjectPartA = nil
-    self.ObjectPartB = nil
+    self.TargetA = nil
+    self.TargetB = nil
 
     return self
 end
 
 --[[
-    Setups the wire.
+    Setups the wire.<br>
+    Vector2 + Vector2 is not allowed.
 ]]
 function SpawnedWire:Setup(
-    partAMousePos: Vector2,
-    objectPartA: ObjectTypes.ObjectPart,
-    partBMousePos: Vector2,
-    objectPartB: ObjectTypes.ObjectPart
+    targetA: ObjectTypes.WireTarget,
+    mousePosA: Vector2,
+    targetB: ObjectTypes.WireTarget,
+    mousePosB: Vector2
 )
-    self.ObjectPartA = objectPartA
-    self.ObjectPartA:MoveWireAttachment(partAMousePos)
+    if typeof(targetA) == "Vector2" and typeof(targetB) == "Vector2" then
+        Rage.Logging:Error("SpawnedWire:Setup(): Cannot connect a wire between two Vector2s. Part + Vector2 only, or Part + Part.")
+    end
 
-    self.ObjectPartB = objectPartB
-    self.ObjectPartB:MoveWireAttachment(partBMousePos)
+    self.TargetA = WireTarget.New(targetA)
+    self.TargetA:CreateAttachment(mousePosA)
+
+    self.TargetB = WireTarget.New(targetB)
+    self.TargetB:CreateAttachment(mousePosB)
+
+    self.StorageInstance = self.TargetA.Type == WireTargetType.OBJECT_PART and self.TargetA.Target.Part or self.TargetB.Target.Part
 
     self:OnConnect()
 end
@@ -68,6 +79,9 @@ end
     Despawns the wire.
 ]]
 function SpawnedWire:Despawn()
+    self.TargetA:Cleanup()
+    self.TargetB:Cleanup()
+
     self:OnCleanup()
 end
 
@@ -82,7 +96,7 @@ end
     Returns if this wire is connected to the provided part.
 ]]
 function SpawnedWire:IsConnectedToPart(part: ObjectTypes.ObjectPart): boolean
-    return self.ObjectPartA == part or self.ObjectPartB == part
+    return self.TargetA:BelongsTo(part) or self.TargetB:BelongsTo(part)
 end
 
 --[[

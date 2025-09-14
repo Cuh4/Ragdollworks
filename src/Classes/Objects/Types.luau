@@ -22,6 +22,8 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local signal = require(Rage.WallyPackages.signal)
 
+local WireTargetType = require(Rage.ReplicatedStorage.Enums.WireTargetType)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -63,7 +65,7 @@ export type ObjectSettings = {
     IsSpawnable: boolean
 }
 
-export type SpawnedObject = {
+export type SpawnedObject = Entity & {
     ID: number,
     Object: Object,
     Instance: Model,
@@ -91,7 +93,7 @@ export type SpawnedObject = {
     AddContextMenuItem: (self: SpawnedObject, name: string, onTrigger: ContextMenuItemCallback) -> nil,
     Despawn: (self: SpawnedObject) -> nil,
     Remove: (self: SpawnedObject) -> nil
-} & Entity
+}
 
 export type ObjectPart = {
     SELECTION_COLOR: Color3,
@@ -110,7 +112,6 @@ export type ObjectPart = {
     Highlighted: boolean,
     AlignPositionInstance: AlignPosition,
     AngularVelocityInstance: AngularVelocity,
-    WireAttachmentInstance: Attachment,
     DraggingAttachmentInstance: Attachment,
     SelectionBoxInstance: SelectionBox,
     RotationForce: number,
@@ -140,7 +141,6 @@ export type ObjectPart = {
     SetRotationForce: (self: ObjectPart, force: number) -> nil,
     Drag: (self: ObjectPart, position: Vector2) -> nil,
     StopDragging: (self: ObjectPart) -> nil,
-    MoveWireAttachment: (self: ObjectPart, position: Vector2) -> nil,
     Freeze: (self: ObjectPart) -> nil,
     Unfreeze: (self: ObjectPart) -> nil,
     Pause: (self: ObjectPart) -> nil,
@@ -178,13 +178,14 @@ export type Wire = {
     IconAssetID: string?
 }
 
-export type SpawnedWire = {
-    ObjectPartA: ObjectPart,
-    ObjectPartB: ObjectPart,
+export type SpawnedWire = Entity & {
+    TargetA: WireTarget,
+    TargetB: WireTarget,
+    StorageInstance: Instance,
 
     New: () -> SpawnedWire,
 
-    Setup: (self: SpawnedWire, partAMousePos: Vector2, objectPartA: ObjectPart, partBMousePos: Vector2, objectPartB: ObjectPart) -> nil,
+    Setup: (self: SpawnedWire, targetA: WireTarget, mousePosA: Vector2, targetB: WireTarget, mousePosB: Vector2) -> nil,
     Remove: (self: SpawnedWire) -> nil,
     Despawn: (self: SpawnedWire) -> nil,
     IsConnectedToPart: (self: SpawnedWire, part: ObjectPart) -> boolean,
@@ -193,7 +194,25 @@ export type SpawnedWire = {
     OnUpdate: (self: SpawnedWire) -> nil,
     OnConnect: (self: SpawnedWire) -> nil,
     OnCleanup: (self: SpawnedWire) -> nil
-}  & Entity
+}
+
+export type WireTarget = {
+    Target: WireTargetInstance,
+    Part: BasePart,
+    Attachment: Attachment,
+    Type: WireTargetType.WireTargetType,
+
+    New: (target: WireTargetInstance) -> WireTarget,
+
+    _CreateWorldPart: (self: WireTarget) -> BasePart,
+    GetPosition: (self: WireTarget) -> Vector2,
+    CreateAttachment: (self: WireTarget, mousePos: Vector2) -> Attachment,
+    BelongsTo: (self: WireTarget, objectPart: ObjectPart) -> boolean,
+    Cleanup: (self: WireTarget) -> nil
+}
+
+-- dunno how to name this
+export type WireTargetInstance = ObjectPart | Vector2
 
 export type ContextMenu = {
     ObjectPart: ObjectPart,

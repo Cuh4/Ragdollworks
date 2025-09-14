@@ -57,13 +57,13 @@ function Rope:OnUpdate() end
 function Rope:OnConnect()
     self.RopeConstraint = Instance.new("RopeConstraint")
     self.RopeConstraint.Name = "Rope"
-    self.RopeConstraint.Attachment0 = self.ObjectPartA.WireAttachmentInstance
-    self.RopeConstraint.Attachment1 = self.ObjectPartB.WireAttachmentInstance
+    self.RopeConstraint.Attachment0 = self.TargetA.Attachment
+    self.RopeConstraint.Attachment1 = self.TargetB.Attachment
     self.RopeConstraint.Restitution = 0.3
     self.RopeConstraint.Visible = true
     self.RopeConstraint.Thickness = 0.5
-    self.RopeConstraint.Length = (self.ObjectPartA:GetPosition() - self.ObjectPartB:GetPosition()).Magnitude
-    self.RopeConstraint.Parent = self.ObjectPartA.Part
+    self.RopeConstraint.Length = (self.TargetA:GetPosition() - self.TargetB:GetPosition()).Magnitude + 0.001
+    self.RopeConstraint.Parent = self.StorageInstance
 end
 
 --[[
@@ -73,9 +73,9 @@ function Rope:OnCleanup()
     self.RopeConstraint:Destroy()
 end
 
-export type Rope = {
+export type Rope = ObjectTypes.SpawnedWire & typeof(Rope) & {
     RopeConstraint: RopeConstraint
-} & typeof(Rope) & ObjectTypes.SpawnedWire
+}
 
 return {
     Name = "Rope",
