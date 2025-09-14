@@ -40,10 +40,12 @@ Maps = Rage:Service("Maps") :: Maps
 Maps.MAP_FOLDER = Rage.Assets:GetAsset("Maps")
 Maps.MAP_POSITION = Vector2.new(0, 0)
 Maps.BOUNDARY_THICKNESS = 100
+Maps.BOUNDARY_Z_SIZE = 50
 Maps.BOUNDARY_COLOR = Color3.fromRGB(15, 15, 15)
 Maps.BACKGROUND_SIZE = Vector2.new(10000, 10000)
 Maps.BACKGROUND_COLOR = Maps.BOUNDARY_COLOR
-Maps.BACKGROUND_Z_OFFSET = -10
+
+Maps.ZPosition = 0
 
 Maps.OnMapStart = signal.new() :: signal.Signal<Map.Map>
 Maps.OnMapExit = signal.new() :: signal.Signal
@@ -121,8 +123,10 @@ function Maps:_SetupMapInstance()
     self.MapInstance:MoveTo(Vector3.new(
         self.MAP_POSITION.X,
         self.MAP_POSITION.Y,
-        self.BACKGROUND_Z_OFFSET
+        0
     ))
+
+    self.ZPosition = background.Position.Z
 end
 
 --[[
@@ -173,8 +177,8 @@ function Maps:_CreateBoundaryPart(size: Vector2, position: Vector2): Part
     part.Color = self.BOUNDARY_COLOR
     part.Anchored = true
     part.CanCollide = true
-    part.Size = Vector3.new(size.X, size.Y, math.abs(self.BACKGROUND_Z_OFFSET) * 2)
-    part.Position = Vector3.new(position.X, position.Y, self.BACKGROUND_Z_OFFSET / 2)
+    part.Size = Vector3.new(size.X, size.Y, math.abs(self.BOUNDARY_Z_SIZE) * 2)
+    part.Position = Vector3.new(position.X, position.Y, self.BOUNDARY_Z_SIZE / 2)
 
     return part
 end
@@ -183,13 +187,15 @@ end
     Creates the background for maps.
 ]]
 function Maps:_CreateMapBackground()
+    local backgroundZSize = 1
+
     local background = Instance.new("Part")
     background.Name = "ScaledMapBackground"
     background.Color = self.BACKGROUND_COLOR
     background.Anchored = true
     background.CanCollide = false
-    background.Size = Vector3.new(1, 1, 1)
-    background.Position = Vector3.new(self.MAP_POSITION.X, self.MAP_POSITION.Y, self.BACKGROUND_Z_OFFSET)
+    background.Size = Vector3.new(1, 1, backgroundZSize)
+    background.Position = Vector3.new(self.MAP_POSITION.X, self.MAP_POSITION.Y, self.ZPosition - backgroundZSize)
 
     local mesh = Instance.new("BlockMesh") -- meshes can exceed part size limit
     mesh.Name = "SizeExtenderMesh"
