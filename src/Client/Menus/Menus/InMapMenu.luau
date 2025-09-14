@@ -68,6 +68,8 @@ function InMapMenu.New(): InMapMenu
     self.PausedStateContainer = self.ObjectsContainer.PausedStateContainer
     self.PausedStateIcon = self.PausedStateContainer.PausedStateIcon
 
+    self.Vignette = self.ScreenGUI.Vignette
+
     return self
 end
 
@@ -109,8 +111,22 @@ end
 --[[
     Updates the paused state container.
 ]]
-function InMapMenu:UpdatePausedState(paused: boolean)
-    self.PausedStateIcon.Image = paused and RbxAssets.PAUSED_ICON or RbxAssets.UNPAUSED_ICON
+function InMapMenu:UpdatePausedState()
+    self.PausedStateIcon.Image = Objects.Paused and RbxAssets.PAUSED_ICON or RbxAssets.UNPAUSED_ICON
+    self:UpdateVignette()
+end
+
+--[[
+    Updates the vignette.
+]]
+function InMapMenu:UpdateVignette()
+    self.Vignette.Visible = Objects.Paused or Objects.SlowMotion
+
+    if Objects.Paused then
+        self.Vignette.ImageTransparency = 0
+    elseif Objects.SlowMotion then
+        self.Vignette.ImageTransparency = 0.7
+    end
 end
 
 --[[
@@ -139,7 +155,8 @@ function InMapMenu:Setup()
     self:UpdateSelectedObject()
     self:UpdateSelectedWire()
     self:UpdateSpawnedObjectsCounter()
-    self:UpdatePausedState(Objects.Paused)
+    self:UpdatePausedState()
+    self:UpdateVignette()
 
     self.OnMapStart = Maps.OnMapStart:Connect(function()
         self:Show()
@@ -165,8 +182,12 @@ function InMapMenu:Setup()
         self:UpdateSelectedWire()
     end)
 
-    self.OnPauseStateChange = Objects.OnPauseStateChange:Connect(function(paused: boolean)
-        self:UpdatePausedState(paused)
+    self.OnPauseStateChange = Objects.OnPauseStateChange:Connect(function()
+        self:UpdatePausedState()
+    end)
+
+    self.OnSlomoStateChange = Objects.OnSlomoStateChange:Connect(function()
+        self:UpdateVignette()
     end)
 end
 
@@ -192,6 +213,8 @@ export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
     PausedStateContainer: Frame,
     PausedStateIcon: ImageLabel,
 
+    Vignette: ImageLabel,
+
     OnMapStart: signal.Connection,
     OnMapExit: signal.Connection,
 
@@ -200,7 +223,8 @@ export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
     OnObjectSelect: signal.Connection,
     OnWireSelect: signal.Connection,
 
-    OnPauseStateChange: signal.Connection
+    OnPauseStateChange: signal.Connection,
+    OnSlomoStateChange: signal.Connection
 }
 
 return InMapMenu
