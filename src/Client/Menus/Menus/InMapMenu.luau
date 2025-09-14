@@ -65,6 +65,9 @@ function InMapMenu.New(): InMapMenu
     self.SelectedWireText = self.SelectedWireContainer.WireName
     self.SelectedWireIcon = self.SelectedWireContainer.WireIcon
 
+    self.PausedStateContainer = self.ObjectsContainer.PausedStateContainer
+    self.PausedStateIcon = self.PausedStateContainer.PausedStateIcon
+
     return self
 end
 
@@ -76,43 +79,38 @@ function InMapMenu:UpdateSpawnedObjectsCounter()
 end
 
 --[[
-    Updates the selected object.
+    Updates the selected object container.
 ]]
 function InMapMenu:UpdateSelectedObject()
     if not Objects.SelectedObject then
         self.SelectedObjectContainer.Visible = false
-        self:UpdateObjectsContainer()
         return
     end
 
     self.SelectedObjectContainer.Visible = true
     self.SelectedObjectText.Text = Objects.SelectedObject.Name
     self.SelectedObjectIcon.Image = Objects.SelectedObject.IconAssetID or RbxAssets.UNKNOWN_ICON
-    self:UpdateObjectsContainer()
 end
 
 --[[
-    Updates the selected wire.
+    Updates the selected wire container.
 ]]
 function InMapMenu:UpdateSelectedWire()
     if not Objects.SelectedWire then
         self.SelectedWireContainer.Visible = false
-        self:UpdateObjectsContainer()
         return
     end
 
     self.SelectedWireContainer.Visible = true
     self.SelectedWireText.Text = Objects.SelectedWire.Name
     self.SelectedWireIcon.Image = Objects.SelectedWire.IconAssetID or RbxAssets.UNKNOWN_ICON
-    self:UpdateObjectsContainer()
 end
 
 --[[
-    Update objects container.
+    Updates the paused state container.
 ]]
-function InMapMenu:UpdateObjectsContainer()
-    -- to prevent a space in container column
-    self.ObjectsContainer.Visible = self.SelectedWireContainer.Visible or self.SelectedObjectContainer.Visible
+function InMapMenu:UpdatePausedState(paused: boolean)
+    self.PausedStateIcon.Image = paused and RbxAssets.PAUSED_ICON or RbxAssets.UNPAUSED_ICON
 end
 
 --[[
@@ -141,6 +139,7 @@ function InMapMenu:Setup()
     self:UpdateSelectedObject()
     self:UpdateSelectedWire()
     self:UpdateSpawnedObjectsCounter()
+    self:UpdatePausedState(Objects.Paused)
 
     self.OnMapStart = Maps.OnMapStart:Connect(function()
         self:Show()
@@ -165,6 +164,10 @@ function InMapMenu:Setup()
     self.OnWireSelect = Objects.OnWireSelect:Connect(function()
         self:UpdateSelectedWire()
     end)
+
+    self.OnPauseStateChange = Objects.OnPauseStateChange:Connect(function(paused: boolean)
+        self:UpdatePausedState(paused)
+    end)
 end
 
 export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
@@ -186,13 +189,18 @@ export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
     SelectedWireText: TextLabel,
     SelectedWireIcon: ImageLabel,
 
+    PausedStateContainer: Frame,
+    PausedStateIcon: ImageLabel,
+
     OnMapStart: signal.Connection,
     OnMapExit: signal.Connection,
 
     OnObjectSpawn: signal.Connection,
     OnObjectDespawn: signal.Connection,
     OnObjectSelect: signal.Connection,
-    OnWireSelect: signal.Connection
+    OnWireSelect: signal.Connection,
+
+    OnPauseStateChange: signal.Connection
 }
 
 return InMapMenu
