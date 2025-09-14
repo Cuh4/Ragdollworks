@@ -90,6 +90,7 @@ Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnObjectSelect = signal.new() :: signal.Signal<ObjectTypes.Object>
 Objects.OnWireSelect = signal.new() :: signal.Signal<ObjectTypes.Wire>
 Objects.OnPauseStateChange = signal.new() :: signal.Signal<boolean>
+Objects.OnSlomoStateChange = signal.new() :: signal.Signal<boolean>
 
 --[[
     Called when the service starts.
@@ -225,6 +226,8 @@ end
 ]]
 function Objects:SetSlowMotion(slowMotion: boolean)
     self.SlowMotion = slowMotion
+    self.OnSlomoStateChange:Fire(self.SlowMotion)
+
     Rage.Logging:Info("Objects:SetSlowMotion(): Slow motion: "..tostring(self.SlowMotion))
 end
 
