@@ -22,6 +22,9 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
+local CLI = require(Rage.Path.CLI)
+local Camera = require(Rage.Path.Camera)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -31,6 +34,13 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 ]]
 Effects = Rage:Service("Effects") :: Effects
 Effects.EFFECTS_FOLDER = Rage.Assets:GetAsset("Effects") :: Folder
+
+--[[
+    Called when this service starts.
+]]
+function Effects:OnStart()
+    self:_CreateCommands()
+end
 
 --[[
     Returns a particle effect of the given name.
@@ -43,7 +53,7 @@ end
     Spawns a particle effect of the given name.
     Use -1 lifetime for infinite lifetime.
 ]]
-function Effects:SpawnEffect(name: string, lifetime: number, parent: Instance?, position: Vector2?, size: Vector2?): ParticleEmitter
+function Effects:SpawnEffect(name: string, lifetime: number, parent: Instance?, position: Vector2?, properties: ParticleProperties?): ParticleEmitter
     if parent and position then
         Rage.Logging:Error("Effects:SpawnEffect(): Both 'parent' and 'position' cannot be provided. Choose one or the other.")
     end
@@ -54,12 +64,18 @@ function Effects:SpawnEffect(name: string, lifetime: number, parent: Instance?, 
 
     local effect = self:GetEffect(name):Clone()
 
+    if properties then
+        for index, value in pairs(properties) do
+            effect[index] = value
+        end
+    end
+
     if not parent then
         parent = Instance.new("Part")
         parent.CanCollide = false
         parent.CanQuery = false
         parent.Anchored = true
-        parent.Size = size and Vector3.new(size.X, size.Y, 1) or Vector3.new(1, 1, 1)
+        parent.Size = Vector3.new(1, 1, 1)
         parent.Position = Vector3.new(position.X, position.Y, 0)
         parent.Transparency = 1
         parent.Parent = Rage.Workspace
@@ -71,6 +87,8 @@ function Effects:SpawnEffect(name: string, lifetime: number, parent: Instance?, 
 
     effect.Enabled = true
     effect.Parent = parent
+
+    Rage.Logging:Info(("Effects:SpawnEffect(): Spawned effect %s for %.2f seconds."):format(name, lifetime))
 
     if lifetime == -1 then
         return effect
@@ -86,6 +104,65 @@ function Effects:SpawnEffect(name: string, lifetime: number, parent: Instance?, 
 
     return effect
 end
+
+--[[
+    Creates CLI commands.
+]]
+function Effects:_CreateCommands()
+    CLI.Conch.register("effect", {
+        description = "Spawns a particle effect.",
+
+        arguments = function()
+            return CLI.Conch.args.string("Name", "The name of the effect."),
+                CLI.Conch.args.number("Lifetime", "The lifetime in secs, -1 for infinte"),
+                CLI.Conch.args.number("Size", "The size of the effect.")
+        end,
+
+        callback = function(name: string, lifetime: number, size: number)
+            self:SpawnEffect(name, lifetime, nil, Camera.MouseWorldPosition, {
+                Size = NumberSequence.new(size)
+            })
+        end
+    })
+end
+
+export type ParticleProperties = {
+    Brightness: number,
+    Color: Color3,
+    LightEmission: number,
+    LightInfluence: number,
+    Orientation: Enum.ParticleOrientation,
+    Size: NumberSequence,
+    Squash: NumberSequence,
+    Texture: string,
+    Transparency: NumberSequence,
+    ZOffset: number,
+
+    EmissionDirection: Enum.NormalId,
+    Lifetime: NumberRange,
+    Rate: number,
+    Rotation: NumberRange,
+    RotSpeed: NumberRange,
+    Speed: NumberRange,
+    SpreadAngle: NumberRange,
+
+    Shape: Enum.ParticleEmitterShape,
+    ShapeInOut: Enum.ParticleEmitterShapeInOut,
+    ShapePartial: number,
+    ShapeStyle: Enum.ParticleEmitterShapeStyle,
+
+    FlipbookLayout: Enum.ParticleFlipbookLayout,
+    FlipbookMode: Enum.ParticleFlipbookMode,
+    FlipbookStartRandom: boolean,
+
+    Acceleration: Vector3,
+
+    Drag: number,
+    LockedToPart: boolean,
+    TimeScale: number,
+    VelocityInheritance: number,
+    WindAffectsDrag: number
+}
 
 export type Effects = typeof(Effects)
 return Effects
