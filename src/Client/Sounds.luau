@@ -26,6 +26,7 @@ local Sound = require(Rage.ReplicatedStorage.Classes.Sound)
 local SoundCollection = require(Rage.ReplicatedStorage.Classes.SoundCollection)
 
 local CLI = require(Rage.Path.CLI)
+local Camera = require(Rage.Path.Camera)
 
 -------------------------------
 -- // Main
@@ -35,6 +36,7 @@ local CLI = require(Rage.Path.CLI)
     A service for playing sounds.
 ]]
 Sounds = Rage:Service("Sounds") :: Sounds
+Sounds.ROLLOFF_MAX_CAMERA_MAX_Z_OFFSET = 20 -- good naming
 
 --[[
     Called when the service starts.
@@ -60,15 +62,18 @@ end
 --[[
     Creates a new sound collection.
 ]]
-function Sounds:CreateSoundCollection(...: Sound.Sound): SoundCollection.SoundCollection
+function Sounds:CreateSoundCollection(...: Sound.RSound): SoundCollection.SoundCollection
     return SoundCollection.New(...)
 end
 
 --[[
     Creates a new sound.
 ]]
-function Sounds:CreateSound(soundID: number, settings: Sound.SoundSettings): Sound.Sound
-    return Sound.New(soundID, settings)
+function Sounds:CreateSound(soundID: number, settings: Sound.SoundSettings): Sound.RSound
+    local sound = Sound.New(soundID, settings)
+    sound.Settings.RollOffMaxDistance = Camera.CAMERA_Z_ZOOMED_OUT + self.ROLLOFF_MAX_CAMERA_MAX_Z_OFFSET
+
+    return sound
 end
 
 --[[
