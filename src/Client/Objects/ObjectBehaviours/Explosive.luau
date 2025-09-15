@@ -24,6 +24,10 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local ObjectBehaviour = require(Rage.ReplicatedStorage.Classes.Objects.ObjectBehaviour)
 local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
+local Sound = require(Rage.ReplicatedStorage.Classes.Sound)
+
+local Sounds = require(Rage.Path.Sounds)
+local Effects = require(Rage.Path.Effects)
 
 -------------------------------
 -- // Main
@@ -47,6 +51,13 @@ function ExplosiveObjectBehaviour.New(spawnedObject: ObjectTypes.SpawnedObject):
     self.ExplosionPressure = self.SpawnedObject.Instance:GetAttribute("ExplosionPressure") or 50000
     self.ExplosionPositionDeltaThreshold = self.SpawnedObject.Instance:GetAttribute("ExplosionPositionDeltaThreshold") or 10
     self.ExplodeOnActivation = self.SpawnedObject.Instance:GetAttribute("ExplodeOnActivation") or false
+
+    local soundAssetID = self.SpawnedObject.Instance:GetAttribute("ExplosionSoundAssetID") or Rage.Logging:Error(self.SpawnedObject.Instance:GetFullName()..": No explosion sound asset ID provided.")
+
+    self.Sound = Sounds:CreateSound(soundAssetID, {
+        Volume = self.SpawnedObject.Instance:GetAttribute("ExplosionSoundVolume") or Rage.Logging:Error(self.SpawnedObject.Instance:GetFullName()..": No explosion sound volume provided."),
+        RollOffMinDistance = self.ExplosionRadius * 0.8
+    })
 
     return self
 end
@@ -88,8 +99,22 @@ function ExplosiveObjectBehaviour:Explode()
     explosion.BlastPressure = self.ExplosionPressure
     explosion.ExplosionType = Enum.ExplosionType.NoCraters
     explosion.DestroyJointRadiusPercent = 0
-    explosion.Position = self.MainPart.Part.Position
+    explosion.Position = self.MainPart:GetPosition3D()
+    explosion.Visible = false
     explosion.Parent = Rage.Workspace
+
+    self.Sound:Play({}, self.MainPart:GetPosition())
+
+    Effects:SpawnEffect(
+        "Explosion",
+        0.5,
+        nil,
+        self.MainPart:GetPosition(),
+
+        {
+            Size = NumberSequence.new(self.ExplosionRadius)
+        }
+    )
 
     self.MainPart:Despawn()
     self.MainPart = nil
@@ -142,7 +167,8 @@ export type ExplosiveObjectBehaviour = ObjectTypes.ObjectBehaviour & typeof(Expl
     ExplosionRadius: number,
     ExplosionPressure: number,
     PositionDeltaThreshold: number,
-    ExplodeOnActivation: boolean
+    ExplodeOnActivation: boolean,
+    Sound: Sound.RSound
 }
 
 return ExplosiveObjectBehaviour
