@@ -1,0 +1,38 @@
+--------------------------------------------------------
+-- [Ragdollworks] Object Part Selection Mode
+--------------------------------------------------------
+
+--[[
+    ----------------------------
+
+    Copyright (C) 2025 Cuh4 - All Rights Reserved
+        - Unauthorized copying of this file, via any medium is strictly prohibited
+        - Proprietary and confidential
+
+    CREDIT:
+        Author(s): @Cuh4 (GitHub)
+
+    ----------------------------
+]]
+
+-------------------------------
+-- // Variable
+-------------------------------
+
+local BaseEnum = require(script.Parent.BaseEnum)
+
+-------------------------------
+-- // Main
+-------------------------------
+
+--[[
+    An enum representing the selection mode for object parts (smallest first, etc).
+]]
+local ObjectPartSelectionMode = BaseEnum("ObjectPartSelectionMode")
+ObjectPartSelectionMode.SMALLEST = "SMALLEST"
+ObjectPartSelectionMode.LARGEST = "LARGEST"
+ObjectPartSelectionMode.CLOSEST_LAYER = "CLOSEST_LAYER"
+ObjectPartSelectionMode.FARTHEST_LAYER = "FARTHEST_LAYER"
+
+export type ObjectPartSelectionMode = string
+return ObjectPartSelectionMode

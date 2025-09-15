@@ -36,6 +36,8 @@ local Object = require(Rage.ReplicatedStorage.Classes.Objects.Object)
 local SpawnedObject = require(Rage.ReplicatedStorage.Classes.Objects.SpawnedObject)
 local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
 
+local ObjectPartSelectionMode = require(Rage.ReplicatedStorage.Enums.ObjectPartSelectionMode)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -70,6 +72,7 @@ Objects.IsDragging = false
 Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
 
 Objects.SelectedObject = nil :: ObjectTypes.Object
+Objects.SelectionMode = ObjectPartSelectionMode.SMALLEST :: ObjectPartSelectionMode.ObjectPartSelectionMode
 
 Objects.ContextMenuActivePart = nil :: ObjectTypes.ObjectPart
 
@@ -534,6 +537,13 @@ function Objects:ActivateHighlightedPart()
 end
 
 --[[
+    Sets the selection mode.
+]]
+function Objects:SetSelectionMode(selectionMode: ObjectPartSelectionMode.ObjectPartSelectionMode)
+    self.SelectionMode = selectionMode
+end
+
+--[[
     Returns the ObjectPart under the mouse, if any.
 ]]
 function Objects:GetPartUnderMouse(): ObjectTypes.ObjectPart?
@@ -549,16 +559,27 @@ function Objects:GetPartUnderMouse(): ObjectTypes.ObjectPart?
         end
     end
 
-    -- Return the part with the highest layer
-    local highest = nil :: ObjectTypes.ObjectPart?
-
-    for _, part in pairs(parts) do
-        if not highest or part.Layer > highest.Layer then
-            highest = part
-        end
+    if #parts <= 0 then
+        return
     end
 
-    return highest
+    if self.SelectionMode == ObjectPartSelectionMode.CLOSEST_LAYER then
+        return Rage.Libs.Table:GetMax(parts, function(current: ObjectTypes.ObjectPart, max: ObjectTypes.ObjectPart)
+            return current.Layer > max.Layer
+        end)
+    elseif self.SelectionMode == ObjectPartSelectionMode.FARTHEST_LAYER then
+        return Rage.Libs.Table:GetMax(parts, function(current: ObjectTypes.ObjectPart, max: ObjectTypes.ObjectPart)
+            return current.Layer < max.Layer
+        end)
+    elseif self.SelectionMode == ObjectPartSelectionMode.SMALLEST then
+        return Rage.Libs.Table:GetMax(parts, function(current: ObjectTypes.ObjectPart, min: ObjectTypes.ObjectPart)
+            return current.Part.Size.Magnitude < min.Part.Size.Magnitude
+        end)
+    elseif self.SelectionMode == ObjectPartSelectionMode.LARGEST then
+        return Rage.Libs.Table:GetMax(parts, function(current: ObjectTypes.ObjectPart, max: ObjectTypes.ObjectPart)
+            return current.Part.Size.Magnitude > max.Part.Size.Magnitude
+        end)
+    end
 end
 
 --[[
@@ -1236,8 +1257,21 @@ end
     Creates commands.
 ]]
 function Objects:_CreateCommands()
+    CLI.Conch.register("set-selection-mode", {
+        description = "Sets the selection mode.",
+
+        arguments = function()
+            return CLI.Conch.args.string("Mode", "The mode to set, see `ObjectPartSelectionMode` enum")
+        end,
+
+        callback = function(mode: string)
+            self.SelectionMode = ObjectPartSelectionMode[mode]
+        end
+    })
+
     CLI.Conch.register("set-slomo-speed", {
         description = "Sets the slomo speed.",
+
         arguments = function()
             return CLI.Conch.args.number("Speed", "The speed, 0 - 1")
         end,
