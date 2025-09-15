@@ -79,7 +79,7 @@ function Table:Merge(tbl1: table, tbl2: table)
 end
 
 --[[
-    Finds a value in a sequential table and returns the index, or nil if not found.
+    Finds a value in a table and returns the index, or nil if not found.
 ]]
 function Table:Find(tbl: table, value: any): number?
     for index, _value in pairs(tbl) do
@@ -117,6 +117,25 @@ function Table:IterateReverse(tbl: table, callback: (index: number, value: any) 
             callback(index, tbl[index])
         end
     end
+end
+
+--[[
+    Returns the "max" value in a table using a condition checker callback.
+]]
+function Table:GetMax(tbl: table, callback: (current: any, max: any) -> number): any
+    if #tbl <= 0 then
+        return
+    end
+
+    local max = nil
+
+    for _, value in pairs(tbl) do
+        if not max or callback(value, max) then
+            max = value
+        end
+    end
+
+    return max
 end
 
 export type Table = typeof(Table)
