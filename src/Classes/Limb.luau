@@ -229,7 +229,7 @@ function Limb:Grunt()
     end
 
     self.LastGrunt = os.clock()
-    self.GruntSounds:PlayRandom()
+    self.GruntSounds:PlayRandom({}, self.ObjectPart.Part)
 
     Rage.Logging:Info(self.LimbName..": Grunted")
 end
@@ -242,7 +242,7 @@ function Limb:PlayImpactSound(impactAmount: number)
         Sounds:CreateSoundModifier("PitchShiftSoundEffect", {
             Octave = math.clamp(1 - (impactAmount / 175), 0.75, 1)
         })
-    })
+    }, self.ObjectPart.Part)
 end
 
 --[[
@@ -257,7 +257,7 @@ function Limb:DeathScream()
         return
     end
 
-    self.DeathSounds:PlayRandom()
+    self.DeathSounds:PlayRandom({}, self.ObjectPart.Part)
     self.PlayedDeathScream = true
 
     Rage.Logging:Info(self.LimbName..": Playing death scream")
