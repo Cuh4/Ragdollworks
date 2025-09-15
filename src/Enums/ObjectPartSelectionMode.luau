@@ -19,7 +19,10 @@
 -- // Variable
 -------------------------------
 
-local BaseEnum = require(script.Parent.BaseEnum)
+local Rage = require(game:GetService("ReplicatedStorage").Rage)
+
+local BaseEnum = require(Rage.ReplicatedStorage.Enums.BaseEnum) -- relative imports fuck with referencing the exported type below in other files for some fucking dumb reason
+                                                                -- fuck you roblox lua lsp extension
 
 -------------------------------
 -- // Main

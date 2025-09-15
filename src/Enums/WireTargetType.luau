@@ -19,7 +19,9 @@
 -- // Variable
 -------------------------------
 
-local BaseEnum = require(script.Parent.BaseEnum)
+local Rage = require(game:GetService("ReplicatedStorage").Rage)
+
+local BaseEnum = require(Rage.ReplicatedStorage.Enums.BaseEnum)
 
 -------------------------------
 -- // Main
