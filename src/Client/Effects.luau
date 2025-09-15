@@ -43,7 +43,7 @@ end
     Spawns a particle effect of the given name.
     Use -1 lifetime for infinite lifetime.
 ]]
-function Effects:SpawnEffect(name: string, lifetime: number, parent: Instance?, position: Vector3?): ParticleEmitter
+function Effects:SpawnEffect(name: string, lifetime: number, parent: Instance?, position: Vector2?, size: Vector2?): ParticleEmitter
     if parent and position then
         Rage.Logging:Error("Effects:SpawnEffect(): Both 'parent' and 'position' cannot be provided. Choose one or the other.")
     end
@@ -59,8 +59,8 @@ function Effects:SpawnEffect(name: string, lifetime: number, parent: Instance?, 
         parent.CanCollide = false
         parent.CanQuery = false
         parent.Anchored = true
-        parent.Size = Vector3.new(1, 1, 1)
-        parent.Position = position
+        parent.Size = size and Vector3.new(size.X, size.Y, 1) or Vector3.new(1, 1, 1)
+        parent.Position = Vector3.new(position.X, position.Y, 0)
         parent.Transparency = 1
         parent.Parent = Rage.Workspace
 
