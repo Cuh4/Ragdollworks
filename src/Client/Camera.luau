@@ -35,7 +35,7 @@ local CLI = require(Rage.Path.CLI)
 ]]
 Camera = Rage:Service("Camera") :: Camera
 Camera.CAMERA_FOV = 30
-Camera.CAMERA_SPEED = 1
+Camera.CAMERA_SPEED = 0.5
 Camera.CAMERA_SPEED_ZOOMED_OUT = 7
 Camera.SCROLL_ZOOM_SENSITIVITY = 0.06
 Camera.CAMERA_Z_ZOOMED_IN = 30
