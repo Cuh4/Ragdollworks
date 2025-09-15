@@ -16,16 +16,21 @@
 ]]
 
 -------------------------------
+-- // Variable
+-------------------------------
+
+local BaseEnum = require(script.Parent.BaseEnum)
+
+-------------------------------
 -- // Main
 -------------------------------
 
 --[[
     An enum representing the type of a wire target.
 ]]
-local WireTargetType = {
-    OBJECT_PART = "OBJECT_PART",
-    WORLD = "WORLD"
-}
+local WireTargetType = BaseEnum("WireTargetType")
+WireTargetType.OBJECT_PART = "OBJECT_PART"
+WireTargetType.WORLD = "WORLD"
 
-export type WireTargetType = typeof(WireTargetType)
+export type WireTargetType = string
 return WireTargetType
