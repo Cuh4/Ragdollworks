@@ -44,22 +44,23 @@ Limb.__index = Limb
 ]]
 function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: number, maxStabilizationAngularVelocity: number, maxStabilizationTorque: number, bloodDecalCount: number): Limb
     local self = setmetatable({}, Limb) :: Limb
-    self.BLOOD_DECAL_MIN_TRANSPARENCY = 0.3
-    self.BRUISE_DECAL_MIN_TRANSPARENCY = 0.55
-
     self.GRUNT_IMPACT_THRESHOLD = 12
     self.GRUNT_COOLDOWN = 0.3
 
+    self.IMPACT_MAX_PROPAGATIONS = 4
+    self.IMPACT_PROPAGATION_MULTIPLIER = 0.1
     self.IMPACT_THRESHOLD = 15
     self.IMPACT_COOLDOWN = 0.3
     self.IMPACT_DAMAGE_MULTIPLIER = 1.3
     self.IMPACT_MASS_MULTIPLIER = 0.1
 
+    self.BRUISE_DECAL_MIN_TRANSPARENCY = 0.55
     self.IMPACT_BRUISING_THRESHOLD = 20
-    self.IMPACT_BRUISING_MULTIPLIER = 0.003
+    self.IMPACT_BRUISING_MULTIPLIER = 0.005
 
+    self.BLOOD_DECAL_MIN_TRANSPARENCY = 0.3
     self.IMPACT_SKIN_DAMAGE_THRESHOLD = 15
-    self.IMPACT_SKIN_DAMAGE_MULTIPLIER = 0.007
+    self.IMPACT_SKIN_DAMAGE_MULTIPLIER = 0.011
 
     self.GORY_IMPACT_SOUND_THRESHOLD = 50
 
@@ -72,7 +73,8 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.BRAIN_DEAD_HEALTH_LOSS_RATE = 0.35 -- per update
     self.HEART_DEAD_HEALTH_LOSS_RATE = 0.1 -- per update
 
-    self.UNGROUNDED_STABILIZATION_MULTIPLIER = 0.04
+    self.UNGROUNDED_STABILIZATION_MULTIPLIER = 0.02
+    self.UNGROUNDED_STABILIZATION_MATCH_ANGLE_OFFSET = 25 -- degrees
 
     self.LimbName = name
     self.ObjectPart = objectPart
@@ -80,6 +82,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.MaxHealth = maxHealth
     self.BloodDecalCount = bloodDecalCount
     self.Limbs = {}
+    self.ClosestLimb = nil
 
     self.LastGrunt = 0
     self.LastImpact = 0
@@ -106,7 +109,9 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.BleedingSound = bleedingSound:Play({}, self.ObjectPart.Part)
 
     self.GoryImpactSounds = Sounds:CreateSoundCollection(
-        Sounds:CreateSound(RbxAssets.HUMAN_HEAVY_GORY_IMPACT_1, {Volume = 0.25})
+        Sounds:CreateSound(RbxAssets.HUMAN_HEAVY_GORY_IMPACT_1, {Volume = 0.25}),
+        Sounds:CreateSound(RbxAssets.HUMAN_HEAVY_GORY_IMPACT_2, {Volume = 0.27}),
+        Sounds:CreateSound(RbxAssets.HUMAN_HEAVY_GORY_IMPACT_3, {Volume = 0.24})
     )
 
     local _impactSettings = {
@@ -119,7 +124,10 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
         Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_3, _impactSettings),
         Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_4, _impactSettings),
         Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_5, _impactSettings),
-        Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_6, _impactSettings)
+        Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_6, _impactSettings),
+        Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_7, _impactSettings),
+        Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_8, _impactSettings),
+        Sounds:CreateSound(RbxAssets.HUMAN_IMPACT_9, _impactSettings)
     )
 
     self.ImpactEffects = {
@@ -129,12 +137,16 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.GruntSounds = Sounds:CreateSoundCollection(
         Sounds:CreateSound(RbxAssets.HUMAN_GRUNT_1, {Volume = 0.7}),
         Sounds:CreateSound(RbxAssets.HUMAN_GRUNT_2, {Volume = 1.2}),
-        Sounds:CreateSound(RbxAssets.HUMAN_GRUNT_3, {Volume = 0.2})
+        Sounds:CreateSound(RbxAssets.HUMAN_GRUNT_3, {Volume = 0.2}),
+        Sounds:CreateSound(RbxAssets.HUMAN_GRUNT_4, {Volume = 0.4}),
+        Sounds:CreateSound(RbxAssets.HUMAN_GRUNT_5, {Volume = 0.3}),
+        Sounds:CreateSound(RbxAssets.HUMAN_GRUNT_6, {Volume = 0.35})
     )
 
     self.DeathSounds = Sounds:CreateSoundCollection(
-        Sounds:CreateSound(RbxAssets.HUMAN_DEATH_1, {Volume = 1.2}),
-        Sounds:CreateSound(RbxAssets.HUMAN_DEATH_2, {Volume = 1})
+        Sounds:CreateSound(RbxAssets.HUMAN_DEATH_1, {Volume = 0.4}),
+        Sounds:CreateSound(RbxAssets.HUMAN_DEATH_2, {Volume = 0.5}),
+        Sounds:CreateSound(RbxAssets.HUMAN_DEATH_3, {Volume = 0.7})
     )
 
     self.BleedingEffect = nil :: ParticleEmitter
@@ -204,6 +216,18 @@ function Limb:GetStabilizationForceMaxTorque(): number
 end
 
 --[[
+    Returns the CFrame for the stabilization force to match.
+]]
+function Limb:GetStabilizationForceCFrame(): CFrame
+    if self.IsGrounded then
+        return CFrame.Angles(0, 0, 0)
+    end
+
+    local _, _, rotationZ = self.ClosestLimb and self.ClosestLimb.ObjectPart.Part.CFrame:GetEulerAnglesYXZ() or 0, 0, 0
+    return CFrame.Angles(0, 0, rotationZ + math.rad(self.UNGROUNDED_STABILIZATION_MATCH_ANGLE_OFFSET))
+end
+
+--[[
     Finds a limb by name.
 ]]
 function Limb:FindLimbByName(name: string): Limb?
@@ -225,6 +249,20 @@ function Limb:GetLimbParts(): {Part}
     end
 
     return parts
+end
+
+--[[
+    Returns the closest limb.
+]]
+function Limb:GetClosestLimb(): Limb
+    return Rage.Libs.Table:GetMax(self.Limbs, function(current: Limb, max: Limb)
+        local currentDistance = (current.ObjectPart:GetPosition3D() - self.ObjectPart:GetPosition3D()).Magnitude
+        local maxDistance = (max.ObjectPart:GetPosition3D() - self.ObjectPart:GetPosition3D()).Magnitude
+
+        return currentDistance < maxDistance and
+            current.ClosestLimb ~= self and
+            current.ObjectPart:GetPosition().Y < self.ObjectPart:GetPosition().Y
+    end)
 end
 
 --[[
@@ -359,11 +397,17 @@ function Limb:TrackImpacts()
 
         self.LastImpact = time()
 
-        local delta = (self.ObjectPart:GetVelocity3D() - part.AssemblyLinearVelocity).Magnitude
+        local relativeVelocity = self.ObjectPart:GetVelocity3D() - part.AssemblyLinearVelocity :: Vector3
+        local relativePosition = self.ObjectPart:GetPosition3D() - part.Position :: Vector3
+
+        if relativePosition:Dot(relativeVelocity) > 0 then
+            return -- the parts are moving away from each other
+        end
+
         local mass = part.Anchored and 1 or part.Mass
 
-        if delta >= self.IMPACT_THRESHOLD then
-            local impactAmount = (delta - self.IMPACT_THRESHOLD) + (mass * self.IMPACT_MASS_MULTIPLIER)
+        if relativeVelocity.Magnitude >= self.IMPACT_THRESHOLD then
+            local impactAmount = (relativeVelocity.Magnitude - self.IMPACT_THRESHOLD) + (mass * self.IMPACT_MASS_MULTIPLIER)
             self:HandleImpact(impactAmount)
         end
     end)
@@ -501,9 +545,14 @@ end
 --[[
     Called when the limb received an impact.
 ]]
-function Limb:HandleImpact(amount: number)
+function Limb:HandleImpact(amount: number, _propagations: number?)
     -- Log
     Rage.Logging:Info(self.LimbName..": Impact, amount: "..amount)
+
+    -- Propagate impact across body
+    if self.ClosestLimb and _propagations < self.IMPACT_MAX_PROPAGATIONS then
+        self.ClosestLimb:HandleImpact(amount * (self.IMPACT_PROPAGATION_MULTIPLIER / _propagations), _propagations + 1)
+    end
 
     -- Inflict damage
     self:Damage(amount * self.IMPACT_DAMAGE_MULTIPLIER)
@@ -540,6 +589,7 @@ end
 function Limb:HandleStabilization()
     self.StabilizationForce.MaxTorque = self:GetStabilizationForceMaxTorque()
     self.StabilizationForce.Responsiveness = self:GetStabilizationForceResponsiveness()
+    self.StabilizationForce.CFrame = self:GetStabilizationForceCFrame()
     self.StabilizationForce.Enabled = self:IsAlive() and not self.IsForceLimp
 end
 
@@ -633,6 +683,8 @@ end
 ]]
 function Limb:Setup(limbs: {[ObjectTypes.ObjectPart]: Limb})
     self.Limbs = limbs
+    self.ClosestLimb = self:GetClosestLimb()
+    print(self.LimbName..": Closest limb: "..(self.ClosestLimb and tostring(self.ClosestLimb.LimbName) or "nil"))
 
     self.Attachment = Instance.new("Attachment")
     self.Attachment.Name = "LimbAttachment"
@@ -679,20 +731,21 @@ function Limb:Cleanup()
 end
 
 export type Limb = typeof(Limb) & {
-    BLOOD_DECAL_MIN_TRANSPARENCY: number,
-    BRUISE_DECAL_MIN_TRANSPARENCY: number,
-
     GRUNT_IMPACT_THRESHOLD: number,
     GRUNT_COOLDOWN: number,
 
+    IMPACT_MAX_PROPAGATIONS: number,
+    IMPACT_PROPAGATION_MULTIPLIER: number,
     IMPACT_THRESHOLD: number,
     IMPACT_COOLDOWN: number,
     IMPACT_DAMAGE_MULTIPLIER: number,
     IMPACT_MASS_MULTIPLIER: number,
 
+    BRUISE_DECAL_MIN_TRANSPARENCY: number,
     IMPACT_BRUISING_THRESHOLD: number,
     IMPACT_BRUISING_MULTIPLIER: number,
 
+    BLOOD_DECAL_MIN_TRANSPARENCY: number,
     IMPACT_SKIN_DAMAGE_THRESHOLD: number,
     IMPACT_SKIN_DAMAGE_MULTIPLIER: number,
 
@@ -708,6 +761,7 @@ export type Limb = typeof(Limb) & {
     HEART_DEAD_HEALTH_LOSS_RATE: number,
 
     UNGROUNDED_STABILIZATION_MULTIPLIER: number,
+    UNGROUNDED_STABILIZATION_MATCH_ANGLE_OFFSET: number,
 
     LimbName: string,
     ObjectPart: ObjectTypes.ObjectPart,
@@ -715,6 +769,7 @@ export type Limb = typeof(Limb) & {
     MaxHealth: number,
     BloodDecalCount: number,
     Limbs: {[ObjectTypes.ObjectPart]: Limb},
+    ClosestLimb: Limb,
 
     BillboardGUI: BillboardGui,
     HealthContainer: Frame,
