@@ -32,6 +32,8 @@ local Menu = require(Rage.Path.Classes.Menu)
     A service for handling UI menus.
 ]]
 Menus = Rage:Service("Menus") :: Menus
+Menus.StartPriority = 0
+
 Menus.Menus = {} :: {[string]: Menu.Menu}
 
 --[[
@@ -97,5 +99,5 @@ function Menus:GetMenus(): {[string]: Menu.Menu}
     return self.Menus
 end
 
-export type Menus = typeof(Menus)
+export type Menus = Rage.Service & typeof(Menus)
 return Menus
