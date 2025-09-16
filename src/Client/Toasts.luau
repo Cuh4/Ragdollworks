@@ -32,7 +32,7 @@ local CLI = require(script.Parent.CLI)
 --[[
     A service for displaying toasts/notifications.
 ]]
-Toasts = Rage:Service("Toasts"):: Toasts
+Toasts = Rage:Service("Toasts") :: Toasts
 Toasts.TOAST_COMPONENT = UI:GetComponent("Toast")
 Toasts.TOAST_CONTAINER = UI:GetScreenGUI("Toasts"):FindFirstChild("Container")
 Toasts.ANIMATE_TIME = 0.5
