@@ -28,6 +28,7 @@ local CLI = require(Rage.Path.CLI)
 local Binds = require(Rage.Path.Binds)
 
 local Bind = require(Rage.Path.Classes.Bind)
+local BindCollection = require(Rage.Path.Classes.BindCollection)
 
 -------------------------------
 -- // Main
@@ -53,6 +54,8 @@ Camera.IsPanning = false
 Camera.MousePosition = Vector2.new(0, 0)
 Camera.MouseDelta = Vector2.new(0, 0)
 Camera.MouseWorldPosition = Vector2.new(0, 0)
+
+Camera.BindCollection = nil :: BindCollection.BindCollection
 
 --[[
     Called when the service starts.
@@ -80,26 +83,6 @@ function Camera:CreateBinds()
         "Camera",
         {
             Binds:CreateBind(
-                "Move Camera",
-                "Moves the camera when panning.",
-                {Enum.UserInputType.MouseMovement},
-                {ShowTouchButton = true},
-
-                function(context: Bind.BindContext)
-                    if context.State ~= Enum.UserInputState.Change then
-                        return
-                    end
-
-                    self:_UpdateMousePosition(Vector2.new(context.InputObject.Position.X, context.InputObject.Position.Y))
-
-                    if self.IsPanning then
-                        local multiplier = Rage.Libs.Math:Lerp(self.Zoom, 0.05, 0.6)
-                        self:Move(-self.MouseDelta.X * multiplier, self.MouseDelta.Y * multiplier)
-                    end
-                end
-            ),
-
-            Binds:CreateBind(
                 "Zoom Camera",
                 "Zooms the camera.",
                 {Enum.UserInputType.MouseWheel},
@@ -115,18 +98,70 @@ function Camera:CreateBinds()
             ),
 
             Binds:CreateBind(
+                "Zoom In",
+                "Zooms the camera in.",
+                {Enum.KeyCode.LeftBracket},
+                {ShowTouchButton = true},
+                nil,
+
+                function(context: Bind.BindContext)
+                    if not context.Bind.IsBeingPressed then
+                        return
+                    end
+
+                    self:SetZoom(self.Zoom - self.SCROLL_ZOOM_SENSITIVITY)
+                end
+            ),
+
+            Binds:CreateBind(
+                "Zoom Out",
+                "Zooms the camera out.",
+                {Enum.KeyCode.RightBracket},
+                {ShowTouchButton = true},
+                nil,
+
+                function(context: Bind.BindContext)
+                    if not context.Bind.IsBeingPressed then
+                        return
+                    end
+
+                    self:SetZoom(self.Zoom + self.SCROLL_ZOOM_SENSITIVITY)
+                end
+            ),
+
+            Binds:CreateBind(
                 "Pan Camera",
                 "Pans the camera.",
                 {Enum.UserInputType.MouseButton3},
                 {ShowTouchButton = true},
 
                 function(context: Bind.BindContext)
-                    if context.State == Enum.UserInputState.Begin then
-                        self.IsPanning = true
-                    elseif context.State == Enum.UserInputState.End or context.State == Enum.UserInputState.Cancel then
-                        self.IsPanning = false
-                    end
-                end
+                    self.IsPanning = context.Bind.IsBeingPressed
+                end,
+
+                nil,
+
+                {
+                    Binds:CreateBind(
+                        "Move Camera",
+                        "Moves the camera when panning.",
+                        {Enum.UserInputType.MouseMovement},
+                        {ShowTouchButton = true},
+
+                        function(context: Bind.BindContext)
+                            if context.State ~= Enum.UserInputState.Change then
+                                return
+                            end
+
+                            if not self.IsPanning then
+                                Rage.Logging:Error("Camera: Move camera bind active when panning is false. This shouldn't be the case. FIXME!")
+                            end
+
+                            local multiplier = Rage.Libs.Math:Lerp(self.Zoom, 0.05, 0.6)
+                            self:Move(-self.MouseDelta.X * multiplier, self.MouseDelta.Y * multiplier)
+                        end
+                    ),
+                }
             ),
 
             Binds:CreateBind(
@@ -136,11 +171,7 @@ function Camera:CreateBinds()
                 {ShowTouchButton = true},
 
                 function(context: Bind.BindContext)
-                    if context.State == Enum.UserInputState.Begin then
-                        self.MoveFaster = true
-                    elseif context.State == Enum.UserInputState.End or context.State == Enum.UserInputState.Cancel then
-                        self.MoveFaster = false
-                    end
+                    self.MoveFaster = context.Bind.IsBeingPressed
                 end
             ),
 
@@ -410,6 +441,8 @@ function Camera:Update()
     Rage.Camera.FieldOfView = self.CAMERA_FOV
     Rage.Camera.CameraType = Enum.CameraType.Scriptable
     Rage.Camera.CFrame = self:GetCamCFrame()
+
+    self:_UpdateMousePosition(Rage.Input:GetMouseLocation())
 end
 
 --[[
@@ -464,5 +497,5 @@ function Camera:_CreateCommands()
     })
 end
 
-export type Camera = typeof(Camera)
+export type Camera = Rage.Service & typeof(Camera)
 return Camera
