@@ -38,9 +38,9 @@ local BindCollection = require(Rage.Path.Classes.BindCollection)
 ]]
 Binds = Rage:Service("Binds") :: Binds
 Binds.BindCollections = {} :: {[string]: BindCollection.BindCollection}
-Binds.RegisteredBinds = {} :: {[string]: Bind.Bind}
-Binds.EnteredBinds = {} :: {[string]: Bind.Bind}
-Binds.ExitedBinds = {} :: {[string]: Bind.Bind}
+Binds.RegisteredBinds = {} :: {Bind.Bind}
+Binds.EnteredBinds = {} :: {Bind.Bind}
+Binds.ExitedBinds = {} :: {Bind.Bind}
 
 Binds.OnBindEnter = signal.new() :: signal.Signal<Bind.Bind>
 Binds.OnBindExit = signal.new() :: signal.Signal<Bind.Bind>
@@ -78,8 +78,8 @@ end
     Registers a bind.
 ]]
 function Binds:_RegisterBind(bind: Bind.Bind)
-    self.RegisteredBinds[bind.Name] = bind
-    self.ExitedBinds = bind
+    table.insert(self.RegisteredBinds, bind)
+    table.insert(self.ExitedBinds, bind)
 end
 
 --[[
@@ -120,8 +120,8 @@ function Binds:CreateBind(
     end)
 
     bind.OnEnter:Connect(function()
-        self.EnteredBinds[name] = bind
-        self.ExitedBinds[name] = nil
+        table.insert(self.EnteredBinds, bind)
+        Rage.Libs.Table:Remove(self.ExitedBinds, bind)
 
         self.OnBindEnter:Fire(bind)
 
@@ -129,8 +129,8 @@ function Binds:CreateBind(
     end)
 
     bind.OnExit:Connect(function()
-        self.EnteredBinds[name] = nil
-        self.ExitedBinds[name] = bind
+        Rage.Libs.Table:Remove(self.EnteredBinds, bind)
+        table.insert(self.ExitedBinds, bind)
 
         self.OnBindExit:Fire(bind)
 
@@ -150,8 +150,12 @@ end
 --[[
     Returns a bind by name.
 ]]
-function Binds:GetBind(name: string): Bind.Bind
-    return self.RegisteredBinds[name]
+function Binds:GetBind(name: string): Bind.Bind?
+    for _, bind in ipairs(self:GetBinds()) do
+        if bind.Name == name then
+            return bind
+        end
+    end
 end
 
 --[[
@@ -169,17 +173,20 @@ function Binds:GetEnteredBinds(): {Bind.Bind}
 end
 
 --[[
+    Returns all exited binds.
+]]
+function Binds:GetExitedBinds(): {Bind.Bind}
+    return self.ExitedBinds
+end
+
+--[[
     Returns the input types of all entered binds.
 ]]
 function Binds:GetInputTypesOfEnteredBinds(): {Bind.BindInputType}
     local inputTypes = {} :: {Bind.BindInputType}
 
-    for _, bind in pairs(self:GetBinds()) do
-        if not bind.Entered then
-            continue
-        end
-
-        for _, input in pairs(bind.Binds) do
+    for _, bind in ipairs(self:GetEnteredBinds()) do
+        for _, input in ipairs(bind.Binds) do
             table.insert(inputTypes, input)
         end
     end
@@ -191,7 +198,7 @@ end
     Invokes heartbeat for all binds.
 ]]
 function Binds:Heartbeat()
-    for _, bind in pairs(self:GetBinds()) do
+    for _, bind in ipairs(self:GetBinds()) do
         bind:Heartbeat()
     end
 end
