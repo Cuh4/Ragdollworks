@@ -366,6 +366,7 @@ end
 ]]
 function Objects:OnMapExit()
     self.BindCollection:Exit()
+    self:DespawnAllObjects()
 end
 
 --[[
