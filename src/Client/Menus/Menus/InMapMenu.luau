@@ -31,6 +31,7 @@ local UI = require(Rage.Path.UI)
 local Bind = require(Rage.Path.Classes.Bind)
 local Menu = require(Rage.Path.Classes.Menu)
 
+local Trove = require(Rage.WallyPackages.trove)
 local signal = require(Rage.WallyPackages.signal)
 
 -------------------------------
@@ -57,7 +58,7 @@ function InMapMenu.New(): InMapMenu
     self.PlayerName = self.PlayerContainer.PlayerName
 
     self.BindsContainer = self.InfoContainer.BindsContainer
-    self.BindFrames = {}
+    self.BindTroves = {}
 
     self.ObjectsContainer = self.InfoContainer.ObjectsContainer
 
@@ -140,8 +141,12 @@ end
     Adds a bind to the binds container.
 ]]
 function InMapMenu:AddBind(bind: Bind.Bind)
+    if self.BindTroves[bind] then
+        return
+    end
+
+    local trove = Trove.new()
     local icons = bind:GetIcons()
-    local frames = {} :: {Frame}
 
     for _, input in pairs(bind.Binds) do
         local bindFrame = UI:GetComponent("Bind"):Clone() :: Frame
@@ -151,29 +156,40 @@ function InMapMenu:AddBind(bind: Bind.Bind)
         bindIcon.Image = icons[input] or RbxAssets.UNKNOWN_ICON
         bindName.Text = bind.Name
 
+        bindFrame.LayoutOrder = bind.ID
         bindFrame.Parent = self.BindsContainer
 
-        table.insert(frames, bindFrame)
+        trove:Add(bind.OnTrigger:Connect(function(context: Bind.BindContext)
+            if context.Bind.IsBeingPressed then
+                bindFrame:AddTag("UISelectedContainer")
+                bindFrame:RemoveTag("UISecondaryContainer")
+                return
+            end
+
+            if not context.Bind.IsBeingPressed then
+                bindFrame:AddTag("UISecondaryContainer")
+                bindFrame:RemoveTag("UISelectedContainer")
+            end
+        end))
+
+        trove:Add(bindFrame)
     end
 
-    self.BindFrames[bind] = frames
+    self.BindTroves[bind] = trove
 end
 
 --[[
     Removes a bind from the binds container.
 ]]
 function InMapMenu:RemoveBind(bind: Bind.Bind)
-    local frames = self.BindFrames[bind]
+    local trove = self.BindTroves[bind]
 
-    if not frames then
+    if not trove then
         return
     end
 
-    for _, frame in pairs(frames) do
-        frame:Destroy()
-    end
-
-    self.BindFrames[bind] = nil
+    trove:Destroy()
+    self.BindTroves[bind] = nil
 end
 
 --[[
@@ -238,14 +254,16 @@ function InMapMenu:Setup()
     end)
 
     self.OnBindEnter = Binds.OnBindEnter:Connect(function(bind: Bind.Bind)
-        print("add bind", bind.Name)
         self:AddBind(bind)
     end)
 
     self.OnBindExit = Binds.OnBindExit:Connect(function(bind: Bind.Bind)
-        print("remove bind", bind.Name)
         self:RemoveBind(bind)
     end)
+
+    for _, bind in pairs(Binds:GetEnteredBinds()) do
+        self:AddBind(bind)
+    end
 end
 
 export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
@@ -256,7 +274,7 @@ export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
     PlayerName: TextLabel,
 
     BindsContainer: Frame,
-    BindFrames: {[Bind.Bind]: {Frame}},
+    BindTroves: {[Bind.Bind]: {Trove.Trove}},
 
     ObjectsContainer: Frame,
 
