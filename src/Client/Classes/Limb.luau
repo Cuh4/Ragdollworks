@@ -56,8 +56,14 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.IMPACT_MASS_MULTIPLIER = 0.1
 
     self.IMPACT_BRUISING_THRESHOLD = 20
-    self.IMPACT_BRUISING_MULTIPLIER = 0.007
+    self.IMPACT_BRUISING_MULTIPLIER = 0.003
 
+    self.IMPACT_SKIN_DAMAGE_THRESHOLD = 15
+    self.IMPACT_SKIN_DAMAGE_MULTIPLIER = 0.007
+
+    self.GORY_IMPACT_SOUND_THRESHOLD = 50
+
+    self.BLEEDING_SOUND_VOLUME = 0.7
     self.BLEEDING_IMPACT_THRESHOLD = 55
     self.BLEEDING_IMPACT_HEALTH_THRESHOLD = 0.6 -- % of health needed until impacts can cause bleeding
     self.BLEEDING_IMPACT_MULTIPLIER = 0.001
@@ -80,6 +86,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
 
     self.Bruising = 0
     self.Bleeding = 0
+    self.SkinDamage = 0
     self.IsLimbAlive = true
     self.IsGrounded = false
     self.IsForceLimp = false
@@ -91,6 +98,16 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.Attachment = nil :: Attachment
     self.MaxStabilizationAngularVelocity = maxStabilizationAngularVelocity
     self.MaxStabilizationTorque = maxStabilizationTorque
+
+    local bleedingSound = Sounds:CreateSound(RbxAssets.BLEEDING_SOUND,{
+        Looped = true
+    }) :: Sound.RSound
+
+    self.BleedingSound = bleedingSound:Play({}, self.ObjectPart.Part)
+
+    self.GoryImpactSounds = Sounds:CreateSoundCollection(
+        Sounds:CreateSound(RbxAssets.HUMAN_HEAVY_GORY_IMPACT_1, {Volume = 0.25})
+    )
 
     local _impactSettings = {
         Volume = 0.06
@@ -243,6 +260,10 @@ function Limb:PlayImpactSound(impactAmount: number)
             Octave = math.clamp(1 - (impactAmount / 175), 0.75, 1)
         })
     }, self.ObjectPart.Part)
+
+    if impactAmount >= self.GORY_IMPACT_SOUND_THRESHOLD then
+        self.GoryImpactSounds:PlayRandom({}, self.ObjectPart.Part)
+    end
 end
 
 --[[
@@ -276,6 +297,22 @@ end
 ]]
 function Limb:RemoveBleeding()
     self.Bleeding = 0
+end
+
+--[[
+    Applies skin damage.
+]]
+function Limb:ApplySkinDamage(amount: number)
+    self.SkinDamage = math.clamp(self.SkinDamage + amount, 0, 1)
+    Rage.Logging:Info(self.LimbName..": Skin damage += "..amount)
+end
+
+
+--[[
+    Removes all skin damage.
+]]
+function Limb:RemoveSkinDamage()
+    self.SkinDamage = 0
 end
 
 --[[
@@ -481,6 +518,11 @@ function Limb:HandleImpact(amount: number)
         self:ApplyBruising(amount * self.IMPACT_BRUISING_MULTIPLIER)
     end
 
+    -- Skin damage
+    if amount > self.IMPACT_SKIN_DAMAGE_THRESHOLD then
+        self:ApplySkinDamage(amount * self.IMPACT_SKIN_DAMAGE_MULTIPLIER)
+    end
+
     -- SFX
     self:PlayImpactSound(amount)
 
@@ -507,12 +549,16 @@ end
 function Limb:HandleBleeding()
     if self.Bleeding <= 0 then
         self.BleedingEffect.Enabled = false
+        self.BleedingSound.Playing = false
         return
     end
 
     self:Damage(self.BLEEDING_HEALTH_LOSS_RATE * self.Bleeding)
     self.BleedingEffect.Rate = self.BleedingEffectDefaultRate * self.Bleeding
     self.BleedingEffect.Enabled = true
+
+    self.BleedingSound.Volume = self.BLEEDING_SOUND_VOLUME * self.Bleeding
+    self.BleedingSound.Playing = true
 end
 
 --[[
@@ -555,17 +601,16 @@ function Limb:HandleDamageVisuals()
     -- Bruising decal
     self.BruiseDecal.Transparency = Rage.Libs.Math:Lerp(1, self.BRUISE_DECAL_MIN_TRANSPARENCY, self.Bruising)
 
-    -- Blood decals (OLD APPROACH)
-    local damage = self.MaxHealth - self.Health
-    local globalOffset = (damage / self.MaxHealth) / 2 -- so all decals are used even with minor damage
-    local step = self.MaxHealth / self.BloodDecalCount
+    -- Blood decals
+    local globalOffset = self.SkinDamage / 2 -- so all decals are used even with minor damage
+    local step = 1 / self.BloodDecalCount
 
     for index = 1, self.BloodDecalCount do
         local decal = self:GetBloodDecal(index)
         local startBound = (index - 1) * step
         local endBound = index * step
 
-        local progress = math.clamp((damage - startBound) / (endBound - startBound), 0, 1)
+        local progress = math.clamp((self.SkinDamage - startBound) / (endBound - startBound), 0, 1)
         decal.Transparency = Rage.Libs.Math:Lerp(1, self.BLOOD_DECAL_MIN_TRANSPARENCY, math.clamp(progress + globalOffset, 0, 1))
     end
 end
@@ -648,6 +693,12 @@ export type Limb = typeof(Limb) & {
     IMPACT_BRUISING_THRESHOLD: number,
     IMPACT_BRUISING_MULTIPLIER: number,
 
+    IMPACT_SKIN_DAMAGE_THRESHOLD: number,
+    IMPACT_SKIN_DAMAGE_MULTIPLIER: number,
+
+    GORY_IMPACT_SOUND_THRESHOLD: number,
+
+    BLEEDING_SOUND_VOLUME: number,
     BLEEDING_IMPACT_THRESHOLD: number,
     BLEEDING_IMPACT_HEALTH_THRESHOLD: number,
     BLEEDING_IMPACT_MULTIPLIER: number,
@@ -673,6 +724,7 @@ export type Limb = typeof(Limb) & {
 
     Bruising: number,
     Bleeding: number,
+    SkinDamage: number,
     IsLimbAlive: boolean,
     Grounded: boolean,
     IsForceLimp: boolean,
@@ -685,6 +737,8 @@ export type Limb = typeof(Limb) & {
     MaxStabilizationAngularVelocity: number,
     MaxStabilizationTorque: number,
 
+    BleedingSound: Sound,
+    GoryImpactSounds: SoundCollection.SoundCollection,
     ImpactSounds: SoundCollection.SoundCollection,
     ImpactEffects: {string},
     GruntSounds: SoundCollection.SoundCollection,
