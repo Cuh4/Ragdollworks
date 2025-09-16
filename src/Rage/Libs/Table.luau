@@ -138,5 +138,19 @@ function Table:GetMax(tbl: table, callback: (current: any, max: any) -> number):
     return max
 end
 
+--[[
+    Performs an operation on all values in a copy of the provided table and returns the table
+    post-operation.
+]]
+function Table:Map(tbl: table, callback: (value: any) -> any): table
+    local newTbl = table.clone(tbl)
+
+    for index, value in pairs(newTbl) do
+        newTbl[index] = callback(value)
+    end
+
+    return newTbl
+end
+
 export type Table = typeof(Table)
 return Table
