@@ -313,5 +313,5 @@ function Maps:_CreateCommands()
     })
 end
 
-export type Maps = typeof(Maps)
+export type Maps = Rage.Service & typeof(Maps)
 return Maps

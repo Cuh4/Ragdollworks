@@ -40,5 +40,5 @@ function ID:GetID(): number
     return self.CurrentID
 end
 
-export type ID = typeof(ID)
+export type ID = Rage.Service & typeof(ID)
 return ID

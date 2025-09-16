@@ -164,5 +164,5 @@ export type ParticleProperties = {
     WindAffectsDrag: number
 }
 
-export type Effects = typeof(Effects)
+export type Effects = Rage.Service & typeof(Effects)
 return Effects

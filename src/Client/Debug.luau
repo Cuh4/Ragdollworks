@@ -118,5 +118,5 @@ function Debug:_CreateCommands()
     })
 end
 
-export type Debug = typeof(Debug)
+export type Debug = Rage.Service & typeof(Debug)
 return Debug

@@ -42,5 +42,5 @@ function CLI:OnStart()
     self.ConchUI.bind_to(Enum.KeyCode.F4)
 end
 
-export type CLI = typeof(CLI)
+export type CLI = Rage.Service & typeof(CLI)
 return CLI

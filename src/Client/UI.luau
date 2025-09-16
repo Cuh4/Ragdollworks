@@ -47,5 +47,5 @@ function UI:GetComponent(name: string): GuiObject
     return self.COMPONENTS_FOLDER:WaitForChild(name) or Rage.Logging:Error("UI:GetComponent(): Component '"..name.."' does not exist.")
 end
 
-export type UI = typeof(UI)
+export type UI = Rage.Service & typeof(UI)
 return UI

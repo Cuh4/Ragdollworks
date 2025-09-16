@@ -93,5 +93,5 @@ function Sounds:_CreateCommands()
     })
 end
 
-export type Sounds = typeof(Sounds)
+export type Sounds = Rage.Service & typeof(Sounds)
 return Sounds

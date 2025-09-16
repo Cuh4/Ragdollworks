@@ -105,5 +105,5 @@ function Toasts:_CreateCommands()
     })
 end
 
-export type Toasts = typeof(Toasts)
+export type Toasts = Rage.Service & typeof(Toasts)
 return Toasts
