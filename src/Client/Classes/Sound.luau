@@ -89,6 +89,10 @@ function Sound:_CreateSoundInstance(trove: Trove.Trove, modifiers: {Instance}, t
         self:_CleanupSound(sound)
     end))
 
+    trove:Add(sound.Destroying:Once(function()
+        self:_CleanupSound(sound)
+    end))
+
     return sound
 end
 
