@@ -26,7 +26,6 @@ local Sound = require(Rage.Path.Classes.Sound)
 local SoundCollection = require(Rage.Path.Classes.SoundCollection)
 
 local CLI = require(Rage.Path.CLI)
-local Camera = require(Rage.Path.Camera)
 
 -------------------------------
 -- // Main
@@ -36,7 +35,7 @@ local Camera = require(Rage.Path.Camera)
     A service for playing sounds.
 ]]
 Sounds = Rage:Service("Sounds") :: Sounds
-Sounds.ROLLOFF_MAX_CAMERA_MAX_Z_OFFSET = 20 -- good naming
+Sounds.ROLLOFF_MAX = 500
 
 --[[
     Called when the service starts.
@@ -71,7 +70,7 @@ end
 ]]
 function Sounds:CreateSound(soundID: number, settings: Sound.SoundSettings): Sound.RSound
     local sound = Sound.New(soundID, settings)
-    sound.Settings.RollOffMaxDistance = Camera.CAMERA_Z_ZOOMED_OUT + self.ROLLOFF_MAX_CAMERA_MAX_Z_OFFSET
+    sound.Settings.RollOffMaxDistance = self.ROLLOFF_MAX
 
     return sound
 end
