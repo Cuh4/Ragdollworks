@@ -48,12 +48,20 @@ RbxAssets.HUMAN_IMPACT_4 = "rbxassetid://7446606796"
 RbxAssets.HUMAN_IMPACT_5 = "rbxassetid://7446606976"
 RbxAssets.HUMAN_IMPACT_6 = "rbxassetid://7446606925"
 
+RbxAssets.HUMAN_HEAVY_GORY_IMPACT_1 = "rbxassetid://105517372211480"
+
 RbxAssets.HUMAN_GRUNT_1 = "rbxassetid://72066124844939"
 RbxAssets.HUMAN_GRUNT_2 = "rbxassetid://4596892095"
 RbxAssets.HUMAN_GRUNT_3 = "rbxassetid://93792621035094"
 
 RbxAssets.HUMAN_DEATH_1 = "rbxassetid://9125652432"
 RbxAssets.HUMAN_DEATH_2 = "rbxassetid://6108566293"
+
+RbxAssets.BLEEDING_SOUND = "rbxassetid://95168252930081"
+
+RbxAssets.POSITIVE_FEEDBACK_SOUND = "rbxassetid://116995696565929"
+RbxAssets.INFO_FEEDBACK_SOUND = "rbxassetid://17582299860"
+RbxAssets.NEGATIVE_FEEDBACK_SOUND = "rbxassetid://7441284478"
 
 RbxAssets.BIND_ICONS = { -- https://devforum.roblox.com/t/images-for-almost-every-keycode-and-userinputtype/2932907
     [Enum.KeyCode.U] = "rbxassetid://17164171424",
