@@ -26,6 +26,7 @@ local ContextActionService = game:GetService("ContextActionService")
 local signal = require(Rage.WallyPackages.signal)
 
 local RbxAssets = require(Rage.Path.RbxAssets)
+local ID = require(Rage.Path.ID)
 
 -------------------------------
 -- // Main
@@ -40,8 +41,9 @@ Bind.__index = Bind
 --[[
     Creates a new Bind class instance.
 ]]
-function Bind.New(name: string, summary: string, binds: {BindInputType}, settings: {BindSettings}, childBinds: {Bind}?): Bind
+function Bind.New(name: string, summary: string, binds: {BindInputType}, settings: BindSettings, childBinds: {Bind}?): Bind
     local self = setmetatable({}, Bind) :: Bind
+    self.ID = ID:GetID()
     self.Name = name
     self.Summary = summary
     self.Binds = binds
@@ -213,6 +215,7 @@ export type BindSettings = {
 export type BindInputType = Enum.KeyCode | Enum.UserInputType
 
 export type Bind = typeof(Bind) & {
+    ID: number,
     Name: string,
     Summary: string,
     Binds: {BindInputType},
