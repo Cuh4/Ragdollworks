@@ -47,15 +47,24 @@ RbxAssets.HUMAN_IMPACT_3 = "rbxassetid://7446609976"
 RbxAssets.HUMAN_IMPACT_4 = "rbxassetid://7446606796"
 RbxAssets.HUMAN_IMPACT_5 = "rbxassetid://7446606976"
 RbxAssets.HUMAN_IMPACT_6 = "rbxassetid://7446606925"
+RbxAssets.HUMAN_IMPACT_7 = "rbxassetid://97453300112866"
+RbxAssets.HUMAN_IMPACT_8 = "rbxassetid://81732934755870"
+RbxAssets.HUMAN_IMPACT_9 = "rbxassetid://100158627852440"
 
 RbxAssets.HUMAN_HEAVY_GORY_IMPACT_1 = "rbxassetid://105517372211480"
+RbxAssets.HUMAN_HEAVY_GORY_IMPACT_2 = "rbxassetid://136752537264415"
+RbxAssets.HUMAN_HEAVY_GORY_IMPACT_3 = "rbxassetid://116476849977016"
 
 RbxAssets.HUMAN_GRUNT_1 = "rbxassetid://72066124844939"
 RbxAssets.HUMAN_GRUNT_2 = "rbxassetid://4596892095"
 RbxAssets.HUMAN_GRUNT_3 = "rbxassetid://93792621035094"
+RbxAssets.HUMAN_GRUNT_4 = "rbxassetid://86655471105526"
+RbxAssets.HUMAN_GRUNT_5 = "rbxassetid://86259003661882"
+RbxAssets.HUMAN_GRUNT_6 = "rbxassetid://109336182042127"
 
 RbxAssets.HUMAN_DEATH_1 = "rbxassetid://9125652432"
 RbxAssets.HUMAN_DEATH_2 = "rbxassetid://6108566293"
+RbxAssets.HUMAN_DEATH_3 = "rbxassetid://136790423235270"
 
 RbxAssets.BLEEDING_SOUND = "rbxassetid://95168252930081"
 
