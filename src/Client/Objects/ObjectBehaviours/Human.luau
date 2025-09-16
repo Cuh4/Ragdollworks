@@ -44,7 +44,6 @@ setmetatable(HumanObjectBehaviour, ObjectBehaviour)
 function HumanObjectBehaviour.New(spawnedObject: ObjectTypes.SpawnedObject): HumanObjectBehaviour
     local self = setmetatable(ObjectBehaviour.New(spawnedObject), HumanObjectBehaviour) :: HumanObjectBehaviour
     self.Limbs = {} :: {[ObjectTypes.ObjectPart]: Limb.Limb}
-    self.IsForceLimp = false
 
     return self
 end
@@ -139,8 +138,7 @@ function HumanObjectBehaviour:OnUpdate()
 end
 
 export type HumanObjectBehaviour = ObjectTypes.ObjectBehaviour & typeof(HumanObjectBehaviour) & {
-    Limbs: {[ObjectTypes.ObjectPart]: Limb.Limb},
-    IsForceLimp: boolean
+    Limbs: {[ObjectTypes.ObjectPart]: Limb.Limb}
 }
 
 return HumanObjectBehaviour
