@@ -25,6 +25,9 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local Maps = require(Rage.Path.Maps)
 local RbxAssets = require(Rage.Path.RbxAssets)
 local CLI = require(Rage.Path.CLI)
+local Binds = require(Rage.Path.Binds)
+
+local Bind = require(Rage.ReplicatedStorage.Classes.Bind)
 
 -------------------------------
 -- // Main
@@ -46,8 +49,9 @@ Camera.Position = Maps.MAP_POSITION
 Camera.Zoom = 0
 Camera.MoveFaster = false
 Camera.IsPanning = false
-Camera.LastMousePosition = Vector2.new(0, 0)
 
+Camera.MousePosition = Vector2.new(0, 0)
+Camera.MouseDelta = Vector2.new(0, 0)
 Camera.MouseWorldPosition = Vector2.new(0, 0)
 
 --[[
@@ -57,7 +61,7 @@ function Camera:OnStart()
     self:_CreateCommands()
     self:HidePlayer()
     self:SetMouseIcon()
-    self:HandleInputEvents()
+    self:CreateBinds()
 
     self.HeartbeatConnection = Rage.RunService.Heartbeat:Connect(function()
         self:Update()
@@ -69,22 +73,153 @@ function Camera:OnStart()
 end
 
 --[[
-    Updates the camera.
+    Creates camera binds.
 ]]
-function Camera:Update()
-    self:HandleInputTick()
+function Camera:CreateBinds()
+    self.BindCollection = Binds:CreateBindCollection(
+        "Camera",
+        {
+            Binds:CreateBind(
+                "Move Camera",
+                "Moves the camera when panning.",
+                {Enum.UserInputType.MouseMovement},
+                {ShowTouchButton = true},
 
-    Rage.Lighting.FogEnd = math.huge
+                function(context: Bind.BindContext)
+                    if context.State ~= Enum.UserInputState.Change then
+                        return
+                    end
 
-    Rage.Camera.FieldOfView = self.CAMERA_FOV
-    Rage.Camera.CameraType = Enum.CameraType.Scriptable
-    Rage.Camera.CFrame = self:GetCamCFrame()
+                    self:_UpdateMousePosition(Vector2.new(context.InputObject.Position.X, context.InputObject.Position.Y))
 
-    local mouseWorldPosition = self:CastRayToZ0()
+                    if self.IsPanning then
+                        local multiplier = Rage.Libs.Math:Lerp(self.Zoom, 0.05, 0.6)
+                        self:Move(-self.MouseDelta.X * multiplier, self.MouseDelta.Y * multiplier)
+                    end
+                end
+            ),
 
-    if mouseWorldPosition then
-        self.MouseWorldPosition = mouseWorldPosition
-    end
+            Binds:CreateBind(
+                "Zoom Camera",
+                "Zooms the camera.",
+                {Enum.UserInputType.MouseWheel},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.State ~= Enum.UserInputState.Change then
+                        return
+                    end
+
+                    self:SetZoom(self.Zoom + -(context.InputObject.Position.Z * self.SCROLL_ZOOM_SENSITIVITY))
+                end
+            ),
+
+            Binds:CreateBind(
+                "Pan Camera",
+                "Pans the camera.",
+                {Enum.UserInputType.MouseButton3},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.State == Enum.UserInputState.Begin then
+                        self.IsPanning = true
+                    elseif context.State == Enum.UserInputState.End or context.State == Enum.UserInputState.Cancel then
+                        self.IsPanning = false
+                    end
+                end
+            ),
+
+            Binds:CreateBind(
+                "Move Camera Faster",
+                "Moves the camera faster.",
+                {Enum.KeyCode.LeftShift},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.State == Enum.UserInputState.Begin then
+                        self.MoveFaster = true
+                    elseif context.State == Enum.UserInputState.End or context.State == Enum.UserInputState.Cancel then
+                        self.MoveFaster = false
+                    end
+                end
+            ),
+
+            Binds:CreateBind(
+                "Move Left",
+                "Moves the camera left.",
+                {Enum.KeyCode.Left},
+                {ShowTouchButton = true},
+                nil,
+
+                function(context: Bind.BindContext)
+                    if not context.Bind.IsBeingPressed then
+                        return
+                    end
+
+                    self:Move(-self:GetSpeed(), 0)
+                end
+            ),
+
+            Binds:CreateBind(
+                "Move Right",
+                "Moves the camera right.",
+                {Enum.KeyCode.Right},
+                {ShowTouchButton = true},
+                nil,
+
+                function(context: Bind.BindContext)
+                    if not context.Bind.IsBeingPressed then
+                        return
+                    end
+
+                    self:Move(self:GetSpeed(), 0)
+                end
+            ),
+
+            Binds:CreateBind(
+                "Move Up",
+                "Moves the camera up.",
+                {Enum.KeyCode.Up},
+                {ShowTouchButton = true},
+                nil,
+
+                function(context: Bind.BindContext)
+                    if not context.Bind.IsBeingPressed then
+                        return
+                    end
+
+                    self:Move(0, self:GetSpeed())
+                end
+            ),
+
+            Binds:CreateBind(
+                "Move Down",
+                "Moves the camera down.",
+                {Enum.KeyCode.Down},
+                {ShowTouchButton = true},
+                nil,
+
+                function(context: Bind.BindContext)
+                    if not context.Bind.IsBeingPressed then
+                        return
+                    end
+
+                    self:Move(0, -self:GetSpeed())
+                end
+            )
+        }
+    )
+
+    self.BindCollection:Enter()
+end
+
+--[[
+    Updates where the mouse is.
+]]
+function Camera:_UpdateMousePosition(position: Vector2)
+    self.MouseDelta = position - self.MousePosition
+    self.MousePosition = position
+    self.MouseWorldPosition = self:MouseCastRayToZ0()
 end
 
 --[[
@@ -116,74 +251,6 @@ function Camera:GetSpeed(): number
 end
 
 --[[
-    Handles camera movement from input.
-]]
-function Camera:HandleInputTick()
-    if Rage.Input:IsKeyDown(Enum.KeyCode.Up) then
-        self:Move(0, self:GetSpeed())
-    end
-
-    if Rage.Input:IsKeyDown(Enum.KeyCode.Down) then
-        self:Move(0, -self:GetSpeed())
-    end
-
-    if Rage.Input:IsKeyDown(Enum.KeyCode.Left) then
-        self:Move(-self:GetSpeed(), 0)
-    end
-
-    if Rage.Input:IsKeyDown(Enum.KeyCode.Right) then
-        self:Move(self:GetSpeed(), 0)
-    end
-
-    self:SetMoveFaster(Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift))
-
-    if self.IsPanning then
-        local mousePos = Rage.Input:GetMouseLocation()
-        local delta = mousePos - self.LastMousePosition
-        local multiplier = Rage.Libs.Math:Lerp(self.Zoom, 0.05, 0.6)
-
-        self:Move(-delta.X * multiplier, delta.Y * multiplier)
-
-        self.LastMousePosition = mousePos
-    end
-end
-
---[[
-    Handles camera movement via events.
-]]
-function Camera:HandleInputEvents()
-    Rage.Input.InputChanged:Connect(function(input, gameProcessedEvent)
-        if gameProcessedEvent then
-            return
-        end
-
-        if input.UserInputType == Enum.UserInputType.MouseWheel then
-            self:SetZoom(self.Zoom + -(input.Position.Z * self.SCROLL_ZOOM_SENSITIVITY))
-        end
-    end)
-
-    Rage.Input.InputBegan:Connect(function(input, gameProcessedEvent)
-        if gameProcessedEvent then
-            return
-        end
-
-        if input.UserInputType == Enum.UserInputType.MouseButton3 then
-            self:SetPanning(true)
-        end
-    end)
-
-    Rage.Input.InputEnded:Connect(function(input, gameProcessedEvent)
-        if gameProcessedEvent then
-            return
-        end
-
-        if input.UserInputType == Enum.UserInputType.MouseButton3 then
-            self:SetPanning(false)
-        end
-    end)
-end
-
---[[
     Sets the mouse icon.
 ]]
 function Camera:SetMouseIcon()
@@ -195,11 +262,6 @@ end
 ]]
 function Camera:SetPanning(isPanning: boolean)
     self.IsPanning = isPanning
-
-    if isPanning then
-        self.LastMousePosition = Rage.Input:GetMouseLocation()
-    end
-
     Rage.Logging:Info("Camera:SetPanning(): Panning is "..tostring(isPanning))
 end
 
@@ -259,7 +321,7 @@ end
 --[[
     Casts a ray from the camera's position to the mouse's position.
 ]]
-function Camera:CastRay(distance: number): RaycastResult?
+function Camera:MouseCastRay(distance: number): RaycastResult?
     local mouseLocation = Rage.Input:GetMouseLocation()
     local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
 
@@ -280,7 +342,7 @@ end
 --[[
     Casts a ray from the camera's position to the mouse's position, and returning ALL hit instances instead of the first.
 ]]
-function Camera:CastRayAll(distance: number): {RaycastResult}
+function Camera:MouseCastRayAll(distance: number): {RaycastResult}
     local mouseLocation = Rage.Input:GetMouseLocation()
     local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
 
@@ -318,7 +380,7 @@ end
 --[[
     Casts a ray to Z 0.
 ]]
-function Camera:CastRayToZ0(): Vector2?
+function Camera:MouseCastRayToZ0(): Vector2?
     local mouseLocation = Rage.Input:GetMouseLocation()
     local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
 
@@ -337,6 +399,17 @@ function Camera:CastRayToZ0(): Vector2?
 
     local hitPos = origin + direction * scalar
     return Vector2.new(hitPos.X, hitPos.Y)
+end
+
+--[[
+    Updates the camera.
+]]
+function Camera:Update()
+    Rage.Lighting.FogEnd = math.huge
+
+    Rage.Camera.FieldOfView = self.CAMERA_FOV
+    Rage.Camera.CameraType = Enum.CameraType.Scriptable
+    Rage.Camera.CFrame = self:GetCamCFrame()
 end
 
 --[[
