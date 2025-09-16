@@ -31,7 +31,10 @@ local Maps = require(Rage.Path.Maps)
 local Debug = require(Rage.Path.Debug)
 local Toasts = require(Rage.Path.Toasts)
 local Effects = require(Rage.Path.Effects)
+local Binds = require(Rage.Path.Binds)
 
+local Bind = require(Rage.Path.Classes.Bind)
+local BindCollection = require(Rage.Path.Classes.BindCollection)
 local Object = require(Rage.Path.Classes.Objects.Object)
 local SpawnedObject = require(Rage.Path.Classes.Objects.SpawnedObject)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
@@ -88,6 +91,10 @@ Objects.SlowMotion = false
 Objects.SlomoSpeed = 0.5
 Objects._HeartbeatFrame = 0
 
+Objects.BindCollection = nil :: BindCollection.BindCollection
+Objects.HighlightRequiredBindCollection = nil :: BindCollection.BindCollection
+Objects.SelectionRequiredBindCollection = nil :: BindCollection.BindCollection
+
 Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnObjectSelect = signal.new() :: signal.Signal<ObjectTypes.Object>
@@ -99,15 +106,19 @@ Objects.OnSlomoStateChange = signal.new() :: signal.Signal<boolean>
     Called when the service starts.
 ]]
 function Objects:OnStart()
+    self:CreateBinds()
     self:LoadBehaviours()
     self:LoadWires()
     self:LoadObjects()
-    self:HandleInput()
 
     self:_CreateCommands()
 
     Rage.RunService.Heartbeat:Connect(function()
         self:Update()
+    end)
+
+    Maps.OnMapStart:Connect(function()
+        self:OnMapStart()
     end)
 
     Maps.OnMapExit:Connect(function()
@@ -116,112 +127,245 @@ function Objects:OnStart()
 end
 
 --[[
-    Handles user input every tick.
+    Creates all keybinds.
 ]]
-function Objects:HandleInputTick()
-    if Rage.Input:IsKeyDown(Enum.KeyCode.A) then
-        self:RotateDraggedPart(-self.RotationSpeed)
-    elseif Rage.Input:IsKeyDown(Enum.KeyCode.D) then
-        self:RotateDraggedPart(self.RotationSpeed)
-    else
-        self:RotateDraggedPart(0)
-    end
+function Objects:CreateBinds()
+    self.BindCollection = Binds:CreateBindCollection(
+        "Objects",
+        {
+            Binds:CreateBind(
+                "Select/Drag Part",
+                "Selects and drags the part under the mouse.",
+                {Enum.UserInputType.MouseButton1},
+                {ShowTouchButton = false},
 
-    if Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift) then
-        self.RotationSpeed = self.RotationSpeed + self.ROTATION_SPEED_INCREMENT
-    else
-        self.RotationSpeed = self.DEFAULT_ROTATION_SPEED
-    end
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self:SelectHighlightedObjectPart(not Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift))
+                        self:DragHighlightedPart()
 
-    local part = self:GetPartUnderMouse()
+                        if not self.HighlightedPart then
+                            self:HideContextMenu()
+                        end
+                    else
+                        self:StopDragging()
+                    end
+                end,
 
-    if part then
-        self:HighlightPart(part)
-    else
-        self:UnhighlightPart()
-    end
+                nil,
+
+                {
+                    Binds:CreateBind(
+                        "Rotate Part Left",
+                        "Rotates the selected part counterclockwise.",
+                        {Enum.KeyCode.A},
+                        {ShowTouchButton = true},
+                        nil,
+
+                        function(context: Bind.BindContext)
+                            if not context.Bind.IsBeingPressed then
+                                return
+                            end
+
+                            self:RotateDraggedPart(-self.RotationSpeed)
+                        end
+                    ),
+
+                    Binds:CreateBind(
+                        "Rotate Part Right",
+                        "Rotates the selected part clockwise.",
+                        {Enum.KeyCode.D},
+                        {ShowTouchButton = true},
+                        nil,
+
+                        function(context: Bind.BindContext)
+                            if not context.Bind.IsBeingPressed then
+                                return
+                            end
+
+                            self:RotateDraggedPart(self.RotationSpeed)
+                        end
+                    ),
+
+                    Binds:CreateBind(
+                        "Rotate Faster",
+                        "Rotates the selected part faster.",
+                        {Enum.KeyCode.LeftShift},
+                        {ShowTouchButton = true},
+                        nil,
+
+                        function(context: Bind.BindContext)
+                            if context.Bind.IsBeingPressed then
+                                self.RotationSpeed = self.RotationSpeed + self.ROTATION_SPEED_INCREMENT
+                            else
+                                self.RotationSpeed = self.DEFAULT_ROTATION_SPEED
+                            end
+                        end
+                    )
+                }
+            ),
+
+            Binds:CreateBind(
+                "Spawn Object",
+                "Spawns an object.",
+                {Enum.KeyCode.E},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self:PlayerSpawnObject()
+                    end
+                end
+            ),
+
+            Binds:CreateBind(
+                "Toggle Slow Motion",
+                "Toggles slow motion.",
+                {Enum.KeyCode.G},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self:PlayerToggleSlowMotion()
+                    end
+                end
+            ),
+
+            Binds:CreateBind(
+                "Undo",
+                "Undoes the last action.",
+                {Enum.KeyCode.Z},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if not context.Bind.IsBeingPressed then
+                        self:Undo()
+                    end
+                end
+            ),
+
+            Binds:CreateBind(
+                "Wire",
+                "Wires two things together.",
+                {Enum.KeyCode.T},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self:PlayerBeginWiring()
+                    else
+                        self:PlayerStopWiring()
+                    end
+                end
+            ),
+
+            Binds:CreateBind(
+                "Toggle Pause",
+                "Toggles paused state.",
+                {Enum.KeyCode.Space},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self:PlayerTogglePaused()
+                    end
+                end
+            )
+        }
+    )
+
+    self.HighlightRequiredBindCollection = Binds:CreateBindCollection(
+        "Object Highlight",
+        {
+            Binds:CreateBind(
+                "Show Context Menu",
+                "Shows a context menu for the selected part(s).",
+                {Enum.UserInputType.MouseButton2},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self:SelectHighlightedObjectPart(true)
+                        self:PlayerHandleContextMenu()
+                    end
+                end
+            ),
+
+            Binds:CreateBind(
+                "Pipette",
+                "Pipettes an object.",
+                {Enum.KeyCode.Y},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self:PlayerPipette()
+                    end
+                end
+            ),
+
+            Binds:CreateBind(
+                "Activate Part",
+                "Activates the part under the mouse.",
+                {Enum.KeyCode.F},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self:ActivateHighlightedPart()
+                    end
+                end
+            ),
+        }
+    )
+
+    self.SelectionRequiredBindCollection = Binds:CreateBindCollection(
+        "Object Selected",
+        {
+            Binds:CreateBind(
+                "Follow",
+                "Toggles whether the camera follows the selected parts.",
+                {Enum.KeyCode.U},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self:SetFollowing(not self.IsFollowing)
+                    end
+                end
+            ),
+
+            Binds:CreateBind(
+                "Delete Object",
+                "Deletes the selected objects.",
+                {Enum.KeyCode.Delete},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self:DespawnSelectedObjects()
+                    end
+                end
+            )
+        }
+    ) :: BindCollection.BindCollection
 end
 
 --[[
-    Handles user input.
+    Handles when the map is entered.
 ]]
-function Objects:HandleInput()
-    Rage.Input.InputBegan:Connect(function(input, gameProcessedEvent)
-        if gameProcessedEvent then
-            return
-        end
+function Objects:OnMapStart()
+    self.BindCollection:Enter()
 
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            self:SelectHighlightedObjectPart(not Rage.Input:IsKeyDown(Enum.KeyCode.LeftShift))
-            self:DragHighlightedPart()
-
-            if not self.HighlightedPart then
-                self:HideContextMenu()
-            end
-        end
-
-        if input.UserInputType == Enum.UserInputType.MouseButton2 then
-            self:SelectHighlightedObjectPart(true)
-            self:PlayerHandleContextMenu()
-        end
-
-        if input.KeyCode == Enum.KeyCode.F then
-            self:ActivateHighlightedPart()
-        end
-
-        if input.KeyCode == Enum.KeyCode.E then
-            self:PlayerSpawnObject()
-        end
-
-        if input.KeyCode == Enum.KeyCode.G then
-            self:PlayerToggleSlowMotion()
-        end
-
-        if input.KeyCode == Enum.KeyCode.Z then
-            self:Undo()
-        end
-
-        if input.KeyCode == Enum.KeyCode.U then
-            self:SetFollowing(not self.IsFollowing)
-        end
-
-        if input.KeyCode == Enum.KeyCode.Delete then
-            self:DespawnSelectedObjects()
-        end
-
-        if input.KeyCode == Enum.KeyCode.T then
-            self:PlayerBeginWiring()
-        end
-
-        if input.KeyCode == Enum.KeyCode.Space then
-            self:PlayerTogglePaused()
-        end
-
-        if input.KeyCode == Enum.KeyCode.Y then
-            self:PlayerPipette()
-        end
-    end)
-
-    Rage.Input.InputEnded:Connect(function(input, gameProcessedEvent)
-        if gameProcessedEvent then
-            return
-        end
-
-        if input.KeyCode == Enum.KeyCode.T then
-            self:PlayerStopWiring()
-        end
-
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            self:StopDragging()
-        end
-    end)
+    self:SelectObject(table.pack(next(self.ExistingObjects))[2])
+    self:SelectWire(table.pack(next(self.ExistingWires))[2])
 end
 
 --[[
     Handles when the map is exited.
 ]]
 function Objects:OnMapExit()
-    self:DespawnAllObjects()
+    self.BindCollection:Exit()
 end
 
 --[[
@@ -499,6 +643,8 @@ function Objects:HighlightPart(part: ObjectTypes.ObjectPart)
     self.HighlightedPart = part
     part:Highlight()
 
+    self.HighlightRequiredBindCollection:Enter()
+
     Rage.Logging:Info("Objects:HighlightPart(): Highlighted part.")
 end
 
@@ -512,6 +658,8 @@ function Objects:UnhighlightPart()
 
     self.HighlightedPart:Unhighlight()
     self.HighlightedPart = nil
+
+    self.HighlightRequiredBindCollection:Exit()
 
     Rage.Logging:Info("Objects:UnhighlightPart(): Unhighlighted part.")
 end
@@ -1050,6 +1198,7 @@ function Objects:SelectObjectPart(objectPart: ObjectTypes.ObjectPart, overwrite:
     end
 
     objectPart:Select()
+    self.SelectionRequiredBindCollection:Enter()
 
     Rage.Logging:Info("Objects:SelectObjectPart(): Selected object part.")
 end
@@ -1098,6 +1247,10 @@ function Objects:DeselectObjectPart(objectPart: ObjectTypes.ObjectPart)
 
     objectPart:Deselect()
     Rage.Libs.Table:Remove(self.SelectedObjectParts, objectPart)
+
+    if not self:IsAnyObjectPartSelected() then
+        self.SelectionRequiredBindCollection:Exit()
+    end
 
     Rage.Logging:Info("Objects:DeselectObjectPart(): Deselected object part.")
 end
@@ -1207,7 +1360,7 @@ end
 --[[
     Updates all spawned wires.
 ]]
-function Objects:UpdateSpawnedWIres()
+function Objects:UpdateSpawnedWires()
     for _, spawnedWire: ObjectTypes.SpawnedWire in pairs(self.SpawnedWires) do
         task.spawn(function()
             spawnedWire:Update()
@@ -1238,6 +1391,19 @@ function Objects:UpdateCamera()
 end
 
 --[[
+    Updates object part highlighting.
+]]
+function Objects:UpdateObjectPartHighlighting()
+    local part = self:GetPartUnderMouse()
+
+    if part then
+        self:HighlightPart(part)
+    else
+        self:UnhighlightPart()
+    end
+end
+
+--[[
     Updates everything. To be called every heartbeat.
 ]]
 function Objects:Update()
@@ -1248,9 +1414,9 @@ function Objects:Update()
     self._HeartbeatFrame += 1
 
     self:UpdateSpawnedObjects()
-    self:UpdateSpawnedWIres()
+    self:UpdateSpawnedWires()
     self:UpdateCamera()
-    self:HandleInputTick()
+    self:UpdateObjectPartHighlighting()
 end
 
 --[[
@@ -1368,5 +1534,5 @@ function Objects:_CreateCommands()
     })
 end
 
-export type Objects = typeof(Objects)
+export type Objects = Rage.Service & typeof(Objects)
 return Objects
