@@ -122,11 +122,7 @@ end
 --[[
     Returns the "max" value in a table using a condition checker callback.
 ]]
-function Table:GetMax(tbl: table, callback: (current: any, max: any) -> number): any
-    if #tbl <= 0 then
-        return
-    end
-
+function Table:GetMax(tbl: table, callback: (current: any, max: any) -> boolean): any
     local max = nil
 
     for _, value in pairs(tbl) do
