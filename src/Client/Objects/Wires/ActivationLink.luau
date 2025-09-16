@@ -72,7 +72,7 @@ function ActivationLink:OnConnect()
         Toasts:DisplayToast(
             "Activation Link",
             "This wire is only functional when connected to two parts.",
-            2
+            5
         )
 
         return
