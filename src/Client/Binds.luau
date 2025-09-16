@@ -55,18 +55,6 @@ function Binds:OnStart()
     end)
 
     self:_CreateCommands()
-
-    self:CreateBind(
-        "test",
-        "test bind",
-        {Enum.UserInputType.MouseButton1, Enum.KeyCode.L},
-        {ShowTouchButton = true},
-
-        function(context: Bind.BindContext)
-            print("test bind")
-            print(context)
-        end
-    )
 end
 
 --[[
