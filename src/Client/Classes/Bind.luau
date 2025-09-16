@@ -25,6 +25,8 @@ local ContextActionService = game:GetService("ContextActionService")
 
 local signal = require(Rage.WallyPackages.signal)
 
+local RbxAssets = require(Rage.Path.RbxAssets)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -38,7 +40,7 @@ Bind.__index = Bind
 --[[
     Creates a new Bind class instance.
 ]]
-function Bind.New(name: string, summary: string, binds: {BindInputType}, settings: {BindSettings}): Bind
+function Bind.New(name: string, summary: string, binds: {BindInputType}, settings: {BindSettings}, childBinds: {Bind}?): Bind
     local self = setmetatable({}, Bind) :: Bind
     self.Name = name
     self.Summary = summary
@@ -47,6 +49,7 @@ function Bind.New(name: string, summary: string, binds: {BindInputType}, setting
     self.Entered = false
     self.IsBeingPressed = false
     self.CurrentContext = nil
+    self.ChildBinds = childBinds or {}
 
     self.OnTrigger = signal.new()
     self.OnEnter = signal.new()
@@ -54,6 +57,19 @@ function Bind.New(name: string, summary: string, binds: {BindInputType}, setting
     self.OnHeartbeat = signal.new()
 
     return self
+end
+
+--[[
+    Returns icon asset IDs for all the binds.
+]]
+function Bind:GetIcons(): {[BindInputType]: string}
+    local icons = {} :: {[BindInputType]: string}
+
+    for _, bind in pairs(self.Binds) do
+        icons[bind] = RbxAssets.BIND_ICONS[bind] or RbxAssets.UNKNOWN_ICON
+    end
+
+    return icons
 end
 
 --[[
@@ -129,6 +145,16 @@ function Bind:_Trigger(state: Enum.UserInputState, inputObject: InputObject)
         State = state
     }
 
+    if self.IsBeingPressed then
+        for _, childBind in pairs(self.ChildBinds) do
+            childBind:Enter()
+        end
+    else
+        for _, childBind in pairs(self.ChildBinds) do
+            childBind:Exit()
+        end
+    end
+
     self.OnTrigger:Fire(self.CurrentContext)
 end
 
@@ -194,6 +220,7 @@ export type Bind = typeof(Bind) & {
     Entered: boolean,
     IsBeingPressed: boolean,
     CurrentContext: BindContext?,
+    ChildBinds: {Bind},
 
     OnTrigger: signal.Signal<BindContext>,
     OnEnter: signal.Signal,

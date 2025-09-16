@@ -91,13 +91,15 @@ function Binds:CreateBind(
     binds: {Bind.BindInputType},
     settings: {Bind.BindSettings},
     trigger: (Bind.BindContext) -> nil?,
-    heartbeat: (Bind.BindContext) -> nil?
+    heartbeat: (Bind.BindContext) -> nil?,
+    childBinds: {Bind.Bind}?
 ): Bind.Bind
     local bind = Bind.New(
         name,
         summary,
         binds,
-        settings
+        settings,
+        childBinds
     )
 
     -- Register
@@ -122,6 +124,8 @@ function Binds:CreateBind(
         self.ExitedBinds[name] = nil
 
         self.OnBindEnter:Fire(bind)
+
+        Rage.Logging:Info(("Bind '%s': Entered"):format(name))
     end)
 
     bind.OnExit:Connect(function()
@@ -129,6 +133,8 @@ function Binds:CreateBind(
         self.ExitedBinds[name] = bind
 
         self.OnBindExit:Fire(bind)
+
+        Rage.Logging:Info(("Bind '%s': Exited"):format(name))
     end)
 
     -- Log
@@ -287,5 +293,5 @@ function Binds:_CreateCommands()
     })
 end
 
-export type Binds = typeof(Binds)
+export type Binds = Rage.Service & typeof(Binds)
 return Binds
