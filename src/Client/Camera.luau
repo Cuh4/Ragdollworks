@@ -322,7 +322,7 @@ end
     Casts a ray from the camera's position to the mouse's position.
 ]]
 function Camera:MouseCastRay(distance: number): RaycastResult?
-    local mouseLocation = Rage.Input:GetMouseLocation()
+    local mouseLocation = self.MousePosition
     local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
 
     if viewportRay.Direction.Z == 0 then
@@ -343,7 +343,7 @@ end
     Casts a ray from the camera's position to the mouse's position, and returning ALL hit instances instead of the first.
 ]]
 function Camera:MouseCastRayAll(distance: number): {RaycastResult}
-    local mouseLocation = Rage.Input:GetMouseLocation()
+    local mouseLocation = self.MousePosition
     local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
 
     if viewportRay.Direction.Z == 0 then
@@ -381,7 +381,7 @@ end
     Casts a ray to Z 0.
 ]]
 function Camera:MouseCastRayToZ0(): Vector2?
-    local mouseLocation = Rage.Input:GetMouseLocation()
+    local mouseLocation = self.MousePosition
     local viewportRay = Rage.Camera:ViewportPointToRay(mouseLocation.X, mouseLocation.Y)
 
     local origin = viewportRay.Origin
