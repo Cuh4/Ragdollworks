@@ -38,17 +38,17 @@ Feedback = Rage:Service("Feedback") :: Feedback
 
 Feedback.PositiveSound = Sounds:CreateSound(
     RbxAssets.POSITIVE_FEEDBACK_SOUND,
-    {Volume = 0.4}
+    {Volume = 0.03}
 ) :: Sound.RSound
 
 Feedback.InfoSound = Sounds:CreateSound(
     RbxAssets.INFO_FEEDBACK_SOUND,
-    {Volume = 0.2}
+    {Volume = 0.03}
 ) :: Sound.RSound
 
 Feedback.NegativeSound = Sounds:CreateSound(
     RbxAssets.NEGATIVE_FEEDBACK_SOUND,
-    {Volume = 0.2}
+    {Volume = 0.03}
 ) :: Sound.RSound
 
 --[[
