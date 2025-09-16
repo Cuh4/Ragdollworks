@@ -22,8 +22,8 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local UI = require(script.Parent.UI)
-local CLI = require(script.Parent.CLI)
+local UI = require(Rage.Path.UI)
+local CLI = require(Rage.Path.CLI)
 
 -------------------------------
 -- // Main
