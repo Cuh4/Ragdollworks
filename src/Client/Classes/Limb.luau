@@ -47,6 +47,11 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.GRUNT_IMPACT_THRESHOLD = 12
     self.GRUNT_COOLDOWN = 0.3
 
+    self.UNCONSCIOUS_MAX_TIME = 60 -- seconds
+    self.UNCONSCIOUS_MIN_TIME = 5 -- seconds
+    self.UNCONSCIOUS_IMPACT_THRESHOLD = 35
+    self.UNCONSCIOUS_IMPACT_TIME_MULTIPLIER = 1.1
+
     self.IMPACT_MAX_PROPAGATIONS = 4
     self.IMPACT_PROPAGATION_MULTIPLIER = 0.4
     self.IMPACT_THRESHOLD = 12
@@ -93,7 +98,8 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.SkinDamage = 0
     self.IsLimbAlive = true
     self.IsGrounded = false
-    self.IsForceLimp = false
+    self.IsUnconscious = false
+    self.UnconsciousTil = 0
     self.IsBrainAlive = true
     self.IsHeartBeating = true
     self.PlayedDeathScream = false
@@ -289,6 +295,11 @@ function Limb:Grunt()
         return
     end
 
+    if not self:IsAwake() then
+        Rage.Logging:Warn(self.LimbName..": Attempted to grunt while unconscious")
+        return
+    end
+
     self.LastGrunt = os.clock()
     self.GruntSounds:PlayRandom({}, self.ObjectPart.Part)
 
@@ -319,6 +330,11 @@ function Limb:DeathScream()
     end
 
     if self.PlayedDeathScream then
+        return
+    end
+
+    if not self:IsAwake() then
+        Rage.Logging:Warn(self.LimbName..": Attempted to play death scream while unconscious")
         return
     end
 
@@ -372,13 +388,6 @@ end
 ]]
 function Limb:RemoveBruising()
     self.Bruising = 0
-end
-
---[[
-    Forces/unforces the limb to be limp.
-]]
-function Limb:SetIsForceLimp(isForceLimp: boolean)
-    self.IsForceLimp = isForceLimp
 end
 
 --[[
@@ -465,6 +474,51 @@ function Limb:DetectIsGrounded(): boolean
     else
         return self:FindLimbByName("LeftFoot").IsGrounded or self:FindLimbByName("RightFoot").IsGrounded
     end
+end
+
+--[[
+    Returns if the human this limb belongs to is conscious (awake).
+]]
+function Limb:IsAwake(): boolean
+    return not self.IsUnconscious
+end
+
+--[[
+    Wakes this limb's human up.
+]]
+function Limb:WakeUp()
+    if not self.IsUnconscious then
+        return
+    end
+
+    if not self:OnlyRunOnLimb("Head", "WakeUp") then
+        return
+    end
+
+    self.IsUnconscious = false
+    self.UnconsciousTil = 0
+
+    Rage.Logging:Info(self.LimbName..": Woke up")
+end
+
+--[[
+    Sets this limb's human to be unconscious for x seconds.
+]]
+function Limb:SetUnconsciousFor(seconds: number)
+    if self.IsUnconscious then
+        self.UnconsciousTil = self.UnconsciousTil + seconds
+        Rage.Logging:Info((self.LimbName..": Unconsciousness extended by %.1f seconds"):format(seconds))
+        return
+    end
+
+    if not self:OnlyRunOnLimb("Head", "SetUnconsciousFor", seconds) then
+        return
+    end
+
+    self.IsUnconscious = true
+    self.UnconsciousTil = os.clock() + seconds
+
+    Rage.Logging:Info((self.LimbName..": Unconscious for %.1f seconds"):format(seconds))
 end
 
 --[[
@@ -579,6 +633,17 @@ function Limb:HandleImpact(amount: number, _propagations: number?)
         self:ApplySkinDamage(amount * self.IMPACT_SKIN_DAMAGE_MULTIPLIER)
     end
 
+    -- Knockouts
+    if amount > self.UNCONSCIOUS_IMPACT_THRESHOLD then
+        local seconds = Rage.Libs.Math:Lerp(
+            self.UNCONSCIOUS_MIN_TIME,
+            self.UNCONSCIOUS_MAX_TIME,
+            math.clamp(((amount - self.UNCONSCIOUS_IMPACT_THRESHOLD) / self.UNCONSCIOUS_IMPACT_THRESHOLD) * self.UNCONSCIOUS_IMPACT_TIME_MULTIPLIER, 0, 1)
+        )
+
+        self:SetUnconsciousFor(seconds)
+    end
+
     -- SFX
     self:PlayImpactSound(amount)
 
@@ -597,7 +662,7 @@ function Limb:HandleStabilization()
     self.StabilizationForce.MaxTorque = self:GetStabilizationForceMaxTorque()
     self.StabilizationForce.Responsiveness = self:GetStabilizationForceResponsiveness()
     self.StabilizationForce.CFrame = self:GetStabilizationForceCFrame()
-    self.StabilizationForce.Enabled = self:IsAlive() and not self.IsForceLimp
+    self.StabilizationForce.Enabled = self:IsAlive() and self:IsAwake()
 end
 
 --[[
@@ -632,6 +697,15 @@ function Limb:HandleHealthUI()
 end
 
 --[[
+    Handle consciousness.
+]]
+function Limb:HandleConsciousness()
+    if not self:IsAwake() and os.clock() >= self.UnconsciousTil then
+        self:WakeUp()
+    end
+end
+
+--[[
     Handles limb state. Call in `:Update()`.
 ]]
 function Limb:HandleState()
@@ -639,6 +713,8 @@ function Limb:HandleState()
     self.IsLimbAlive = self.Health > 0
     self.IsBrainAlive = self:FindLimbByName("Head").IsLimbAlive
     self.IsHeartBeating = self:FindLimbByName("UpperTorso").IsLimbAlive
+    self.IsUnconscious = self:FindLimbByName("Head").IsUnconscious
+    self.UnconsciousTil = self:FindLimbByName("Head").UnconsciousTil
 
     if not self.IsBrainAlive then
         if self.PlayedDeathScream then
@@ -691,7 +767,6 @@ end
 function Limb:Setup(limbs: {[ObjectTypes.ObjectPart]: Limb})
     self.Limbs = limbs
     self.ClosestLimb = self:GetClosestLimb()
-    print(self.LimbName..": Closest limb: "..(self.ClosestLimb and tostring(self.ClosestLimb.LimbName) or "nil"))
 
     self.Attachment = Instance.new("Attachment")
     self.Attachment.Name = "LimbAttachment"
@@ -723,6 +798,7 @@ end
 ]]
 function Limb:Update()
     self:HandleDamageVisuals()
+    self:HandleConsciousness()
     self:HandleState()
     self:HandleHealthUI()
     self:HandleStabilization()
@@ -740,6 +816,11 @@ end
 export type Limb = typeof(Limb) & {
     GRUNT_IMPACT_THRESHOLD: number,
     GRUNT_COOLDOWN: number,
+
+    UNCONSCIOUS_MAX_TIME: number,
+    UNCONSCIOUS_MIN_TIME: number,
+    UNCONSCIOUS_IMPACT_THRESHOLD: number,
+    UNCONSCIOUS_IMPACT_TIME_MULTIPLIER: number,
 
     IMPACT_MAX_PROPAGATIONS: number,
     IMPACT_PROPAGATION_MULTIPLIER: number,
@@ -790,7 +871,8 @@ export type Limb = typeof(Limb) & {
     SkinDamage: number,
     IsLimbAlive: boolean,
     Grounded: boolean,
-    IsForceLimp: boolean,
+    IsUnconscious: boolean,
+    UnconsciousTil: number,
     IsBrainAlive: boolean,
     IsHeartBeating: boolean,
     PlayedDeathScream: boolean,

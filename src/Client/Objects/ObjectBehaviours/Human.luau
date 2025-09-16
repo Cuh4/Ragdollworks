@@ -79,22 +79,18 @@ end
     Creates context menu items.
 ]]
 function HumanObjectBehaviour:CreateContextMenuItems(objectPart: ObjectTypes.ObjectPart)
-    local limb = self:GetLimb(objectPart)
+    local limb = self:GetLimb(objectPart) :: Limb.Limb
 
     if not limb then
         Rage.Logging:Error("HumanObjectBehaviour:CreateContextMenuItems(): Missing limb for object part: "..objectPart.Part:GetFullName())
     end
 
-    objectPart.ContextMenu:AddContextMenuItem("Force Limp", function()
-        limb:SetIsForceLimp(true)
+    objectPart.ContextMenu:AddContextMenuItem("Wake Up", function()
+        limb:WakeUp()
     end)
 
-    objectPart.ContextMenu:AddContextMenuItem("Unforce Limp", function()
-        limb:SetIsForceLimp(false)
-    end)
-
-    objectPart.ContextMenu:AddContextMenuItem("Toggle Limb", function()
-        limb:SetIsForceLimp(not limb.IsForceLimp)
+    objectPart.ContextMenu:AddContextMenuItem("Knockout (1 minute)", function()
+        limb:SetUnconsciousFor(60)
     end)
 
     objectPart.ContextMenu:AddContextMenuItem("Heal Limb", function()
