@@ -335,6 +335,7 @@ function Limb:DeathScream()
 
     if not self:IsAwake() then
         Rage.Logging:Warn(self.LimbName..": Attempted to play death scream while unconscious")
+        self.PlayedDeathScream = true
         return
     end
 
