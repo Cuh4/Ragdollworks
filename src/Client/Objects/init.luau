@@ -62,7 +62,7 @@ Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
 Objects.SpawnedObjectCount = 0
 Objects.SpawnedObjects = {} :: {number: ObjectTypes.SpawnedObject}
 Objects.SelectedObjectParts = {} :: {ObjectTypes.ObjectPart}
-Objects.HighlightedPart = nil :: ObjectTypes.ObjectPart
+Objects.HighlightedPart = nil :: ObjectTypes.ObjectPart?
 
 Objects.EntityHistory = {} :: {ObjectTypes.Entity}
 
@@ -71,15 +71,15 @@ Objects.IsFollowing = false
 Objects.IsDragging = false
 Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
 
-Objects.SelectedObject = nil :: ObjectTypes.Object
+Objects.SelectedObject = nil :: ObjectTypes.Object?
 Objects.SelectionMode = ObjectPartSelectionMode.SMALLEST :: ObjectPartSelectionMode.ObjectPartSelectionMode
 
-Objects.ContextMenuActivePart = nil :: ObjectTypes.ObjectPart
+Objects.ContextMenuActivePart = nil :: ObjectTypes.ObjectPart?
 
 Objects.ExistingWires = {} :: {string: ObjectTypes.Wire}
-Objects.SelectedWire = nil :: ObjectTypes.Wire
-Objects.SelectedWireSource = nil :: ObjectTypes.WireTargetInstance
-Objects.SelectedWireSourceMousePos = nil :: Vector2
+Objects.SelectedWire = nil :: ObjectTypes.Wire?
+Objects.SelectedWireSource = nil :: ObjectTypes.WireTargetInstance?
+Objects.SelectedWireSourceMousePos = nil :: Vector2?
 Objects.SpawnedWires = {} :: {ObjectTypes.SpawnedWire}
 
 Objects.Paused = false
@@ -547,7 +547,7 @@ end
     Returns the ObjectPart under the mouse, if any.
 ]]
 function Objects:GetPartUnderMouse(): ObjectTypes.ObjectPart?
-    local results = Camera:CastRayAll(self.RAY_DISTANCE)
+    local results = Camera:MouseCastRayAll(self.RAY_DISTANCE)
     local parts = {} :: {ObjectTypes.ObjectPart}
 
     -- Convert raycast results to object parts if possible
