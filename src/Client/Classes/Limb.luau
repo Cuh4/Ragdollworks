@@ -48,19 +48,19 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.GRUNT_COOLDOWN = 0.3
 
     self.IMPACT_MAX_PROPAGATIONS = 4
-    self.IMPACT_PROPAGATION_MULTIPLIER = 0.1
-    self.IMPACT_THRESHOLD = 15
-    self.IMPACT_COOLDOWN = 0.3
-    self.IMPACT_DAMAGE_MULTIPLIER = 1.3
+    self.IMPACT_PROPAGATION_MULTIPLIER = 0.4
+    self.IMPACT_THRESHOLD = 12
+    self.IMPACT_COOLDOWN = 0.2
+    self.IMPACT_DAMAGE_MULTIPLIER = 1.55
     self.IMPACT_MASS_MULTIPLIER = 0.1
 
     self.BRUISE_DECAL_MIN_TRANSPARENCY = 0.55
     self.IMPACT_BRUISING_THRESHOLD = 20
     self.IMPACT_BRUISING_MULTIPLIER = 0.005
 
-    self.BLOOD_DECAL_MIN_TRANSPARENCY = 0.3
-    self.IMPACT_SKIN_DAMAGE_THRESHOLD = 15
-    self.IMPACT_SKIN_DAMAGE_MULTIPLIER = 0.011
+    self.BLOOD_DECAL_MIN_TRANSPARENCY = 0.25
+    self.IMPACT_SKIN_DAMAGE_THRESHOLD = 8
+    self.IMPACT_SKIN_DAMAGE_MULTIPLIER = 0.03
 
     self.GORY_IMPACT_SOUND_THRESHOLD = 50
 
@@ -82,6 +82,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.MaxHealth = maxHealth
     self.BloodDecalCount = bloodDecalCount
     self.Limbs = {}
+    self._LimbCache = {}
     self.ClosestLimb = nil
 
     self.LastGrunt = 0
@@ -231,8 +232,13 @@ end
     Finds a limb by name.
 ]]
 function Limb:FindLimbByName(name: string): Limb?
+    if self._LimbCache[name] then
+        return self._LimbCache[name]
+    end
+
     for _, limb in pairs(self.Limbs) do
         if limb.LimbName == name then
+            self._LimbCache[name] = limb
             return limb
         end
     end
@@ -769,6 +775,7 @@ export type Limb = typeof(Limb) & {
     MaxHealth: number,
     BloodDecalCount: number,
     Limbs: {[ObjectTypes.ObjectPart]: Limb},
+    _LimbCache: {string: Limb},
     ClosestLimb: Limb,
 
     BillboardGUI: BillboardGui,
