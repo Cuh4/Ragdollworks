@@ -128,14 +128,7 @@ end
 --[[
     Called when an object using this behaviour is activated.
 ]]
-function HumanObjectBehaviour:OnActivate(objectPart: ObjectTypes.ObjectPart)
-    self.IsForceLimp = not self.IsForceLimp
-
-    for _, limb in pairs(self.Limbs) do
-        limb:SetIsForceLimp(self.IsForceLimp)
-    end
-end
-
+function HumanObjectBehaviour:OnActivate(objectPart: ObjectTypes.ObjectPart) end
 --[[
     Called when an object using this behaviour is updated.
 ]]
