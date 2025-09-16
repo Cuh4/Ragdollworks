@@ -50,9 +50,9 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.IMPACT_MAX_PROPAGATIONS = 4
     self.IMPACT_PROPAGATION_MULTIPLIER = 0.4
     self.IMPACT_THRESHOLD = 12
-    self.IMPACT_COOLDOWN = 0.2
+    self.IMPACT_COOLDOWN = 0.1
     self.IMPACT_DAMAGE_MULTIPLIER = 1.55
-    self.IMPACT_MASS_MULTIPLIER = 0.1
+    self.IMPACT_MASS_MULTIPLIER = 0.25
 
     self.BRUISE_DECAL_MIN_TRANSPARENCY = 0.55
     self.IMPACT_BRUISING_THRESHOLD = 20
@@ -74,7 +74,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.HEART_DEAD_HEALTH_LOSS_RATE = 0.1 -- per update
 
     self.UNGROUNDED_STABILIZATION_MULTIPLIER = 0.02
-    self.UNGROUNDED_STABILIZATION_MATCH_ANGLE_OFFSET = 25 -- degrees
+    self.UNGROUNDED_STABILIZATION_MATCH_ANGLE_OFFSET = -6 -- degrees
 
     self.LimbName = name
     self.ObjectPart = objectPart
@@ -539,6 +539,7 @@ function Limb:Heal()
     self.Health = self.MaxHealth
     self:RemoveBleeding()
     self:RemoveBruising()
+    self:RemoveSkinDamage()
 end
 
 --[[
