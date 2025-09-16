@@ -25,7 +25,10 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local Maps = require(Rage.Path.Maps)
 local Objects = require(Rage.Path.Objects)
 local RbxAssets = require(Rage.Path.RbxAssets)
+local Binds = require(Rage.Path.Binds)
+local UI = require(Rage.Path.UI)
 
+local Bind = require(Rage.Path.Classes.Bind)
 local Menu = require(Rage.Path.Classes.Menu)
 
 local signal = require(Rage.WallyPackages.signal)
@@ -48,13 +51,17 @@ setmetatable(InMapMenu, Menu)
 function InMapMenu.New(): InMapMenu
     local self = setmetatable(Menu.New("InMap"), InMapMenu) :: InMapMenu
     self.InfoContainer = self.ScreenGUI.Info
+
     self.PlayerContainer = self.InfoContainer.PlayerContainer
     self.PlayerIcon = self.PlayerContainer.PlayerIcon
     self.PlayerName = self.PlayerContainer.PlayerName
 
+    self.BindsContainer = self.InfoContainer.BindsContainer
+    self.BindFrames = {}
+
     self.ObjectsContainer = self.InfoContainer.ObjectsContainer
 
-    self.ObjectsSpawnedContainer = self.InfoContainer.ObjectsSpawned
+    self.ObjectsSpawnedContainer = self.ObjectsContainer.ObjectsSpawnedContainer
     self.ObjectsSpawnedNumberText = self.ObjectsSpawnedContainer.ObjectCountContainer.ObjectCountText
 
     self.SelectedObjectContainer = self.ObjectsContainer.SelectedObjectContainer
@@ -130,6 +137,46 @@ function InMapMenu:UpdateVignette()
 end
 
 --[[
+    Adds a bind to the binds container.
+]]
+function InMapMenu:AddBind(bind: Bind.Bind)
+    local icons = bind:GetIcons()
+    local frames = {} :: {Frame}
+
+    for _, input in pairs(bind.Binds) do
+        local bindFrame = UI:GetComponent("Bind"):Clone() :: Frame
+        local bindIcon = bindFrame.BindIcon :: ImageLabel
+        local bindName = bindFrame.BindName :: TextLabel
+
+        bindIcon.Image = icons[input] or RbxAssets.UNKNOWN_ICON
+        bindName.Text = bind.Name
+
+        bindFrame.Parent = self.BindsContainer
+
+        table.insert(frames, bindFrame)
+    end
+
+    self.BindFrames[bind] = frames
+end
+
+--[[
+    Removes a bind from the binds container.
+]]
+function InMapMenu:RemoveBind(bind: Bind.Bind)
+    local frames = self.BindFrames[bind]
+
+    if not frames then
+        return
+    end
+
+    for _, frame in pairs(frames) do
+        frame:Destroy()
+    end
+
+    self.BindFrames[bind] = nil
+end
+
+--[[
     Returns the player's icon.
 ]]
 function InMapMenu:GetPlayerIcon(): (string, boolean)
@@ -189,13 +236,27 @@ function InMapMenu:Setup()
     self.OnSlomoStateChange = Objects.OnSlomoStateChange:Connect(function()
         self:UpdateVignette()
     end)
+
+    self.OnBindEnter = Binds.OnBindEnter:Connect(function(bind: Bind.Bind)
+        print("add bind", bind.Name)
+        self:AddBind(bind)
+    end)
+
+    self.OnBindExit = Binds.OnBindExit:Connect(function(bind: Bind.Bind)
+        print("remove bind", bind.Name)
+        self:RemoveBind(bind)
+    end)
 end
 
 export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
     InfoContainer: Frame,
+
     PlayerContainer: Frame,
     PlayerIcon: ImageLabel,
     PlayerName: TextLabel,
+
+    BindsContainer: Frame,
+    BindFrames: {[Bind.Bind]: {Frame}},
 
     ObjectsContainer: Frame,
 
@@ -224,7 +285,10 @@ export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
     OnWireSelect: signal.Connection,
 
     OnPauseStateChange: signal.Connection,
-    OnSlomoStateChange: signal.Connection
+    OnSlomoStateChange: signal.Connection,
+
+    OnBindEnter: signal.Connection,
+    OnBindExit: signal.Connection
 }
 
 return InMapMenu
