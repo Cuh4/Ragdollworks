@@ -223,7 +223,7 @@ function Limb:GetStabilizationForceCFrame(): CFrame
         return CFrame.Angles(0, 0, 0)
     end
 
-    local _, _, rotationZ = self.ClosestLimb and self.ClosestLimb.ObjectPart.Part.CFrame:GetEulerAnglesYXZ() or 0, 0, 0
+    local _, _, rotationZ = self.ClosestLimb and self.ClosestLimb.ObjectPart.Part.CFrame:ToEulerAnglesXYZ() or 0, 0, 0
     return CFrame.Angles(0, 0, rotationZ + math.rad(self.UNGROUNDED_STABILIZATION_MATCH_ANGLE_OFFSET))
 end
 
@@ -550,7 +550,7 @@ function Limb:HandleImpact(amount: number, _propagations: number?)
     Rage.Logging:Info(self.LimbName..": Impact, amount: "..amount)
 
     -- Propagate impact across body
-    if self.ClosestLimb and _propagations < self.IMPACT_MAX_PROPAGATIONS then
+    if self.ClosestLimb and (_propagations and _propagations < self.IMPACT_MAX_PROPAGATIONS) then
         self.ClosestLimb:HandleImpact(amount * (self.IMPACT_PROPAGATION_MULTIPLIER / _propagations), _propagations + 1)
     end
 
