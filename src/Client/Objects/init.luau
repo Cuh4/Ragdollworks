@@ -32,6 +32,7 @@ local Debug = require(Rage.Path.Debug)
 local Toasts = require(Rage.Path.Toasts)
 local Effects = require(Rage.Path.Effects)
 local Binds = require(Rage.Path.Binds)
+local Feedback = require(Rage.Path.Feedback)
 
 local Bind = require(Rage.Path.Classes.Bind)
 local BindCollection = require(Rage.Path.Classes.BindCollection)
@@ -393,6 +394,12 @@ function Objects:PlayerToggleSlowMotion()
         "Slow motion is now "..(self.SlowMotion and "enabled" or "disabled")..".",
         2
     )
+
+    if self.SlowMotion then
+        Feedback:GivePositive(0.6)
+    else
+        Feedback:GivePositive(1.6)
+    end
 end
 
 --[[
@@ -413,6 +420,8 @@ function Objects:PlayerPipette()
             "Hover your mouse over a part to pipette.",
             2
         )
+
+        return
     end
 
     self:PipetteHighlightedPart()
@@ -544,6 +553,8 @@ function Objects:PauseAllSpawnedObjects()
         "All object physics have been paused.",
         2
     )
+
+    Feedback:GivePositive(0.4)
 end
 
 --[[
@@ -568,6 +579,8 @@ function Objects:UnpauseAllSpawnedObjects()
         "All object physics have been unpaused.",
         2
     )
+
+    Feedback:GivePositive(1.8)
 end
 
 --[[
@@ -862,6 +875,8 @@ function Objects:PlayerStopWiring()
         "Successfully wired up!",
         2
     )
+
+    Feedback:GivePositive(1.1)
 end
 
 --[[
@@ -937,6 +952,8 @@ function Objects:SelectWire(wire: ObjectTypes.Wire)
         "You have selected "..wire.Name..".",
         2
     )
+
+    Feedback:GivePositive(0.9)
 end
 
 --[[
@@ -978,6 +995,8 @@ function Objects:SelectObject(object: ObjectTypes.Object)
     self.SelectedObject = object
     self.OnObjectSelect:Fire(object)
     Rage.Logging:Info("Objects:SelectObject(): Selected object "..object.Name)
+
+    Feedback:GivePositive(1.2)
 
     Toasts:DisplayToast(
         "Objects",
@@ -1045,6 +1064,7 @@ function Objects:PlayerSpawnObject(position: Vector2?): ObjectTypes.SpawnedObjec
 
     Rage.Logging:Info("Objects:PlayerSpawnObject(): Player is spawning object "..self.SelectedObject.Name)
 
+    Feedback:GivePositive(1.4)
     return self:SpawnObject(self.SelectedObject, position or Camera.MouseWorldPosition)
 end
 
@@ -1178,6 +1198,8 @@ function Objects:Undo()
         "Successfully undo'd.",
         2
     )
+
+    Feedback:GivePositive(0.75)
 end
 
 --[[

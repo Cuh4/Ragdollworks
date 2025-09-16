@@ -26,6 +26,7 @@ local signal = require(Rage.WallyPackages.signal)
 
 local CLI = require(Rage.Path.CLI)
 local Toasts = require(Rage.Path.Toasts)
+local Feedback = require(Rage.Path.Feedback)
 
 local Map = require(Rage.Path.Classes.Map)
 
@@ -81,6 +82,8 @@ function Maps:StartMap(map: Map.Map)
     self:_CreateMapBackground()
 
     self.OnMapStart:Fire(self.CurrentMap)
+
+    Feedback:GivePositive(1.1)
 
     Toasts:DisplayToast(
         "Map",
@@ -221,6 +224,8 @@ function Maps:ExitMap()
     self.MapInstance = nil
 
     self.OnMapExit:Fire()
+
+    Feedback:GivePositive(0.9)
 
     Toasts:DisplayToast(
         "Map",
