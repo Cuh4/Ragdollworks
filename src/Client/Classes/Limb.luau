@@ -47,9 +47,9 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.GRUNT_IMPACT_THRESHOLD = 12
     self.GRUNT_COOLDOWN = 0.3
 
-    self.UNCONSCIOUS_MAX_TIME = 60 -- seconds
+    self.UNCONSCIOUS_MAX_TIME = 80 -- seconds
     self.UNCONSCIOUS_MIN_TIME = 5 -- seconds
-    self.UNCONSCIOUS_IMPACT_THRESHOLD = 35
+    self.UNCONSCIOUS_IMPACT_THRESHOLD = 50
     self.UNCONSCIOUS_IMPACT_TIME_MULTIPLIER = 1.1
 
     self.IMPACT_MAX_PROPAGATIONS = 4
@@ -502,12 +502,20 @@ function Limb:WakeUp()
 end
 
 --[[
+    Returns the amount of seconds remaining until this limb's human wakes up.
+]]
+function Limb:GetUnconsciousnessDuration(): number
+    return self.UnconsciousTil - os.clock()
+end
+
+--[[
     Sets this limb's human to be unconscious for x seconds.
 ]]
 function Limb:SetUnconsciousFor(seconds: number)
     if self.IsUnconscious then
-        self.UnconsciousTil = self.UnconsciousTil + seconds
-        Rage.Logging:Info((self.LimbName..": Unconsciousness extended by %.1f seconds"):format(seconds))
+        self.UnconsciousTil = math.clamp(self.UnconsciousTil + seconds, self.UNCONSCIOUS_MIN_TIME, self.UNCONSCIOUS_MAX_TIME)
+        Rage.Logging:Info((self.LimbName..": Unconsciousness extended, now at %.1f secs remaining"):format(self:GetUnconsciousnessDuration()))
+
         return
     end
 
@@ -638,7 +646,7 @@ function Limb:HandleImpact(amount: number, _propagations: number?)
         local seconds = Rage.Libs.Math:Lerp(
             self.UNCONSCIOUS_MIN_TIME,
             self.UNCONSCIOUS_MAX_TIME,
-            math.clamp(((amount - self.UNCONSCIOUS_IMPACT_THRESHOLD) / self.UNCONSCIOUS_IMPACT_THRESHOLD) * self.UNCONSCIOUS_IMPACT_TIME_MULTIPLIER, 0, 1)
+            math.clamp((amount - self.self.UNCONSCIOUS_IMPACT_THRESHOLD) / self.UNCONSCIOUS_IMPACT_THRESHOLD, 0, 1)
         )
 
         self:SetUnconsciousFor(seconds)
