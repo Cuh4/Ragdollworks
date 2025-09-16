@@ -28,9 +28,10 @@ Service.__index = Service
 --[[
     Creates a new service class instance.
 ]]
-function Service.New(name: string): Service
+function Service.New(name: string, startPriority: number): Service
     local self = setmetatable({}, Service) :: Service
     self.Name = name
+    self.StartPriority = startPriority
 
     return self
 end
@@ -44,6 +45,7 @@ end
 
 export type Service = typeof(Service) & {
     Name: string,
+    StartPriority: number,
     OnStart: ((self: Service) -> nil)|nil
 }
 

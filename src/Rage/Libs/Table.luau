@@ -152,5 +152,41 @@ function Table:Map(tbl: table, callback: (value: any) -> any): table
     return newTbl
 end
 
+--[[
+    Returns a sorted copy of the provided table.
+]]
+function Table:Sort(tbl: table, callback: (a: any, b: any) -> boolean): table
+    local sorted = table.clone(tbl)
+    table.sort(sorted, callback)
+
+    return sorted
+end
+
+--[[
+    Returns all the values in a table.
+]]
+function Table:Values(tbl: table): {any}
+    local values = {}
+
+    for _, value in pairs(tbl) do
+        table.insert(values, value)
+    end
+
+    return values
+end
+
+--[[
+    Returns all the indices in a table.
+]]
+function Table:Indices(tbl: table): {any}
+    local indices = {}
+
+    for index in pairs(tbl) do
+        table.insert(indices, index)
+    end
+
+    return indices
+end
+
 export type Table = typeof(Table)
 return Table

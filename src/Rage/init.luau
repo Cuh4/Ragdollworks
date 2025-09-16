@@ -77,6 +77,11 @@ Rage.Classes.Service = _service
 Rage.Services = {} :: {[string]: ModuleScript}
 
 --[[
+    The default start priority for the next service to use.
+]]
+Rage._NextStartPriority = 50
+
+--[[
     The instance in which all services are under.
 ]]
 Rage.Path = nil :: Instance
@@ -121,7 +126,8 @@ end
     Creates a service. To be used within a service script.
 ]]
 function Rage:Service(name: string): Service
-    return self.Classes.Service.New(name)
+    self._NextStartPriority = self._NextStartPriority + 1
+    return self.Classes.Service.New(name, self._NextStartPriority)
 end
 
 --[[
@@ -138,14 +144,18 @@ end
     Starts all services.
 ]]
 function Rage:StartServices()
-    for _, service in pairs(self.Services) do
+    local sorted = self.Libs.Table:Sort(self.Libs.Table:Values(self.Services), function(a: Service, b: Service)
+        return a.StartPriority < b.StartPriority
+    end)
+
+    for _, service in ipairs(sorted) do
         if not service.OnStart then
             self.Logging:Warn(service.Name, "(service) does not have an `OnStart` method. This method is not required to be implemented however.")
             continue
         end
 
+        self.Logging:Info("Starting '"..service.Name.."' with start priority", service.StartPriority)
         task.spawn(service.OnStart, service)
-        self.Logging:Info("Started:", service.Name)
     end
 end
 
