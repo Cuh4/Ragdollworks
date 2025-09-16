@@ -49,7 +49,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
 
     self.UNCONSCIOUS_MAX_TIME = 80 -- seconds
     self.UNCONSCIOUS_MIN_TIME = 5 -- seconds
-    self.UNCONSCIOUS_IMPACT_THRESHOLD = 50
+    self.UNCONSCIOUS_IMPACT_THRESHOLD = 38
     self.UNCONSCIOUS_IMPACT_TIME_MULTIPLIER = 1.1
 
     self.IMPACT_MAX_PROPAGATIONS = 4
@@ -646,7 +646,7 @@ function Limb:HandleImpact(amount: number, _propagations: number?)
         local seconds = Rage.Libs.Math:Lerp(
             self.UNCONSCIOUS_MIN_TIME,
             self.UNCONSCIOUS_MAX_TIME,
-            math.clamp((amount - self.self.UNCONSCIOUS_IMPACT_THRESHOLD) / self.UNCONSCIOUS_IMPACT_THRESHOLD, 0, 1)
+            math.clamp((amount - self.UNCONSCIOUS_IMPACT_THRESHOLD) / self.UNCONSCIOUS_IMPACT_THRESHOLD, 0, 1)
         )
 
         self:SetUnconsciousFor(seconds)
