@@ -94,6 +94,7 @@ Objects._HeartbeatFrame = 0
 Objects.BindCollection = nil :: BindCollection.BindCollection
 Objects.HighlightRequiredBindCollection = nil :: BindCollection.BindCollection
 Objects.SelectionRequiredBindCollection = nil :: BindCollection.BindCollection
+Objects.DraggingRequiredBindCollection = nil :: BindCollection.BindCollection
 
 Objects.OnSpawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
 Objects.OnDespawn = signal.new() :: signal.Signal<ObjectTypes.SpawnedObject>
@@ -150,59 +151,7 @@ function Objects:CreateBinds()
                     else
                         self:StopDragging()
                     end
-                end,
-
-                nil,
-
-                {
-                    Binds:CreateBind(
-                        "Rotate Part Left",
-                        "Rotates the selected part counterclockwise.",
-                        {Enum.KeyCode.A},
-                        {ShowTouchButton = true},
-                        nil,
-
-                        function(context: Bind.BindContext)
-                            if not context.Bind.IsBeingPressed then
-                                return
-                            end
-
-                            self:RotateDraggedPart(-self.RotationSpeed)
-                        end
-                    ),
-
-                    Binds:CreateBind(
-                        "Rotate Part Right",
-                        "Rotates the selected part clockwise.",
-                        {Enum.KeyCode.D},
-                        {ShowTouchButton = true},
-                        nil,
-
-                        function(context: Bind.BindContext)
-                            if not context.Bind.IsBeingPressed then
-                                return
-                            end
-
-                            self:RotateDraggedPart(self.RotationSpeed)
-                        end
-                    ),
-
-                    Binds:CreateBind(
-                        "Rotate Faster",
-                        "Rotates the selected part faster.",
-                        {Enum.KeyCode.LeftShift},
-                        {ShowTouchButton = true},
-                        nil,
-
-                        function(context: Bind.BindContext)
-                            if context.Bind.IsBeingPressed then
-                                self.RotationSpeed = self.RotationSpeed + self.ROTATION_SPEED_INCREMENT
-                            else
-                                self.RotationSpeed = self.DEFAULT_ROTATION_SPEED
-                            end
-                        end
-                    )
-                }
+                end
             ),
 
             Binds:CreateBind(
@@ -272,7 +221,7 @@ function Objects:CreateBinds()
                 end
             )
         }
-    )
+    ) :: BindCollection.BindCollection
 
     self.HighlightRequiredBindCollection = Binds:CreateBindCollection(
         "Object Highlight",
@@ -317,7 +266,7 @@ function Objects:CreateBinds()
                 end
             ),
         }
-    )
+    ) :: BindCollection.BindCollection
 
     self.SelectionRequiredBindCollection = Binds:CreateBindCollection(
         "Object Selected",
@@ -344,6 +293,60 @@ function Objects:CreateBinds()
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
                         self:DespawnSelectedObjects()
+                    end
+                end
+            )
+        }
+    ) :: BindCollection.BindCollection
+
+    self.DraggingRequiredBindCollection = Binds:CreateBindCollection(
+        "Object Dragging",
+
+        {
+            Binds:CreateBind(
+                "Rotate Part Left",
+                "Rotates the selected part counterclockwise.",
+                {Enum.KeyCode.A},
+                {ShowTouchButton = true},
+                nil,
+
+                function(context: Bind.BindContext)
+                    if not context.Bind.IsBeingPressed then
+                        return
+                    end
+
+                    self:RotateDraggedPart(-self.RotationSpeed)
+                end
+            ),
+
+            Binds:CreateBind(
+                "Rotate Part Right",
+                "Rotates the selected part clockwise.",
+                {Enum.KeyCode.D},
+                {ShowTouchButton = true},
+                nil,
+
+                function(context: Bind.BindContext)
+                    if not context.Bind.IsBeingPressed then
+                        return
+                    end
+
+                    self:RotateDraggedPart(self.RotationSpeed)
+                end
+            ),
+
+            Binds:CreateBind(
+                "Rotate Faster",
+                "Rotates the selected part faster.",
+                {Enum.KeyCode.LeftShift},
+                {ShowTouchButton = true},
+                nil,
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self.RotationSpeed = self.RotationSpeed + self.ROTATION_SPEED_INCREMENT
+                    else
+                        self.RotationSpeed = self.DEFAULT_ROTATION_SPEED
                     end
                 end
             )
@@ -588,6 +591,8 @@ function Objects:DragObjectPart(part: ObjectTypes.ObjectPart)
     self.DraggingPart = part
     self.DraggingPart:Drag(Camera.MouseWorldPosition)
 
+    self.DraggingRequiredBindCollection:Enter()
+
     self.IsDragging = true
 
     Rage.Logging:Info("Objects:DragObjectPart(): Started dragging part.")
@@ -616,6 +621,8 @@ function Objects:StopDragging()
 
     self.DraggingPart:StopDragging()
     self.DraggingPart = nil
+
+    self.DraggingRequiredBindCollection:Exit()
 
     self.IsDragging = false
 
