@@ -72,7 +72,7 @@ function BindCollection:Enter()
         return
     end
 
-    for _, bind in self.Binds do
+    for _, bind in ipairs(self.Binds) do
         bind:Enter()
     end
 
@@ -87,7 +87,7 @@ function BindCollection:Exit()
         return
     end
 
-    for _, bind in self.Binds do
+    for _, bind in ipairs(self.Binds) do
         bind:Exit()
     end
 
