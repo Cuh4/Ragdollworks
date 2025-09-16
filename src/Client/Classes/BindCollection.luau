@@ -75,6 +75,8 @@ function BindCollection:Enter()
     for _, bind in self.Binds do
         bind:Enter()
     end
+
+    self.Entered = true
 end
 
 --[[
@@ -88,6 +90,8 @@ function BindCollection:Exit()
     for _, bind in self.Binds do
         bind:Exit()
     end
+
+    self.Entered = false
 end
 
 export type BindCollection = typeof(BindCollection) & {
