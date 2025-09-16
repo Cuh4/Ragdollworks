@@ -27,7 +27,7 @@ local signal = require(Rage.WallyPackages.signal)
 local CLI = require(Rage.Path.CLI)
 local Toasts = require(Rage.Path.Toasts)
 
-local Map = require(Rage.ReplicatedStorage.Classes.Map)
+local Map = require(Rage.Path.Classes.Map)
 
 -------------------------------
 -- // Main

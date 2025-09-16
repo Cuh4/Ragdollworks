@@ -27,7 +27,7 @@ local RbxAssets = require(Rage.Path.RbxAssets)
 local CLI = require(Rage.Path.CLI)
 local Binds = require(Rage.Path.Binds)
 
-local Bind = require(Rage.ReplicatedStorage.Classes.Bind)
+local Bind = require(Rage.Path.Classes.Bind)
 
 -------------------------------
 -- // Main

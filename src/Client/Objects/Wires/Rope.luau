@@ -22,8 +22,8 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local SpawnedWire = require(Rage.ReplicatedStorage.Classes.Objects.SpawnedWire)
-local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
+local SpawnedWire = require(Rage.Path.Classes.Objects.SpawnedWire)
+local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
 -------------------------------
 -- // Main

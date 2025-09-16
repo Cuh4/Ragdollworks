@@ -27,7 +27,7 @@ local Effects = require(Rage.Path.Effects)
 local RbxAssets = require(Rage.Path.RbxAssets)
 
 local Sound, SoundCollection = require(script.Parent.Sound), require(script.Parent.SoundCollection) -- purely for types
-local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
+local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
 -------------------------------
 -- // Main

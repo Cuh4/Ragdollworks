@@ -23,12 +23,12 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local signal = require(Rage.WallyPackages.signal)
 
-local SpawnedWire = require(Rage.ReplicatedStorage.Classes.Objects.SpawnedWire)
-local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
+local SpawnedWire = require(Rage.Path.Classes.Objects.SpawnedWire)
+local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
 local Toasts = require(Rage.Path.Toasts)
 
-local WireTargetType = require(Rage.ReplicatedStorage.Enums.WireTargetType)
+local WireTargetType = require(Rage.Path.Enums.WireTargetType)
 
 -------------------------------
 -- // Main

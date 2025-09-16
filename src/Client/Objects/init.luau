@@ -32,11 +32,11 @@ local Debug = require(Rage.Path.Debug)
 local Toasts = require(Rage.Path.Toasts)
 local Effects = require(Rage.Path.Effects)
 
-local Object = require(Rage.ReplicatedStorage.Classes.Objects.Object)
-local SpawnedObject = require(Rage.ReplicatedStorage.Classes.Objects.SpawnedObject)
-local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
+local Object = require(Rage.Path.Classes.Objects.Object)
+local SpawnedObject = require(Rage.Path.Classes.Objects.SpawnedObject)
+local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
-local ObjectPartSelectionMode = require(Rage.ReplicatedStorage.Enums.ObjectPartSelectionMode)
+local ObjectPartSelectionMode = require(Rage.Path.Enums.ObjectPartSelectionMode)
 
 -------------------------------
 -- // Main

@@ -21,7 +21,7 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local BaseEnum = require(Rage.ReplicatedStorage.Enums.BaseEnum)
+local BaseEnum = require(Rage.Path.Enums.BaseEnum)
 
 -------------------------------
 -- // Main

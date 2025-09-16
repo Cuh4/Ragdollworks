@@ -22,8 +22,8 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local Sound = require(Rage.ReplicatedStorage.Classes.Sound)
-local SoundCollection = require(Rage.ReplicatedStorage.Classes.SoundCollection)
+local Sound = require(Rage.Path.Classes.Sound)
+local SoundCollection = require(Rage.Path.Classes.SoundCollection)
 
 local CLI = require(Rage.Path.CLI)
 local Camera = require(Rage.Path.Camera)

@@ -24,7 +24,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local ObjectPart = require(script.Parent.ObjectPart)
 local ObjectTypes = require(script.Parent.Types)
 
-local WireTargetType = require(Rage.ReplicatedStorage.Enums.WireTargetType)
+local WireTargetType = require(Rage.Path.Enums.WireTargetType)
 
 local Debug = require(Rage.Path.Debug)
 

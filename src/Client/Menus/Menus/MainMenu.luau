@@ -24,7 +24,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local Maps = require(Rage.Path.Maps)
 
-local Menu = require(Rage.ReplicatedStorage.Classes.Menu)
+local Menu = require(Rage.Path.Classes.Menu)
 
 local signal = require(Rage.WallyPackages.signal)
 

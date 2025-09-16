@@ -26,8 +26,8 @@ local signal = require(Rage.WallyPackages.signal)
 
 local CLI = require(Rage.Path.CLI)
 
-local Bind = require(Rage.ReplicatedStorage.Classes.Bind)
-local BindCollection = require(Rage.ReplicatedStorage.Classes.BindCollection)
+local Bind = require(Rage.Path.Classes.Bind)
+local BindCollection = require(Rage.Path.Classes.BindCollection)
 
 -------------------------------
 -- // Main

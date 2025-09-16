@@ -26,7 +26,7 @@ local Maps = require(Rage.Path.Maps)
 local Objects = require(Rage.Path.Objects)
 local RbxAssets = require(Rage.Path.RbxAssets)
 
-local Menu = require(Rage.ReplicatedStorage.Classes.Menu)
+local Menu = require(Rage.Path.Classes.Menu)
 
 local signal = require(Rage.WallyPackages.signal)
 

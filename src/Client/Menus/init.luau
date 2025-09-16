@@ -22,7 +22,7 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local Menu = require(Rage.ReplicatedStorage.Classes.Menu)
+local Menu = require(Rage.Path.Classes.Menu)
 
 -------------------------------
 -- // Main

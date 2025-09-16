@@ -22,9 +22,9 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local ObjectBehaviour = require(Rage.ReplicatedStorage.Classes.Objects.ObjectBehaviour)
-local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
-local Sound = require(Rage.ReplicatedStorage.Classes.Sound)
+local ObjectBehaviour = require(Rage.Path.Classes.Objects.ObjectBehaviour)
+local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
+local Sound = require(Rage.Path.Classes.Sound)
 
 local Sounds = require(Rage.Path.Sounds)
 local Effects = require(Rage.Path.Effects)

@@ -22,7 +22,7 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local signal = require(Rage.WallyPackages.signal)
 
-local WireTargetType = require(Rage.ReplicatedStorage.Enums.WireTargetType)
+local WireTargetType = require(Rage.Path.Enums.WireTargetType)
 
 -------------------------------
 -- // Main

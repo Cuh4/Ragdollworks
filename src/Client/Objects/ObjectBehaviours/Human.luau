@@ -22,10 +22,10 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local ObjectBehaviour = require(Rage.ReplicatedStorage.Classes.Objects.ObjectBehaviour)
-local ObjectTypes = require(Rage.ReplicatedStorage.Classes.Objects.Types)
+local ObjectBehaviour = require(Rage.Path.Classes.Objects.ObjectBehaviour)
+local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
-local Limb = require(Rage.ReplicatedStorage.Classes.Limb)
+local Limb = require(Rage.Path.Classes.Limb)
 
 -------------------------------
 -- // Main
