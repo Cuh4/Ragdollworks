@@ -42,7 +42,7 @@ Limb.__index = Limb
 --[[
     Creates a new Limb class instance.
 ]]
-function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: number, maxStabilizationAngularVelocity: number, maxStabilizationTorque: number, bloodDecalCount: number): Limb
+function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: number, maxStabilizationAngularVelocity: number, maxStabilizationTorque: number, skinDamageDecalCount: number): Limb
     local self = setmetatable({}, Limb) :: Limb
     self.GRUNT_IMPACT_THRESHOLD = 12
     self.GRUNT_COOLDOWN = 0.3
@@ -59,14 +59,18 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.IMPACT_DAMAGE_MULTIPLIER = 1.3
     self.IMPACT_MASS_MULTIPLIER = 0.25
 
-    self.BRUISE_DECAL_MIN_TRANSPARENCY = 0.55
+    self.BRUISE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.55, 1)
     self.IMPACT_BRUISING_THRESHOLD = 16
     self.IMPACT_BRUISING_MULTIPLIER = 0.0095
 
-    self.BLOOD_DECAL_MIN_TRANSPARENCY = 0.25
+    self.SKIN_DAMAGE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.25, 1)
+    self.FLESH_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.27, 1)
+    self.BONE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.17, 1)
+    self.BONE_FROM_SKIN_DAMAGE_MULTIPLIER = 1.2
     self.IMPACT_SKIN_DAMAGE_THRESHOLD = 14
     self.IMPACT_SKIN_DAMAGE_MULTIPLIER = 0.023
 
+    self.GORY_IMPACT_SOUND_SKIN_DAMAGE_THRESHOLD = 0.6
     self.GORY_IMPACT_SOUND_THRESHOLD = 45
 
     self.BLEEDING_SOUND_VOLUME = 0.7
@@ -85,7 +89,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.ObjectPart = objectPart
     self.Health = maxHealth
     self.MaxHealth = maxHealth
-    self.BloodDecalCount = bloodDecalCount
+    self.SkinDamageDecalCount = skinDamageDecalCount
     self.Limbs = {}
     self._LimbCache = {}
     self.ClosestLimb = nil
@@ -159,6 +163,8 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.BleedingEffect = nil :: ParticleEmitter
     self.BleedingEffectDefaultRate = nil :: number
     self.BruiseDecal = nil :: Decal
+    self.FleshDecal = nil :: Decal
+    self.BoneDecal = nil :: Decal
 
     return self
 end
@@ -173,7 +179,7 @@ function Limb.FromObjectPart(objectPart: ObjectTypes.ObjectPart): Limb
         objectPart.Part:GetAttribute("MaxHealth") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `MaxHealth` attribute."),
         objectPart.Part:GetAttribute("MaxStabilizationAngularVelocity") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `MaxStabilizationAngularVelocity` attribute."),
         objectPart.Part:GetAttribute("MaxStabilizationTorque") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `MaxStabilizationTorque` attribute."),
-        objectPart.Part:GetAttribute("BloodDecalCount") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `BloodDecalCount` attribute.")
+        objectPart.Part:GetAttribute("SkinDamageDecalCount") or Rage.Logging:Error(objectPart.Part:GetFullName()..": Missing `SkinDamageDecalCount` attribute.")
     )
 end
 
@@ -310,14 +316,14 @@ end
     Plays an impact sound.
 ]]
 function Limb:PlayImpactSound(impactAmount: number)
-    self.ImpactSounds:PlayRandom({
-        Sounds:CreateSoundModifier("PitchShiftSoundEffect", {
-            Octave = math.clamp(1 - (impactAmount / 175), 0.75, 1)
-        })
-    }, self.ObjectPart.Part)
+    local pitchShift = Sounds:CreateSoundModifier("PitchShiftSoundEffect", {
+        Octave = math.clamp(1 - (impactAmount / 175), 0.75, 1)
+    })
 
-    if impactAmount >= self.GORY_IMPACT_SOUND_THRESHOLD then
-        self.GoryImpactSounds:PlayRandom({}, self.ObjectPart.Part)
+    self.ImpactSounds:PlayRandom({pitchShift}, self.ObjectPart.Part)
+
+    if impactAmount >= self.GORY_IMPACT_SOUND_THRESHOLD or self.SkinDamage >= self.GORY_IMPACT_SOUND_SKIN_DAMAGE_THRESHOLD then
+        self.GoryImpactSounds:PlayRandom({pitchShift}, self.ObjectPart.Part)
     end
 end
 
@@ -488,7 +494,7 @@ end
     Wakes this limb's human up.
 ]]
 function Limb:WakeUp()
-    if not self.IsUnconscious then
+    if self:IsAwake() then
         return
     end
 
@@ -513,7 +519,7 @@ end
     Sets this limb's human to be unconscious for x seconds.
 ]]
 function Limb:SetUnconsciousFor(seconds: number)
-    if self.IsUnconscious then
+    if not self:IsAwake() then
         self.UnconsciousTil = math.clamp(self.UnconsciousTil + seconds, self.UNCONSCIOUS_MIN_TIME, self.UNCONSCIOUS_MAX_TIME)
         Rage.Logging:Info((self.LimbName..": Unconsciousness extended, now at %.1f secs remaining"):format(self:GetUnconsciousnessDuration()))
 
@@ -575,24 +581,24 @@ function Limb:Damage(amount: number)
 end
 
 --[[
-    Returns the blood decal at the provided index.
+    Returns the skin damage decal at the provided index.
 ]]
-function Limb:GetBloodDecal(index: number): Decal
-    local decal = self.ObjectPart.Part:FindFirstChild("Blood"..index)
+function Limb:GetSkinDamageDecal(index: number): Decal
+    local decal = self.ObjectPart.Part:FindFirstChild("SkinDamage"..index)
 
     if not decal then
-        Rage.Logging:Error(self.LimbName..": Missing blood decal at index #"..index)
+        Rage.Logging:Error(self.LimbName..": Missing skin damage decal at index #"..index)
     end
 
     return decal
 end
 
 --[[
-    Returns a random blood decal.
+    Returns a random skin damage decal.
 ]]
-function Limb:GetRandomBloodDecal(): (Decal, number)
-    local index = Rage.Libs.Math:Random(1, self.BloodDecalCount)
-    return self:GetBloodDecal(index), index
+function Limb:GetRandomSkinDamageDecal(): (Decal, number)
+    local index = Rage.Libs.Math:Random(1, self.SkinDamageDecalCount)
+    return self:GetSkinDamageDecal(index), index
 end
 
 --[[
@@ -600,9 +606,11 @@ end
 ]]
 function Limb:Heal()
     self.Health = self.MaxHealth
+
     self:RemoveBleeding()
     self:RemoveBruising()
     self:RemoveSkinDamage()
+    self:WakeUp()
 end
 
 --[[
@@ -741,20 +749,38 @@ end
 ]]
 function Limb:HandleDamageVisuals()
     -- Bruising decal
-    self.BruiseDecal.Transparency = Rage.Libs.Math:Lerp(1, self.BRUISE_DECAL_MIN_TRANSPARENCY, self.Bruising)
+    self.BruiseDecal.Transparency = Rage.Libs.Math:Lerp(
+        self.BRUISE_DECAL_TRANSPARENCY_RANGE.Max,
+        self.BRUISE_DECAL_TRANSPARENCY_RANGE.Min,
+        self.Bruising
+    )
 
-    -- Blood decals
+    -- Skin damage decals
     local globalOffset = self.SkinDamage / 2 -- so all decals are used even with minor damage
-    local step = 1 / self.BloodDecalCount
+    local step = 1 / self.SkinDamageDecalCount
 
-    for index = 1, self.BloodDecalCount do
-        local decal = self:GetBloodDecal(index)
+    for index = 1, self.SkinDamageDecalCount do
+        local decal = self:GetSkinDamageDecal(index)
         local startBound = (index - 1) * step
         local endBound = index * step
 
         local progress = math.clamp((self.SkinDamage - startBound) / (endBound - startBound), 0, 1)
-        decal.Transparency = Rage.Libs.Math:Lerp(1, self.BLOOD_DECAL_MIN_TRANSPARENCY, math.clamp(progress + globalOffset, 0, 1))
+        decal.Transparency = Rage.Libs.Math:Lerp(self.SKIN_DAMAGE_DECAL_TRANSPARENCY_RANGE.Max, self.SKIN_DAMAGE_DECAL_TRANSPARENCY_RANGE.Min, math.clamp(progress + globalOffset, 0, 1))
     end
+
+    -- Flesh
+    self.FleshDecal = Rage.Libs.Math:Lerp(
+        self.FLESH_DECAL_TRANSPARENCY_RANGE.Max,
+        self.FLESH_DECAL_TRANSPARENCY_RANGE.Min,
+        self.SkinDamage
+    )
+
+    -- Bone
+    self.BoneDecal = Rage.Libs.Math:Lerp(
+        self.BONE_DECAL_TRANSPARENCY_RANGE.Max,
+        self.BONE_DECAL_TRANSPARENCY_RANGE.Min,
+        math.clamp(self.SkinDamage * self.BONE_FROM_SKIN_DAMAGE_MULTIPLIER, 0, 1)
+    )
 end
 
 --[[
@@ -798,6 +824,8 @@ function Limb:Setup(limbs: {[ObjectTypes.ObjectPart]: Limb})
     self.BleedingEffect.Enabled = false
 
     self.BruiseDecal = self.ObjectPart.Part:FindFirstChild("Bruise") or Rage.Logging:Error(self.LimbName..": Missing `Bruise` decal.") :: Decal
+    self.FleshDecal = self.ObjectPart.Part:FindFirstChild("Flesh") or Rage.Logging:Error(self.LimbName..": Missing `Flesh` decal.") :: Decal
+    self.BoneDecal = self.ObjectPart.Part:FindFirstChild("Bone") or Rage.Logging:Error(self.LimbName..": Missing `Bone` decal.") :: Decal
 
     self:TrackImpacts()
 end
@@ -838,14 +866,18 @@ export type Limb = typeof(Limb) & {
     IMPACT_DAMAGE_MULTIPLIER: number,
     IMPACT_MASS_MULTIPLIER: number,
 
-    BRUISE_DECAL_MIN_TRANSPARENCY: number,
+    BRUISE_DECAL_TRANSPARENCY_RANGE: NumberRange,
     IMPACT_BRUISING_THRESHOLD: number,
     IMPACT_BRUISING_MULTIPLIER: number,
 
-    BLOOD_DECAL_MIN_TRANSPARENCY: number,
+    SKIN_DAMAGE_DECAL_TRANSPARENCY_RANGE: NumberRange,
+    FLESH_DECAL_TRANSPARENCY_RANGE: NumberRange,
+    BONE_DECAL_TRANSPARENCY_RANGE: NumberRange,
+    BONE_FROM_SKIN_DAMAGE_MULTIPLIER: number,
     IMPACT_SKIN_DAMAGE_THRESHOLD: number,
     IMPACT_SKIN_DAMAGE_MULTIPLIER: number,
 
+    GORY_IMPACT_SOUND_SKIN_DAMAGE_THRESHOLD: number,
     GORY_IMPACT_SOUND_THRESHOLD: number,
 
     BLEEDING_SOUND_VOLUME: number,
@@ -864,7 +896,7 @@ export type Limb = typeof(Limb) & {
     ObjectPart: ObjectTypes.ObjectPart,
     Health: number,
     MaxHealth: number,
-    BloodDecalCount: number,
+    SkinDamageDecalCount: number,
     Limbs: {[ObjectTypes.ObjectPart]: Limb},
     _LimbCache: {string: Limb},
     ClosestLimb: Limb,
@@ -900,6 +932,8 @@ export type Limb = typeof(Limb) & {
     BleedingEffect: ParticleEmitter,
     BleedingEffectDefaultRate: number,
     BruiseDecal: Decal,
+    FleshDecal: Decal,
+    BoneDecal: Decal,
 
     TouchConnection: RBXScriptConnection
 }
