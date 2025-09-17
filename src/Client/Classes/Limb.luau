@@ -70,7 +70,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.IMPACT_SKIN_DAMAGE_THRESHOLD = 14
     self.IMPACT_SKIN_DAMAGE_MULTIPLIER = 0.023
 
-    self.GORY_IMPACT_SOUND_SKIN_DAMAGE_THRESHOLD = 0.6
+    self.GORY_IMPACT_SOUND_SKIN_DAMAGE_THRESHOLD = 0.8
     self.GORY_IMPACT_SOUND_THRESHOLD = 45
 
     self.BLEEDING_SOUND_VOLUME = 0.7
@@ -120,9 +120,9 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.BleedingSound = bleedingSound:Play({}, self.ObjectPart.Part)
 
     self.GoryImpactSounds = Sounds:CreateSoundCollection(
-        Sounds:CreateSound(RbxAssets.HUMAN_HEAVY_GORY_IMPACT_1, {Volume = 0.25}),
-        Sounds:CreateSound(RbxAssets.HUMAN_HEAVY_GORY_IMPACT_2, {Volume = 0.27}),
-        Sounds:CreateSound(RbxAssets.HUMAN_HEAVY_GORY_IMPACT_3, {Volume = 0.24})
+        Sounds:CreateSound(RbxAssets.HUMAN_HEAVY_GORY_IMPACT_1, {Volume = 0.2}),
+        Sounds:CreateSound(RbxAssets.HUMAN_HEAVY_GORY_IMPACT_2, {Volume = 0.2}),
+        Sounds:CreateSound(RbxAssets.HUMAN_HEAVY_GORY_IMPACT_3, {Volume = 0.2})
     )
 
     local _impactSettings = {
@@ -317,7 +317,7 @@ end
 ]]
 function Limb:PlayImpactSound(impactAmount: number)
     local pitchShift = Sounds:CreateSoundModifier("PitchShiftSoundEffect", {
-        Octave = math.clamp(1 - (impactAmount / 175), 0.75, 1)
+        Octave = math.clamp(1 - (impactAmount / 175), 0.7, 1)
     })
 
     self.ImpactSounds:PlayRandom({pitchShift}, self.ObjectPart.Part)
