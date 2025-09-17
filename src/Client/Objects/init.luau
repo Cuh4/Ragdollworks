@@ -309,7 +309,13 @@ function Objects:CreateBinds()
                 "Rotates the selected part counterclockwise.",
                 {Enum.KeyCode.A},
                 {ShowTouchButton = true},
-                nil,
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        return
+                    end
+
+                    self:RotateDraggedPart(0)
+                end,
 
                 function(context: Bind.BindContext)
                     if not context.Bind.IsBeingPressed then
@@ -325,7 +331,13 @@ function Objects:CreateBinds()
                 "Rotates the selected part clockwise.",
                 {Enum.KeyCode.D},
                 {ShowTouchButton = true},
-                nil,
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        return
+                    end
+
+                    self:RotateDraggedPart(0)
+                end,
 
                 function(context: Bind.BindContext)
                     if not context.Bind.IsBeingPressed then
