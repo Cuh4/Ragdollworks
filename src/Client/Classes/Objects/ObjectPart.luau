@@ -45,7 +45,8 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.SELECTION_COLOR = Color3.fromRGB(0, 400, 0)
     self.HIGHLIGHT_COLOR = Color3.fromRGB(50, 200, 50)
     self.SELECTION_BOX_THICKNESS = 0.2
-    self.DRAGGING_RESPONSIVENESS = 25
+    self.DRAGGING_RESPONSIVENESS = 45
+    self.DRAGGING_MAX_VELOCITY = 100
 
     self.Part = part
     self.SpawnedObject = spawnedObject
@@ -160,6 +161,7 @@ function ObjectPart:SetupDragging()
     self.AlignPositionInstance.Attachment0 = self.DraggingAttachmentInstance
     self.AlignPositionInstance.MaxForce = math.huge
     self.AlignPositionInstance.Responsiveness = self.DRAGGING_RESPONSIVENESS
+    self.AlignPositionInstance.MaxVelocity = self.DRAGGING_MAX_VELOCITY
     self.AlignPositionInstance.Enabled = false
     self.AlignPositionInstance.Parent = self.Part
 
