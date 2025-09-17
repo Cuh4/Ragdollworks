@@ -657,7 +657,7 @@ function Limb:HandleImpact(amount: number, _propagations: number?)
     end
 
     -- Knockouts
-    if amount > self.UNCONSCIOUS_IMPACT_THRESHOLD then
+    if self.LimbName == "Head" and amount > self.UNCONSCIOUS_IMPACT_THRESHOLD then
         local seconds = Rage.Libs.Math:Lerp(
             self.UNCONSCIOUS_MIN_TIME,
             self.UNCONSCIOUS_MAX_TIME,
