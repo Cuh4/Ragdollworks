@@ -419,11 +419,11 @@ function Limb:TrackImpacts()
 
         self.LastImpact = time()
 
-        local relativeVelocity = self.ObjectPart:GetVelocity3D() - part.AssemblyLinearVelocity :: Vector3
-        local relativePosition = self.ObjectPart:GetPosition3D() - part.Position :: Vector3
+        local relativeVelocity =  part.AssemblyLinearVelocity - self.ObjectPart:GetVelocity3D() :: Vector3
+        local directionVector = part.Position - self.ObjectPart:GetPosition3D() :: Vector3
 
-        if relativePosition:Dot(relativeVelocity) > 0 then
-            return -- the parts are moving away from each other
+        if directionVector:Dot(relativeVelocity) > 0 then
+            return  -- moving away from each other
         end
 
         local mass = part.Anchored and 1 or part.Mass
@@ -520,7 +520,13 @@ end
 ]]
 function Limb:SetUnconsciousFor(seconds: number)
     if not self:IsAwake() then
-        self.UnconsciousTil = math.clamp(self.UnconsciousTil + seconds, self.UNCONSCIOUS_MIN_TIME, self.UNCONSCIOUS_MAX_TIME)
+        local remaining = self:GetUnconsciousnessDuration()
+
+        if remaining + seconds > self.UNCONSCIOUS_MAX_TIME then
+            seconds = self.UNCONSCIOUS_MAX_TIME - remaining
+        end
+
+        self.UnconsciousTil = self.UnconsciousTil + seconds
         Rage.Logging:Info((self.LimbName..": Unconsciousness extended, now at %.1f secs remaining"):format(self:GetUnconsciousnessDuration()))
 
         return
