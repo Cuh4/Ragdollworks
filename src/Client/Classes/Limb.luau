@@ -420,11 +420,11 @@ function Limb:TrackImpacts()
         self.LastImpact = time()
 
         local relativeVelocity =  part.AssemblyLinearVelocity - self.ObjectPart:GetVelocity3D() :: Vector3
-        local directionVector = part.Position - self.ObjectPart:GetPosition3D() :: Vector3
+        -- local directionVector = part.Position - self.ObjectPart:GetPosition3D() :: Vector3
 
-        if directionVector:Dot(relativeVelocity) > 0 then
-            return  -- moving away from each other
-        end
+        -- if directionVector:Dot(relativeVelocity) > 0 then
+        --     return  -- moving away from each other
+        -- end
 
         local mass = part.Anchored and 1 or part.Mass
 
@@ -775,14 +775,14 @@ function Limb:HandleDamageVisuals()
     end
 
     -- Flesh
-    self.FleshDecal = Rage.Libs.Math:Lerp(
+    self.FleshDecal.Transparency = Rage.Libs.Math:Lerp(
         self.FLESH_DECAL_TRANSPARENCY_RANGE.Max,
         self.FLESH_DECAL_TRANSPARENCY_RANGE.Min,
         self.SkinDamage
     )
 
     -- Bone
-    self.BoneDecal = Rage.Libs.Math:Lerp(
+    self.BoneDecal.Transparency = Rage.Libs.Math:Lerp(
         self.BONE_DECAL_TRANSPARENCY_RANGE.Max,
         self.BONE_DECAL_TRANSPARENCY_RANGE.Min,
         math.clamp(self.SkinDamage * self.BONE_FROM_SKIN_DAMAGE_MULTIPLIER, 0, 1)
