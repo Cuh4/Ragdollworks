@@ -100,6 +100,7 @@ export type ObjectPart = {
     HIGHLIGHT_COLOR: Color3,
     SELECTION_BOX_THICKNESS: number,
     DRAGGING_RESPONSIVENESS: number,
+    DRAGGING_MAX_VELOCITY: number,
 
     Part: BasePart,
     SpawnedObject: SpawnedObject,
