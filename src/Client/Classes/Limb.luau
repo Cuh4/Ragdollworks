@@ -117,7 +117,9 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.MaxStabilizationTorque = maxStabilizationTorque
 
     local bleedingSound = Sounds:CreateSound(RbxAssets.BLEEDING_SOUND,{
-        Looped = true
+        Looped = true,
+        RollOffMinDistance = 10,
+        RollOffMaxDistance = 20
     }) :: Sound.RSound
 
     self.BleedingSound = bleedingSound:Play({}, self.ObjectPart.Part)
