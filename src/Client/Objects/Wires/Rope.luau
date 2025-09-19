@@ -22,6 +22,7 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
+local Wire = require(Rage.Path.Classes.Objects.Wire)
 local SpawnedWire = require(Rage.Path.Classes.Objects.SpawnedWire)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
@@ -77,8 +78,9 @@ export type Rope = ObjectTypes.SpawnedWire & typeof(Rope) & {
     RopeConstraint: RopeConstraint
 }
 
-return {
-    Name = "Rope",
-    Description = "A simple rope that attaches two objects together.",
-    WireClass = Rope
-} :: ObjectTypes.Wire
+return Wire.New(
+    "Rope",
+    "A simple rope that attaches two objects together.",
+    Rope,
+    false
+)

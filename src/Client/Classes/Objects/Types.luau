@@ -52,9 +52,10 @@ export type Object = {
     Behaviours: {ObjectBehaviour},
     Instance: Model,
     IconAssetID: string?,
+    IsDefault: boolean,
 
     New: (name: string, description: string, category: string, settings: ObjectSettings, behaviours: {ObjectBehaviour}, instance: Model, iconAssetID: string) -> Object,
-    FromInstance: (instance: Model) -> Object,
+    FromInstance: (instance: Model, behaviours: {ObjectBehaviour}) -> Object,
 
     CanPlayerSpawn: (self: Object) -> boolean,
     Spawn: (self: Object) -> Model
@@ -178,7 +179,10 @@ export type Wire = {
     Name: string,
     Description: string,
     WireClass: SpawnedWire,
-    IconAssetID: string?
+    IsDefault: boolean,
+    IconAssetID: string?,
+
+    New: (name: string, description: string, wireClass: SpawnedWire, isDefault: boolean, iconAssetID: string?) -> Wire
 }
 
 export type SpawnedWire = Entity & {

@@ -23,6 +23,7 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local signal = require(Rage.WallyPackages.signal)
 
+local Wire = require(Rage.Path.Classes.Objects.Wire)
 local SpawnedWire = require(Rage.Path.Classes.Objects.SpawnedWire)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
@@ -108,8 +109,9 @@ export type ActivationLink = ObjectTypes.SpawnedWire & typeof(ActivationLink) & 
     OnActivationConnection: signal.Connection?
 }
 
-return {
-    Name = "Activation Link",
-    Description = "A non-physics wire that propagates activation signals from one object part to the other.",
-    WireClass = ActivationLink
-} :: ObjectTypes.Wire
+return Wire.New(
+    "Activation Link",
+    "A non-physics wire that propagates activation signals from one object part to the other.",
+    ActivationLink,
+    false
+)

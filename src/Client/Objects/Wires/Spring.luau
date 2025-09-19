@@ -22,6 +22,7 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
+local Wire = require(Rage.Path.Classes.Objects.Wire)
 local SpawnedWire = require(Rage.Path.Classes.Objects.SpawnedWire)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
@@ -78,8 +79,9 @@ export type Spring = ObjectTypes.SpawnedWire & typeof(Spring) & {
     SpringConstraint: SpringConstraint
 }
 
-return {
-    Name = "Spring",
-    Description = "A wire that acts as a spring",
-    WireClass = Spring
-} :: ObjectTypes.Wire
+return Wire.New(
+    "Spring",
+    "A wire that acts as a spring.",
+    Spring,
+    false
+)
