@@ -92,7 +92,7 @@ function Debug:CreateDebugText(position: Rage.PositionType, text: string)
         return
     end
 
-    local part = self:CreateDebugPart(position, true)
+    local part = self:CreateDebugPart(position, nil, true)
     part.Transparency = 1
 
     local billboardGUI = Instance.new("BillboardGui")
