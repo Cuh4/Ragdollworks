@@ -109,6 +109,7 @@ function Debug:CreateDebugText(position: Rage.PositionType, text: string)
     textLabel.TextColor3 = self.DEBUG_TEXT_COLOR
     textLabel.BackgroundColor3 = self.DEBUG_TEXT_BG_COLOR
     textLabel.TextScaled = true
+    textLabel.Size = UDim2.fromScale(1, 1)
     textLabel.BackgroundTransparency = self.DEBUG_TEXT_BG_TRANSPARENCY
     textLabel.Parent = billboardGUI
 
