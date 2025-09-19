@@ -52,7 +52,8 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
 
     self.UNCONSCIOUS_MAX_TIME = 80 -- seconds
     self.UNCONSCIOUS_MIN_TIME = 5 -- seconds
-    self.UNCONSCIOUS_IMPACT_THRESHOLD = 38
+    self.UNCONSCIOUS_IMPACT_THRESHOLD = 22
+    self.UNCONSCIOUS_RNG = 2 -- 1 in x
     self.UNCONSCIOUS_IMPACT_TIME_MULTIPLIER = 1.1
 
     self.IMPACT_MAX_PROPAGATIONS = 5
@@ -85,8 +86,8 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.BRAIN_DEAD_HEALTH_LOSS_RATE = 0.35 -- per update
     self.HEART_DEAD_HEALTH_LOSS_RATE = 0.1 -- per update
 
-    self.UNGROUNDED_STABILIZATION_MULTIPLIER = 0.02
-    self.UNGROUNDED_STABILIZATION_MATCH_ANGLE_OFFSET = -6 -- degrees
+    self.UNGROUNDED_STABILIZATION_MULTIPLIER = 0.6
+    self.UNGROUNDED_STABILIZATION_TARGET_RANDOMNESS = NumberRange.new(-45, 45) -- degrees
 
     self.LimbName = name
     self.ObjectPart = objectPart
@@ -242,7 +243,14 @@ function Limb:GetStabilizationForceCFrame(): CFrame
     end
 
     local _, _, rotationZ = self.ConnectedLimb.ObjectPart.Part.CFrame:ToEulerAnglesXYZ() or 0, 0, 0
-    return CFrame.Angles(0, 0, rotationZ + math.rad(self.UNGROUNDED_STABILIZATION_MATCH_ANGLE_OFFSET))
+    rotationZ = math.deg(rotationZ)
+
+    rotationZ += Rage.Libs.Math:Random( -- go crazy
+        self.UNGROUNDED_STABILIZATION_TARGET_RANDOMNESS.Min,
+        self.UNGROUNDED_STABILIZATION_TARGET_RANDOMNESS.Max
+    )
+
+    return CFrame.Angles(0, 0, math.deg(rotationZ))
 end
 
 --[[
@@ -687,7 +695,7 @@ function Limb:HandleImpact(amount: number, _propagations: number?, _propagationJ
     end
 
     -- Knockouts
-    if self.LimbName == "Head" and amount > self.UNCONSCIOUS_IMPACT_THRESHOLD then
+    if self.LimbName == "Head" and amount > self.UNCONSCIOUS_IMPACT_THRESHOLD and Rage.Libs.Math:Random(1, self.UNCONSCIOUS_RNG) == 1 then
         local seconds = Rage.Libs.Math:Lerp(
             self.UNCONSCIOUS_MIN_TIME,
             self.UNCONSCIOUS_MAX_TIME,
@@ -901,6 +909,7 @@ export type Limb = typeof(Limb) & {
     UNCONSCIOUS_MAX_TIME: number,
     UNCONSCIOUS_MIN_TIME: number,
     UNCONSCIOUS_IMPACT_THRESHOLD: number,
+    UNCONSCIOUS_RNG: number,
     UNCONSCIOUS_IMPACT_TIME_MULTIPLIER: number,
 
     IMPACT_MAX_PROPAGATIONS: number,
@@ -934,7 +943,7 @@ export type Limb = typeof(Limb) & {
     HEART_DEAD_HEALTH_LOSS_RATE: number,
 
     UNGROUNDED_STABILIZATION_MULTIPLIER: number,
-    UNGROUNDED_STABILIZATION_MATCH_ANGLE_OFFSET: number,
+    UNGROUNDED_STABILIZATION_TARGET_RANDOMNESS: NumberRange,
 
     LimbName: string,
     ObjectPart: ObjectTypes.ObjectPart,
