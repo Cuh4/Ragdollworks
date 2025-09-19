@@ -59,6 +59,7 @@ Objects.DEFAULT_ROTATION_SPEED = 1
 
 Objects.RotationSpeed = 1
 
+Objects.DefaultObject = nil :: ObjectTypes.Object?
 Objects.ExistingObjects = {} :: {string: ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
 Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
@@ -80,6 +81,7 @@ Objects.SelectionMode = ObjectPartSelectionMode.SMALLEST :: ObjectPartSelectionM
 
 Objects.ContextMenuActivePart = nil :: ObjectTypes.ObjectPart?
 
+Objects.DefaultWire = nil :: ObjectTypes.Wire?
 Objects.ExistingWires = {} :: {string: ObjectTypes.Wire}
 Objects.SelectedWire = nil :: ObjectTypes.Wire?
 Objects.SelectedWireSource = nil :: ObjectTypes.WireTargetInstance?
@@ -373,8 +375,13 @@ end
 function Objects:OnMapStart()
     self.BindCollection:Enter()
 
-    self:SelectObject(table.pack(next(self.ExistingObjects))[2])
-    self:SelectWire(table.pack(next(self.ExistingWires))[2])
+    if self.DefaultObject then
+        self:SelectObject(self.DefaultObject)
+    end
+
+    if self.DefaultWire then
+        self:SelectWire(self.DefaultWire)
+    end
 end
 
 --[[
@@ -941,6 +948,15 @@ end
 ]]
 function Objects:RegisterWire(wire: ObjectTypes.Wire)
     self.ExistingWires[wire.Name] = wire
+
+    if wire.IsDefault then
+        if self.DefaultWire then
+            Rage.Logging:Error("Objects:RegisterWire(): Multiple default wires found!")
+        end
+
+        self:SetDefaultWire(wire)
+    end
+
     Rage.Logging:Info(("Objects:RegisterWire(): Registered wire %s."):format(wire.Name))
 end
 
@@ -998,6 +1014,30 @@ function Objects:RemoveAllWires()
     Rage.Libs.Table:IterateReverse(self.SpawnedWires, function(_, wire: ObjectTypes.SpawnedWire)
         self:RemoveWire(wire)
     end)
+end
+
+--[[
+    Sets a wire as default.
+]]
+function Objects:SetDefaultWire(wire: ObjectTypes.Wire)
+    if not wire.IsDefault then
+        Rage.Logging:Error("Objects:SetDefaultWire(): Attempted to set a non-default wire as default.")
+    end
+
+    self.DefaultWire = wire
+    Rage.Logging:Info("Objects:SetDefaultWire(): Set default wire to "..wire.Name)
+end
+
+--[[
+    Sets an object as default.
+]]
+function Objects:SetDefaultObject(object: ObjectTypes.Object)
+    if not object.IsDefault then
+        Rage.Logging:Error("Objects:SetDefaultObject(): Attempted to set a non-default object as default.")
+    end
+
+    self.DefaultObject = object
+    Rage.Logging:Info("Objects:SetDefaultObject(): Set default object to "..object.Name)
 end
 
 --[[
@@ -1312,6 +1352,38 @@ function Objects:IsAnyObjectPartSelected(): boolean
 end
 
 --[[
+    Creates an object category if it exists.
+]]
+function Objects:CreateCategory(category: string): {ObjectTypes.Object}
+    if not self.ExistingObjectsByCategory[category] then
+        self.ExistingObjectsByCategory[category] = {}
+        Rage.Logging:Info("Objects:CreateCategory(): Created new category: "..category)
+    end
+
+    return self.ExistingObjectsByCategory[category]
+end
+
+--[[
+    Registers an object.
+]]
+function Objects:RegisterObject(object: ObjectTypes.Object)
+    local category = self:CreateCategory(object.Category)
+    table.insert(category, object)
+
+    self.ExistingObjects[object.Name] = object
+
+    if object.IsDefault then
+        if self.DefaultObject ~= nil then
+            Rage.Logging:Error("Objects:LoadObjects(): Multiple default objects found!")
+        end
+
+        self:SetDefaultObject(object)
+    end
+
+    Rage.Logging:Info("Objects:RegisterObject(): Registered object: "..object.Name)
+end
+
+--[[
     Loads all objects from the OBJECT_FOLDER.
 ]]
 function Objects:LoadObjects()
@@ -1333,18 +1405,7 @@ function Objects:LoadObjects()
 
         -- Create object instance
         local object = Object.FromInstance(objectInstance, objectBehaviours)
-
-        -- Create category if it doesn't exist
-        if not self.ExistingObjectsByCategory[object.Category] then
-            self.ExistingObjectsByCategory[object.Category] = {}
-            Rage.Logging:Info("Objects:LoadObjects(): Created new category: "..object.Category)
-        end
-
-        -- Register
-        self.ExistingObjects[object.Name] = object
-        table.insert(self.ExistingObjectsByCategory[object.Category], object)
-
-        Rage.Logging:Info("Objects:LoadObjects(): Loaded object: "..object.Name)
+        self:RegisterObject(object)
     end
 end
 
