@@ -421,25 +421,28 @@ function Limb:TrackImpacts()
 
         self.LastImpact = time()
 
-        local relativeVelocity =  part.AssemblyLinearVelocity - self.ObjectPart:GetVelocity3D() :: Vector3
+        local limbVelocity = self.ObjectPart:GetVelocity3D()
+        local partVelocity = part.AssemblyLinearVelocity
+        local relativeVelocity =  partVelocity - limbVelocity :: Vector3
         local directionVector = part.Position - self.ObjectPart:GetPosition3D() :: Vector3
-        local dot = directionVector:Dot(relativeVelocity) 
 
-        -- if dot > 0 then
-        --     return  -- moving away from each other
-        -- end
+        if limbVelocity:Dot(directionVector) <= 0 or partVelocity:Dot(-directionVector) <= 0 then
+            return
+        end
+
+        if relativeVelocity.Magnitude < self.IMPACT_THRESHOLD then
+            return
+        end
 
         local mass = Maps:BelongsToMap(part) and 1 or part.Mass
 
-        if relativeVelocity.Magnitude >= self.IMPACT_THRESHOLD then
-            local impactAmount = (relativeVelocity.Magnitude - self.IMPACT_THRESHOLD) + (mass * self.IMPACT_MASS_MULTIPLIER)
-            self:HandleImpact(impactAmount)
+        local impactAmount = (relativeVelocity.Magnitude - self.IMPACT_THRESHOLD) + (mass * self.IMPACT_MASS_MULTIPLIER)
+        self:HandleImpact(impactAmount)
 
-            Debug:CreateDebugText(
-                self.ObjectPart:GetPosition(),
-                ("%s: %.2f (dot: %.2f) (mass: %.2f)"):format(self.LimbName, impactAmount, dot, mass)
-            )
-        end
+        Debug:CreateDebugText(
+            self.ObjectPart:GetPosition(),
+            ("%s: %.2f (mass: %.2f)"):format(self.LimbName, impactAmount, mass)
+        )
     end)
 end
 
@@ -642,8 +645,13 @@ function Limb:HandleImpact(amount: number, _propagations: number?)
     Rage.Logging:Info(self.LimbName..": Impact, amount: "..amount)
 
     -- Propagate impact across body
-    if self.ClosestLimb and (_propagations and _propagations < self.IMPACT_MAX_PROPAGATIONS) then
-        self.ClosestLimb:HandleImpact(amount * (self.IMPACT_PROPAGATION_MULTIPLIER / _propagations), _propagations + 1)
+    _propagations = _propagations or 1
+
+    if self.ClosestLimb and _propagations < self.IMPACT_MAX_PROPAGATIONS then
+        self.ClosestLimb:HandleImpact(
+            amount * (self.IMPACT_PROPAGATION_MULTIPLIER / _propagations),
+            _propagations + 1
+        )
     end
 
     -- Inflict damage
