@@ -27,6 +27,7 @@ local Effects = require(Rage.Path.Effects)
 local RbxAssets = require(Rage.Path.RbxAssets)
 local Debug = require(Rage.Path.Debug)
 local Maps = require(Rage.Path.Maps)
+local Objects = require(Rage.Path.Objects)
 
 local Sound, SoundCollection = require(script.Parent.Sound), require(script.Parent.SoundCollection) -- purely for types
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
@@ -54,8 +55,8 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.UNCONSCIOUS_IMPACT_THRESHOLD = 38
     self.UNCONSCIOUS_IMPACT_TIME_MULTIPLIER = 1.1
 
-    self.IMPACT_MAX_PROPAGATIONS = 4
-    self.IMPACT_PROPAGATION_MULTIPLIER = 0.3
+    self.IMPACT_MAX_PROPAGATIONS = 5
+    self.IMPACT_PROPAGATION_MULTIPLIER = 0.2 -- limb 1 = * IMPACT_PROPAGATION_MULTIPLIER, limb 2 = * IMPACT_PROPAGATION_MULTIPLIER / 2, etc
     self.IMPACT_THRESHOLD = 15
     self.IMPACT_COOLDOWN = 0.1
     self.IMPACT_DAMAGE_MULTIPLIER = 1.3
@@ -66,14 +67,14 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.IMPACT_BRUISING_MULTIPLIER = 0.0095
 
     self.SKIN_DAMAGE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.25, 1)
-    self.FLESH_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.27, 1)
-    self.BONE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.17, 1)
+    self.FLESH_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.95, 1)
+    self.BONE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.87, 1)
     self.BONE_FROM_SKIN_DAMAGE_MULTIPLIER = 1.2
     self.IMPACT_SKIN_DAMAGE_THRESHOLD = 24
-    self.IMPACT_SKIN_DAMAGE_MULTIPLIER = 0.023
+    self.IMPACT_SKIN_DAMAGE_MULTIPLIER = 0.013
 
-    self.GORY_IMPACT_SOUND_SKIN_DAMAGE_THRESHOLD = 0.8
-    self.GORY_IMPACT_SOUND_THRESHOLD = 45
+    self.GORY_IMPACT_SOUND_SKIN_DAMAGE_THRESHOLD = 0.95 -- %
+    self.GORY_IMPACT_SOUND_THRESHOLD = 65
 
     self.BLEEDING_SOUND_VOLUME = 0.7
     self.BLEEDING_IMPACT_THRESHOLD = 50
@@ -94,7 +95,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.SkinDamageDecalCount = skinDamageDecalCount
     self.Limbs = {}
     self._LimbCache = {}
-    self.ClosestLimb = nil
+    self.ConnectedLimb = nil
 
     self.LastGrunt = 0
     self.LastImpact = 0
@@ -238,7 +239,7 @@ function Limb:GetStabilizationForceCFrame(): CFrame
         return CFrame.Angles(0, 0, 0)
     end
 
-    local _, _, rotationZ = self.ClosestLimb and self.ClosestLimb.ObjectPart.Part.CFrame:ToEulerAnglesXYZ() or 0, 0, 0
+    local _, _, rotationZ = self.ConnectedLimb.ObjectPart.Part.CFrame:ToEulerAnglesXYZ() or 0, 0, 0
     return CFrame.Angles(0, 0, rotationZ + math.rad(self.UNGROUNDED_STABILIZATION_MATCH_ANGLE_OFFSET))
 end
 
@@ -426,9 +427,9 @@ function Limb:TrackImpacts()
         local relativeVelocity =  partVelocity - limbVelocity :: Vector3
         local directionVector = part.Position - self.ObjectPart:GetPosition3D() :: Vector3
 
-        if limbVelocity:Dot(directionVector) <= 0 or partVelocity:Dot(-directionVector) <= 0 then
-            return
-        end
+        -- if limbVelocity:Dot(directionVector) <= 0 or (partVelocity:Dot(-directionVector) <= 0 and not part.Anchored) then
+        --     return
+        -- end
 
         if relativeVelocity.Magnitude < self.IMPACT_THRESHOLD then
             return
@@ -640,19 +641,25 @@ end
 --[[
     Called when the limb received an impact.
 ]]
-function Limb:HandleImpact(amount: number, _propagations: number?)
-    -- Log
-    Rage.Logging:Info(self.LimbName..": Impact, amount: "..amount)
-
+function Limb:HandleImpact(amount: number, _propagations: number?, _propagationJourney: {[Limb]: boolean})
     -- Propagate impact across body
     _propagations = _propagations or 1
+    _propagationJourney = _propagationJourney or {}
 
-    if self.ClosestLimb and _propagations < self.IMPACT_MAX_PROPAGATIONS then
-        self.ClosestLimb:HandleImpact(
+    if _propagations < self.IMPACT_MAX_PROPAGATIONS and not _propagationJourney[self] then
+        _propagationJourney[self] = true
+
+        self.ConnectedLimb:HandleImpact(
             amount * (self.IMPACT_PROPAGATION_MULTIPLIER / _propagations),
-            _propagations + 1
+            _propagations + 1,
+            _propagationJourney
         )
     end
+
+    local isPropagatedImpact = _propagations > 1
+
+    -- Log
+    Rage.Logging:Info(self.LimbName..(": Impact with amount: %.2f. Was due to propagation: %s"):format(amount, tostring(isPropagatedImpact)))
 
     -- Inflict damage
     self:Damage(amount * self.IMPACT_DAMAGE_MULTIPLIER)
@@ -670,6 +677,11 @@ function Limb:HandleImpact(amount: number, _propagations: number?)
     -- Skin damage
     if amount > self.IMPACT_SKIN_DAMAGE_THRESHOLD then
         self:ApplySkinDamage(amount * self.IMPACT_SKIN_DAMAGE_MULTIPLIER)
+    end
+
+    -- Propagated impact shouldn't cause anything else
+    if isPropagatedImpact then
+        return
     end
 
     -- Knockouts
@@ -823,7 +835,15 @@ end
 ]]
 function Limb:Setup(limbs: {[ObjectTypes.ObjectPart]: Limb})
     self.Limbs = limbs
-    self.ClosestLimb = self:GetClosestLimb()
+
+    local connectedTo = self.ObjectPart.Part:FindFirstChild("ConnectedTo") or Rage.Logging:Error(self.LimbName..": Missing `ConnectedTo` ObjectValue.") :: ObjectValue
+
+    if not connectedTo.Value or not connectedTo.Value:IsA("BasePart") then
+        Rage.Logging:Error(self.LimbName..": `ConnectedTo` value is not a part.")
+    end
+
+    local connectedObjectPart = Objects:GetObjectPartFromPart(connectedTo.Value) or Rage.Logging:Error(self.LimbName..": `ConnectedTo` value is not recognized as an object part.")
+    self.ConnectedLimb = self.Limbs[connectedObjectPart] or Rage.Logging:Error(self.LimbName..": `ConnectedTo` value is not recognized as a limb.")
 
     self.Attachment = Instance.new("Attachment")
     self.Attachment.Name = "LimbAttachment"
@@ -921,7 +941,7 @@ export type Limb = typeof(Limb) & {
     SkinDamageDecalCount: number,
     Limbs: {[ObjectTypes.ObjectPart]: Limb},
     _LimbCache: {string: Limb},
-    ClosestLimb: Limb,
+    ConnectedLimb: Limb,
 
     BillboardGUI: BillboardGui,
     HealthContainer: Frame,
