@@ -259,7 +259,7 @@ function Objects:CreateBinds()
             Binds:CreateBind(
                 "Activate Part",
                 "Activates the part under the mouse.",
-                {Enum.KeyCode.F},
+                {Enum.KeyCode.Q},
                 {ShowTouchButton = true},
 
                 function(context: Bind.BindContext)
