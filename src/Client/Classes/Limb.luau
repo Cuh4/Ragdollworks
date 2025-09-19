@@ -25,6 +25,8 @@ local Sounds = require(Rage.Path.Sounds)
 local UI = require(Rage.Path.UI)
 local Effects = require(Rage.Path.Effects)
 local RbxAssets = require(Rage.Path.RbxAssets)
+local Debug = require(Rage.Path.Debug)
+local Maps = require(Rage.Path.Maps)
 
 local Sound, SoundCollection = require(script.Parent.Sound), require(script.Parent.SoundCollection) -- purely for types
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
@@ -420,17 +422,23 @@ function Limb:TrackImpacts()
         self.LastImpact = time()
 
         local relativeVelocity =  part.AssemblyLinearVelocity - self.ObjectPart:GetVelocity3D() :: Vector3
-        -- local directionVector = part.Position - self.ObjectPart:GetPosition3D() :: Vector3
+        local directionVector = part.Position - self.ObjectPart:GetPosition3D() :: Vector3
+        local dot = directionVector:Dot(relativeVelocity) 
 
-        -- if directionVector:Dot(relativeVelocity) > 0 then
+        -- if dot > 0 then
         --     return  -- moving away from each other
         -- end
 
-        local mass = part.Anchored and 1 or part.Mass
+        local mass = Maps:BelongsToMap(part) and 1 or part.Mass
 
         if relativeVelocity.Magnitude >= self.IMPACT_THRESHOLD then
             local impactAmount = (relativeVelocity.Magnitude - self.IMPACT_THRESHOLD) + (mass * self.IMPACT_MASS_MULTIPLIER)
             self:HandleImpact(impactAmount)
+
+            Debug:CreateDebugText(
+                self.ObjectPart:GetPosition(),
+                ("%s: %.2f (dot: %.2f) (mass: %.2f)"):format(self.LimbName, impactAmount, dot, mass)
+            )
         end
     end)
 end
