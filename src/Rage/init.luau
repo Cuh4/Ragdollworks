@@ -62,6 +62,10 @@ Rage.Libs.Table = require(script.Libs.Table)
 Rage.Libs.Math = require(script.Libs.Math)
 Rage.Libs.String = require(script.Libs.String)
 
+local _position = require(script.Libs.Position)
+export type PositionType = _position.PositionType
+Rage.Libs.Position = _position
+
 --[[
     A table of all built-in classes.
 ]]
