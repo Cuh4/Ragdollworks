@@ -67,6 +67,8 @@ export type ObjectSettings = {
 }
 
 export type SpawnedObject = Entity & {
+    _SpawnedObjectFolder: Folder,
+
     ID: number,
     Object: Object,
     Instance: Model,
@@ -204,6 +206,8 @@ export type SpawnedWire = Entity & {
 }
 
 export type WireTarget = {
+    _WirePartFolder: Folder,
+
     Target: WireTargetInstance,
     Part: BasePart,
     Attachment: Attachment,

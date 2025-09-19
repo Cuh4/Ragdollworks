@@ -53,8 +53,8 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.UNCONSCIOUS_IMPACT_TIME_MULTIPLIER = 1.1
 
     self.IMPACT_MAX_PROPAGATIONS = 4
-    self.IMPACT_PROPAGATION_MULTIPLIER = 0.4
-    self.IMPACT_THRESHOLD = 12
+    self.IMPACT_PROPAGATION_MULTIPLIER = 0.3
+    self.IMPACT_THRESHOLD = 15
     self.IMPACT_COOLDOWN = 0.1
     self.IMPACT_DAMAGE_MULTIPLIER = 1.3
     self.IMPACT_MASS_MULTIPLIER = 0.25
@@ -67,7 +67,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.FLESH_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.27, 1)
     self.BONE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.17, 1)
     self.BONE_FROM_SKIN_DAMAGE_MULTIPLIER = 1.2
-    self.IMPACT_SKIN_DAMAGE_THRESHOLD = 14
+    self.IMPACT_SKIN_DAMAGE_THRESHOLD = 24
     self.IMPACT_SKIN_DAMAGE_MULTIPLIER = 0.023
 
     self.GORY_IMPACT_SOUND_SKIN_DAMAGE_THRESHOLD = 0.8
@@ -716,7 +716,7 @@ function Limb:HandleHealthUI()
         0
     )
 
-    self.HealthContainer.Size = UDim2.new(self:GetHealthPercentage(), 0, 0.3, 0)
+    self.HealthContainer.Size = UDim2.fromScale(self:GetHealthPercentage(), 0.3)
 end
 
 --[[

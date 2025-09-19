@@ -22,6 +22,8 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local Trove = require(Rage.WallyPackages.trove)
 
+local Organization = require(Rage.Path.Organization)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -31,6 +33,8 @@ local Trove = require(Rage.WallyPackages.trove)
 ]]
 Sound = {} :: RSound
 Sound.__index = Sound
+Sound._SoundFolder = Organization:CreateFolder("Sounds", Rage.Workspace)
+Sound._PlayerSoundFolder = Organization:CreateFolder("Sounds", Rage.Player)
 
 --[[
     Creates a new Sound class instance.
@@ -72,13 +76,13 @@ function Sound:_CreateSoundInstance(trove: Trove.Trove, modifiers: {Instance}, t
         part.Position = Vector3.new(target.X, target.Y, 0)
         part.Size = Vector3.new(1, 1, 1)
         part.Transparency = 1
-        part.Parent = Rage.Workspace
+        part.Parent = self._SoundFolder
 
         sound.Parent = part
     elseif typeof(target) == "Instance" then
         sound.Parent = target
     else
-        sound.Parent = Rage.Player
+        sound.Parent = self._PlayerSoundFolder
     end
 
     trove:Add(sound.Ended:Once(function()
@@ -117,6 +121,9 @@ end
 export type SoundTarget = Instance | Vector2
 
 export type RSound = typeof(Sound) & { -- RSound instead of Sound to prevent conflict with Roblox's Sound type
+    _SoundFolder: Folder,
+    _PlayerSoundFolder: Folder,
+
     SoundID: string,
     Settings: SoundSettings,
     Troves: {[Sound]: Trove.Trove}

@@ -24,6 +24,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local CLI = require(Rage.Path.CLI)
 local Camera = require(Rage.Path.Camera)
+local Organization = require(Rage.Path.Organization)
 
 -------------------------------
 -- // Main
@@ -34,6 +35,7 @@ local Camera = require(Rage.Path.Camera)
 ]]
 Effects = Rage:Service("Effects") :: Effects
 Effects.EFFECTS_FOLDER = Rage.Assets:GetAsset("Effects") :: Folder
+Effects.SpawnedEffectsFolder = Organization:CreateFolder("Effects", Rage.Workspace)
 
 --[[
     Called when this service starts.
@@ -72,13 +74,15 @@ function Effects:SpawnEffect(name: string, lifetime: number, parent: Instance?, 
 
     if not parent then
         parent = Instance.new("Part")
+        parent.Name = "EffectsContainer"
         parent.CanCollide = false
         parent.CanQuery = false
+        parent.CanTouch = false
         parent.Anchored = true
         parent.Size = Vector3.new(1, 1, 1)
         parent.Position = Vector3.new(position.X, position.Y, 0)
         parent.Transparency = 1
-        parent.Parent = Rage.Workspace
+        parent.Parent = self.SpawnedEffectsFolder
 
         effect.Destroying:Once(function()
             parent:Destroy()

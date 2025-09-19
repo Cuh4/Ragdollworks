@@ -21,6 +21,8 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
+local Organization = require(Rage.Path.Organization)
+
 local Entity = require(script.Parent.Entity)
 local ObjectPart = require(script.Parent.ObjectPart)
 local ObjectTypes = require(script.Parent.Types)
@@ -34,6 +36,8 @@ local ObjectTypes = require(script.Parent.Types)
 ]]
 SpawnedObject = {} :: ObjectTypes.SpawnedObject
 SpawnedObject.__index = SpawnedObject
+SpawnedObject._SpawnedObjectFolder = Organization:CreateFolder("SpawnedObjects", Rage.Workspace)
+
 setmetatable(SpawnedObject, Entity)
 
 --[[
@@ -101,7 +105,7 @@ function SpawnedObject:Setup(spawnPos: Vector3)
         end)
     end
 
-    self.Instance.Parent = Rage.Workspace
+    self.Instance.Parent = self._SpawnedObjectFolder
 end
 
 --[[

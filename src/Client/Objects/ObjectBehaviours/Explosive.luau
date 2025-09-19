@@ -26,6 +26,7 @@ local ObjectBehaviour = require(Rage.Path.Classes.Objects.ObjectBehaviour)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 local Sound = require(Rage.Path.Classes.Sound)
 
+local Organization = require(Rage.Path.Organization)
 local Sounds = require(Rage.Path.Sounds)
 local Effects = require(Rage.Path.Effects)
 
@@ -38,6 +39,8 @@ local Effects = require(Rage.Path.Effects)
 ]]
 ExplosiveObjectBehaviour = {} :: ExplosiveObjectBehaviour
 ExplosiveObjectBehaviour.__index = ExplosiveObjectBehaviour
+ExplosiveObjectBehaviour._ExplosionsFolder = Organization:CreateFolder("Explosions", Rage.Workspace)
+
 setmetatable(ExplosiveObjectBehaviour, ObjectBehaviour)
 
 --[[
@@ -101,7 +104,7 @@ function ExplosiveObjectBehaviour:Explode()
     explosion.DestroyJointRadiusPercent = 0
     explosion.Position = self.MainPart:GetPosition3D()
     explosion.Visible = false
-    explosion.Parent = Rage.Workspace
+    explosion.Parent = self._ExplosionsFolder
 
     self.Sound:Play({}, self.MainPart:GetPosition())
 
@@ -162,6 +165,8 @@ function ExplosiveObjectBehaviour:OnUpdate()
 end
 
 export type ExplosiveObjectBehaviour = ObjectTypes.ObjectBehaviour & typeof(ExplosiveObjectBehaviour) & {
+    _ExplosionsFolder: Folder,
+
     LastPosition: Vector2,
     MainPart: ObjectTypes.ObjectPart,
     ExplosionRadius: number,

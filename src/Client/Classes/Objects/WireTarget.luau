@@ -26,6 +26,7 @@ local ObjectTypes = require(script.Parent.Types)
 
 local WireTargetType = require(Rage.Path.Enums.WireTargetType)
 
+local Organization = require(Rage.Path.Organization)
 local Debug = require(Rage.Path.Debug)
 
 -------------------------------
@@ -37,6 +38,7 @@ local Debug = require(Rage.Path.Debug)
 ]]
 WireTarget = {} :: ObjectTypes.WireTarget
 WireTarget.__index = WireTarget
+WireTarget._WirePartFolder = Organization:CreateFolder("WireTargets", Rage.Workspace)
 
 --[[
     Creates a new WireTarget class instance.
@@ -73,7 +75,7 @@ function WireTarget:_CreateWorldPart(): BasePart
     part.CanTouch = false
     part.Transparency = 1
     part.Size = Vector3.new(0.1, 0.1, 0.1)
-    part.Parent = Rage.Workspace
+    part.Parent = self._WirePartFolder
 
     return part
 end

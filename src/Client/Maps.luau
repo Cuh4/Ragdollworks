@@ -27,6 +27,7 @@ local signal = require(Rage.WallyPackages.signal)
 local CLI = require(Rage.Path.CLI)
 local Toasts = require(Rage.Path.Toasts)
 local Feedback = require(Rage.Path.Feedback)
+local Organization = require(Rage.Path.Organization)
 
 local Map = require(Rage.Path.Classes.Map)
 
@@ -55,6 +56,8 @@ Maps.ExistingMaps = {} :: {Map.Map}
 Maps.CurrentMap = nil :: Map.Map?
 Maps.MapInstance = nil :: Model?
 Maps.IsInMap = false
+
+Maps.StartedMapsFolder = Organization:CreateFolder("Map", Rage.Workspace)
 
 --[[
     Called when the service starts.
@@ -121,7 +124,7 @@ function Maps:_SetupMapInstance()
     background.CanTouch = false
     background.CanQuery = true
 
-    self.MapInstance.Parent = Rage.Workspace
+    self.MapInstance.Parent = self.StartedMapsFolder
 
     self.MapInstance:MoveTo(Vector3.new(
         self.MAP_POSITION.X,
