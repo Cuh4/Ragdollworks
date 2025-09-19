@@ -1134,6 +1134,8 @@ function Objects:SpawnObject(object: ObjectTypes.Object, position: Vector2): Obj
 
     self:_RegisterSpawnedObject(spawnedObject)
 
+    spawnedObject:StartBehaviours()
+
     Effects:SpawnEffect(
         "ObjectSpawn",
         0.07,

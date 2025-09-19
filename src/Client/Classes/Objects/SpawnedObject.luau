@@ -89,10 +89,6 @@ function SpawnedObject:Setup(spawnPos: Vector3)
         part:Setup()
     end
 
-    for _, behaviour in pairs(self.Behaviours) do
-        behaviour:OnSpawn()
-    end
-
     for _, part in pairs(self.Parts) do
         part.OnActivate:Connect(function()
             for _, behaviour in pairs(self.Behaviours) do
@@ -106,6 +102,16 @@ function SpawnedObject:Setup(spawnPos: Vector3)
     end
 
     self.Instance.Parent = self._SpawnedObjectFolder
+end
+
+--[[
+    Starts this spawned object's behaviours.<br>
+    This should only ever be called once.
+]]
+function SpawnedObject:StartBehaviours()
+    for _, behaviour in pairs(self.Behaviours) do
+        behaviour:OnSpawn()
+    end
 end
 
 --[[

@@ -80,6 +80,7 @@ export type SpawnedObject = Entity & {
 
     Update: (self: SpawnedObject, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
     Setup: (self: SpawnedObject, spawnPos: Vector3) -> nil,
+    StartBehaviours: (self: SpawnedObject) -> nil,
     MoveTo: (self: SpawnedObject, position: Vector2) -> nil,
     RotateTo: (self: SpawnedObject, radians: number) -> nil,
     RotateBy: (self: SpawnedObject, radians: number) -> nil,
