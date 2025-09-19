@@ -269,16 +269,15 @@ function Maps:_CreateCommands()
         end,
 
         callback = function(name: string)
-            if self.IsInMap then
-                Rage.Logging:Warn("Already in a map. Exit the current map before starting a new one.")
-                return
-            end
-
             local map = self:GetMap(name)
 
             if not map then
                 Rage.Logging:Warn("No map found with provided name.")
                 return
+            end
+
+            if self.IsInMap then
+                self:ExitMap()
             end
 
             self:StartMap(map)
