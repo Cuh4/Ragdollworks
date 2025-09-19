@@ -84,6 +84,7 @@ export type SpawnedObject = Entity & {
     MoveTo: (self: SpawnedObject, position: Vector2) -> nil,
     RotateTo: (self: SpawnedObject, radians: number) -> nil,
     RotateBy: (self: SpawnedObject, radians: number) -> nil,
+    GetPartByName: (self: SpawnedObject, name: string) -> ObjectPart?,
     SetupAttributes: (self: SpawnedObject) -> nil,
     CreateNoCollideConstraints: (self: SpawnedObject) -> nil,
     FindParts: (self: SpawnedObject) -> {[BasePart]: ObjectPart},

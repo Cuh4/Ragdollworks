@@ -136,6 +136,17 @@ function SpawnedObject:RotateBy(radians: number)
 end
 
 --[[
+    Returns a part by exact name.
+]]
+function SpawnedObject:GetPartByName(name: string): ObjectTypes.ObjectPart?
+    for _, part in pairs(self.Parts) do
+        if part.Part.Name == name then
+            return part
+        end
+    end
+end
+
+--[[
     Set up attributes for all parts in this spawned object.
 ]]
 function SpawnedObject:SetupAttributes()
