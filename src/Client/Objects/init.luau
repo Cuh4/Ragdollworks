@@ -491,7 +491,7 @@ function Objects:ShowContextMenu(part: ObjectTypes.ObjectPart)
     end
 
     local screenPosition = Rage.Camera:WorldToScreenPoint(part:GetPosition3D())
-    part.ContextMenu:Show(UDim2.new(0, screenPosition.X, 0, screenPosition.Y))
+    part.ContextMenu:Show(UDim2.fromOffset(screenPosition.X, screenPosition.Y))
 
     part.ContextMenu.OnHide:Once(function()
         self:DeregisterContextMenuActivePart()

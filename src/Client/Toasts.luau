@@ -36,8 +36,8 @@ Toasts = Rage:Service("Toasts") :: Toasts
 Toasts.TOAST_COMPONENT = UI:GetComponent("Toast")
 Toasts.TOAST_CONTAINER = UI:GetScreenGUI("Toasts"):FindFirstChild("Container")
 Toasts.ANIMATE_TIME = 0.5
-Toasts.OUT_POSITION = UDim2.new(-1, 0, 0, 0)
-Toasts.IN_POSITION = UDim2.new(0, 0, 0, 0)
+Toasts.OUT_POSITION = UDim2.fromScale(-1, 0)
+Toasts.IN_POSITION = UDim2.fromScale(0, 0)
 
 --[[
     Called when the service starts.
