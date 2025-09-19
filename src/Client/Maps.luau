@@ -96,6 +96,13 @@ function Maps:StartMap(map: Map.Map)
 end
 
 --[[
+    Returns if a part belongs to the current map.
+]]
+function Maps:BelongsToMap(part: BasePart): boolean
+    return self.IsInMap and part:IsDescendantOf(self.MapInstance)
+end
+
+--[[
     Sets up a new map instance.<br>
     Used internally. Do not use wrongly.
 ]]
