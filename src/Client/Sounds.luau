@@ -70,7 +70,7 @@ end
 ]]
 function Sounds:CreateSound(soundID: number, settings: Sound.SoundSettings): Sound.RSound
     local sound = Sound.New(soundID, settings)
-    sound.Settings.RollOffMaxDistance = self.ROLLOFF_MAX
+    sound.Settings.RollOffMaxDistance = sound.Settings.RollOffMaxDistance or self.ROLLOFF_MAX
 
     return sound
 end
