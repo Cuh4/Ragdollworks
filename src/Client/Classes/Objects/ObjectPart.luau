@@ -44,7 +44,8 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     local self = setmetatable({}, ObjectPart) :: ObjectTypes.ObjectPart
     self.SELECTION_COLOR = Color3.fromRGB(0, 400, 0)
     self.HIGHLIGHT_COLOR = Color3.fromRGB(50, 200, 50)
-    self.SELECTION_BOX_THICKNESS = 0.2
+    self.FROZEN_SELECTION_BOX_COLOR = Color3.fromRGB(40, 95, 183)
+    self.SELECTION_BOX_THICKNESS = 0.07
     self.DRAGGING_RESPONSIVENESS = 45
 
     self.Part = part
@@ -61,6 +62,7 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.GeneralAttachmentInstance = nil :: Attachment
     self.DraggingAttachmentInstance = nil :: Attachment
     self.SelectionBoxInstance = nil :: SelectionBox
+    self.FrozenSelectionBoxInstance = nil :: SelectionBox
     self.RotationForce = 0
     self.Layer = layer
     self.ContextMenu = ContextMenu.New(self)
@@ -94,7 +96,7 @@ end
 function ObjectPart:Setup()
     self:SetupContextMenu()
     self:SetupAttachments()
-    self:SetupSelection()
+    self:SetupSelectionBoxes()
     self:SetupDragging()
 end
 
@@ -137,9 +139,9 @@ function ObjectPart:SetupAttachments()
 end
 
 --[[
-    Adds selection instances to the part (selection boxes, etc).
+    Adds selection box instances to the object part.
 ]]
-function ObjectPart:SetupSelection()
+function ObjectPart:SetupSelectionBoxes()
     self.SelectionBoxInstance = Instance.new("SelectionBox")
     self.SelectionBoxInstance.Name = "Selection"
     self.SelectionBoxInstance.Adornee = self.Part
@@ -148,6 +150,16 @@ function ObjectPart:SetupSelection()
     self.SelectionBoxInstance.LineThickness = self.SELECTION_BOX_THICKNESS
     self.SelectionBoxInstance.Visible = false
     self.SelectionBoxInstance.Parent = self.Part
+
+    self.FrozenSelectionBoxInstance = Instance.new("SelectionBox")
+    self.FrozenSelectionBoxInstance.Name = "FrozenSelection"
+    self.FrozenSelectionBoxInstance.Adornee = self.Part
+    self.FrozenSelectionBoxInstance.SurfaceTransparency = 1
+    self.FrozenSelectionBoxInstance.Transparency = 0
+    self.FrozenSelectionBoxInstance.LineThickness = self.SELECTION_BOX_THICKNESS
+    self.FrozenSelectionBoxInstance.Visible = false
+    self.SelectionBoxInstance.Color3 = self.FROZEN_SELECTION_BOX_COLOR
+    self.FrozenSelectionBoxInstance.Parent = self.Part
 end
 
 --[[
@@ -194,9 +206,9 @@ function ObjectPart:UpdateDragging(dragPosition: Vector2)
 end
 
 --[[
-    Updates selection/highlight.
+    Updates selection boxes.
 ]]
-function ObjectPart:UpdateSelection()
+function ObjectPart:UpdateSelectionBoxes()
     if self.Selected then
         self.SelectionBoxInstance.Color3 = self.SELECTION_COLOR
     elseif self.Highlighted then
@@ -204,6 +216,7 @@ function ObjectPart:UpdateSelection()
     end
 
     self.SelectionBoxInstance.Visible = self.Selected or self.Highlighted
+    self.FrozenSelectionBoxInstance.Visible = self.Frozen
 end
 
 --[[
@@ -221,7 +234,7 @@ end
 ]]
 function ObjectPart:Update(startBound: Vector2, endBound: Vector2, dragPosition: Vector2)
     self:UpdateDragging(dragPosition)
-    self:UpdateSelection()
+    self:UpdateSelectionBoxes()
     self:UpdatePhysics(startBound, endBound)
 end
 

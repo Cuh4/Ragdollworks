@@ -102,6 +102,7 @@ export type SpawnedObject = Entity & {
 export type ObjectPart = {
     SELECTION_COLOR: Color3,
     HIGHLIGHT_COLOR: Color3,
+    FROZEN_SELECTION_BOX_COLOR: Color3,
     SELECTION_BOX_THICKNESS: number,
     DRAGGING_RESPONSIVENESS: number,
 
@@ -119,6 +120,7 @@ export type ObjectPart = {
     AngularVelocityInstance: AngularVelocity,
     DraggingAttachmentInstance: Attachment,
     SelectionBoxInstance: SelectionBox,
+    FrozenSelectionBoxInstance: SelectionBox,
     RotationForce: number,
     Layer: number,
     ContextMenu: ContextMenu,
@@ -134,10 +136,10 @@ export type ObjectPart = {
     Setup: (self: ObjectPart) -> nil,
     SetupContextMenu: (self: ObjectPart) -> nil,
     SetupAttachments: (self: ObjectPart) -> nil,
-    SetupSelection: (self: ObjectPart) -> nil,
+    SetupSelectionBoxes: (self: ObjectPart) -> nil,
     SetupDragging: (self: ObjectPart) -> nil,
     UpdateDragging: (self: ObjectPart, dragPosition: Vector2) -> nil,
-    UpdateSelection: (self: ObjectPart) -> nil,
+    UpdateSelectionBoxes: (self: ObjectPart) -> nil,
     UpdatePhysics: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
     Update: (self: ObjectPart, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
     KeepWithinBounds: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
