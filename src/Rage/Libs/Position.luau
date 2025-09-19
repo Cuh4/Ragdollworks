@@ -16,6 +16,12 @@
 ]]
 
 -------------------------------
+-- // Variables
+-------------------------------
+
+local Logging = require(script.Parent.Parent.Logging)
+
+-------------------------------
 -- // Main
 -------------------------------
 
@@ -34,7 +40,11 @@ function Position:ToVector3(position: PositionType): Vector3
         return Vector3.new(position.X, position.Y, 0)
     elseif typeof(position) == "CFrame" then
         return position.Position
+    elseif position.IsA and position:IsA("PVInstance") then
+        return position:GetPivot().Position
     end
+
+    Logging:Error("Position:ToVector3(): Invalid position provided.")
 end
 
 --[[
@@ -47,7 +57,12 @@ function Position:ToVector2(position: PositionType): Vector2
         return position
     elseif typeof(position) == "CFrame" then
         return Vector2.new(position.Position.X, position.Position.Y)
+    elseif position.IsA and position:IsA("PVInstance") then
+        local _position = position:GetPivot().Position
+        return Vector2.new(_position.X, _position.Y)
     end
+
+    Logging:Error("Position:ToVector2(): Invalid position provided.")
 end
 
 --[[
@@ -60,9 +75,13 @@ function Position:ToCFrame(position: PositionType): CFrame
         return CFrame.new(position.X, position.Y, 0)
     elseif typeof(position) == "CFrame" then
         return position
+    elseif position.IsA and position:IsA("PVInstance") then
+        return position:GetPivot().Position
     end
+
+    Logging:Error("Position:ToCFrame(): Invalid position provided.")
 end
 
-export type PositionType = Vector3 | Vector2 | CFrame
+export type PositionType = Vector3 | Vector2 | CFrame | PVInstance
 export type Position = typeof(Position)
 return Position
