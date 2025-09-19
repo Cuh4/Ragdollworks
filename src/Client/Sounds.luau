@@ -87,7 +87,7 @@ function Sounds:_CreateCommands()
         end,
 
         callback = function(soundID: number)
-            self:CreateSound(soundID, {}):Play()
+            self:CreateSound(soundID, {}):Play({})
         end
     })
 end
