@@ -100,9 +100,7 @@ end
 --[[
     Called when an object using this behaviour is about to be despawned.
 ]]
-function LightObjectBehaviour:OnPreDespawn()
-    self.LightParts = {}
-end
+function LightObjectBehaviour:OnPreDespawn() end
 
 --[[
     Called when an object using this behaviour is activated.
