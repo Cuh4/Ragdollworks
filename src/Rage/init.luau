@@ -38,6 +38,7 @@ Rage.Debris = game:GetService("Debris")
 Rage.Tweening = game:GetService("TweenService")
 Rage.ContentProvider = game:GetService("ContentProvider")
 Rage.ContextAction = game:GetService("ContextActionService")
+Rage.StarterGUI = game:GetService("StarterGui")
 
 if Rage.IsServer then
     Rage.ServerScriptService = game:GetService("ServerScriptService")
