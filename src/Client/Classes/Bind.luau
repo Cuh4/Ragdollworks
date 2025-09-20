@@ -103,7 +103,7 @@ function Bind:_MakeBind()
     ContextActionService:BindAction(self.Name, function(_, state: Enum.UserInputState, inputObject: InputObject)
         if state == Enum.UserInputState.Begin then
             self.IsBeingPressed = true
-        elseif state == Enum.UserInputState.End or Enum.UserInputState.Cancel then
+        elseif state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
             self.IsBeingPressed = false
         end
 
