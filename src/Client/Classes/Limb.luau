@@ -32,6 +32,8 @@ local Objects = require(Rage.Path.Objects)
 local Sound, SoundCollection = require(script.Parent.Sound), require(script.Parent.SoundCollection) -- purely for types
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
+local Trove = require(Rage.WallyPackages.trove)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -91,6 +93,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
 
     self.LimbName = name
     self.ObjectPart = objectPart
+    self.Trove = Trove.new()
     self.Health = maxHealth
     self.MaxHealth = maxHealth
     self.SkinDamageDecalCount = skinDamageDecalCount
@@ -439,7 +442,7 @@ end
     Tracks limb impacts.
 ]]
 function Limb:TrackImpacts()
-    self.TouchConnection = self.ObjectPart.Part.Touched:Connect(function(part: BasePart)
+    self.Trove:Add(self.ObjectPart.Part.Touched:Connect(function(part: BasePart)
         if self:DoesPartBelongsToLimb(part) then
             return
         end
@@ -472,7 +475,7 @@ function Limb:TrackImpacts()
             self.ObjectPart:GetPosition(),
             ("%s: %.2f (mass: %.2f)"):format(self.LimbName, impactAmount, mass)
         )
-    end)
+    end))
 end
 
 --[[
@@ -947,7 +950,7 @@ end
     Called when this limb needs cleaning up.
 ]]
 function Limb:Cleanup()
-    self.TouchConnection:Disconnect()
+    self.Trove:Destroy()
 end
 
 export type Limb = typeof(Limb) & {
@@ -995,6 +998,7 @@ export type Limb = typeof(Limb) & {
 
     LimbName: string,
     ObjectPart: ObjectTypes.ObjectPart,
+    Trove: Trove.Trove,
     Health: number,
     MaxHealth: number,
     SkinDamageDecalCount: number,
@@ -1037,9 +1041,7 @@ export type Limb = typeof(Limb) & {
     BleedingEffectDefaultRate: number,
     BruiseDecal: Decal,
     FleshDecal: Decal,
-    BoneDecal: Decal,
-
-    TouchConnection: RBXScriptConnection
+    BoneDecal: Decal
 }
 
 return Limb
