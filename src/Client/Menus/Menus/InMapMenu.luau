@@ -53,10 +53,6 @@ function InMapMenu.New(): InMapMenu
     local self = setmetatable(Menu.New("InMap"), InMapMenu) :: InMapMenu
     self.InfoContainer = self.ScreenGUI.Info
 
-    self.PlayerContainer = self.InfoContainer.PlayerContainer
-    self.PlayerIcon = self.PlayerContainer.PlayerIcon
-    self.PlayerName = self.PlayerContainer.PlayerName
-
     self.BindsContainer = self.InfoContainer.BindsContainer
     self.BindTroves = {}
 
@@ -193,28 +189,9 @@ function InMapMenu:RemoveBind(bind: Bind.Bind)
 end
 
 --[[
-    Returns the player's icon.
-]]
-function InMapMenu:GetPlayerIcon(): (string, boolean)
-    return Rage.Players:GetUserThumbnailAsync(
-        Rage.Player.UserId,
-        Enum.ThumbnailType.HeadShot,
-        Enum.ThumbnailSize.Size352x352
-    )
-end
-
---[[
     Setups the menu.
 ]]
 function InMapMenu:Setup()
-    self.PlayerIcon.Image = Rage.Players:GetUserThumbnailAsync(
-        Rage.Player.UserId,
-        Enum.ThumbnailType.HeadShot,
-        Enum.ThumbnailSize.Size352x352
-    )
-
-    self.PlayerName.Text = Rage.Player.Name
-
     self:UpdateSelectedObject()
     self:UpdateSelectedWire()
     self:UpdateSpawnedObjectsCounter()
@@ -268,10 +245,6 @@ end
 
 export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
     InfoContainer: Frame,
-
-    PlayerContainer: Frame,
-    PlayerIcon: ImageLabel,
-    PlayerName: TextLabel,
 
     BindsContainer: Frame,
     BindTroves: {[Bind.Bind]: {Trove.Trove}},
