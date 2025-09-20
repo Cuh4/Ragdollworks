@@ -60,7 +60,7 @@ function Spring:OnConnect()
     self.SpringConstraint.Name = "Spring"
     self.SpringConstraint.Attachment0 = self.TargetA.Attachment
     self.SpringConstraint.Attachment1 = self.TargetB.Attachment
-    self.SpringConstraint.Stiffness = 150
+    self.SpringConstraint.Stiffness = 1000
     self.SpringConstraint.FreeLength = (self.TargetA:GetPosition() - self.TargetB:GetPosition()).Magnitude / 2
     self.SpringConstraint.Damping = 25
     self.SpringConstraint.Visible = true
