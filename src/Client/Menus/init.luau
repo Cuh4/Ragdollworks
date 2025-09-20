@@ -34,6 +34,15 @@ local Menu = require(Rage.Path.Classes.Menu)
 Menus = Rage:Service("Menus") :: Menus
 Menus.StartPriority = 0
 
+Menus.CORE_GUI_TO_HIDE = {
+    Enum.CoreGuiType.PlayerList,
+    Enum.CoreGuiType.Health,
+    Enum.CoreGuiType.Chat,
+    Enum.CoreGuiType.SelfView,
+    Enum.CoreGuiType.EmotesMenu,
+    Enum.CoreGuiType.Backpack
+} :: {Enum.CoreGuiType}
+
 Menus.Menus = {} :: {[string]: Menu.Menu}
 
 --[[
@@ -41,6 +50,17 @@ Menus.Menus = {} :: {[string]: Menu.Menu}
 ]]
 function Menus:OnStart()
     self:LoadMenus()
+    self:HideCoreGUI()
+end
+
+--[[
+    Hides most CoreGUI.
+]]
+function Menus:HideCoreGUI()
+    for _, coreGuiType in pairs(self.CORE_GUI_TO_HIDE) do
+        Rage.Logging:Info("Menus:HideCoreGUI(): Hiding CoreGUI: "..coreGuiType.Name)
+        Rage.StarterGUI:SetCoreGuiEnabled(coreGuiType, false)
+    end
 end
 
 --[[
