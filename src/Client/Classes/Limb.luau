@@ -112,6 +112,9 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.IsHeartBeating = true
     self.PlayedDeathScream = false
 
+    self.StatusBillboardGUI = nil :: BillboardGui
+    self.StatusIcon = nil :: ImageLabel
+
     self.StabilizationForce = nil :: AlignOrientation
     self.Attachment = nil :: Attachment
     self.MaxStabilizationAngularVelocity = maxStabilizationAngularVelocity
@@ -411,6 +414,21 @@ function Limb:RemoveBruising()
 end
 
 --[[
+    Sets the status icon.
+]]
+function Limb:SetStatusIcon(icon: string)
+    if self.LimbName ~= "Head" then
+        return
+    end
+
+    if self.StatusIcon.Image == icon then
+        return
+    end
+
+    self.StatusIcon.Image = icon
+end
+
+--[[
     Returns the limb's health percentage.
 ]]
 function Limb:GetHealthPercentage(): number
@@ -630,6 +648,21 @@ function Limb:GetRandomSkinDamageDecal(): (Decal, number)
 end
 
 --[[
+    Creates the status icon (if head only).
+]]
+function Limb:CreateStatusIcon()
+    if self.LimbName ~= "Head" then
+        return
+    end
+
+    local statusIcon = UI:GetComponent("HumanStatus") :: BillboardGui
+    statusIcon.Parent = self.ObjectPart.Part
+
+    self.StatusBillboardGUI = statusIcon
+    self.StatusIcon = statusIcon:FindFirstChild("Icon") or Rage.Logging:Error(self.LimbName..": Missing `Icon` object in status billboard GUI.") :: ImageLabel
+end
+
+--[[
     Heals the limb.
 ]]
 function Limb:Heal()
@@ -745,9 +778,23 @@ function Limb:HandleBleeding()
 end
 
 --[[
-    Handles health UI. Call in `:Update()`.
+    Handles UI (health, etc). Call in `:Update()`.
 ]]
-function Limb:HandleHealthUI()
+function Limb:HandleUI()
+    -- Status icon
+    if self.LimbName == "Head" then
+        if self:IsAlive() then
+            if self:IsAwake() then
+                self:SetStatusIcon(RbxAssets.HUMAN_ALIVE_STATUS_ICON)
+            else
+                self:SetStatusIcon(RbxAssets.HUMAN_UNCONSCIOUS_STATUS_ICON)
+            end
+        else
+            self:SetStatusIcon(RbxAssets.HUMAN_DEAD_STATUS_ICON)
+        end
+    end
+
+    -- Health bar
     self.HealthContainer.BackgroundColor3 = Color3.fromRGB(
         math.floor((self.MaxHealth - self.Health) / self.MaxHealth * 255),
         math.floor(self:GetHealthPercentage() * 255),
@@ -880,6 +927,7 @@ function Limb:Setup(limbs: {[ObjectTypes.ObjectPart]: Limb})
     self.BoneDecal = self.ObjectPart.Part:FindFirstChild("Bone") or Rage.Logging:Error(self.LimbName..": Missing `Bone` decal.") :: Decal
 
     self:TrackImpacts()
+    self:CreateStatusIcon() -- head only. the method checks this though
 end
 
 --[[
@@ -889,7 +937,7 @@ function Limb:Update()
     self:HandleDamageVisuals()
     self:HandleConsciousness()
     self:HandleState()
-    self:HandleHealthUI()
+    self:HandleUI()
     self:HandleStabilization()
     self:HandleBleeding()
     self:HandlePassiveDamage()
@@ -970,6 +1018,9 @@ export type Limb = typeof(Limb) & {
     IsBrainAlive: boolean,
     IsHeartBeating: boolean,
     PlayedDeathScream: boolean,
+
+    StatusBillboardGUI: BillboardGui,
+    StatusIcon: ImageLabel,
 
     StabilizationForce: AlignOrientation,
     Attachment: Attachment,
