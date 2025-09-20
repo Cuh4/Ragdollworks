@@ -655,7 +655,7 @@ function Limb:CreateStatusIcon()
         return
     end
 
-    local statusIcon = UI:GetComponent("HumanStatus") :: BillboardGui
+    local statusIcon = UI:GetComponent("HumanStatus"):Clone() :: BillboardGui
     statusIcon.Parent = self.ObjectPart.Part
 
     self.StatusBillboardGUI = statusIcon
