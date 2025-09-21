@@ -93,7 +93,6 @@ Objects.Paused = false
 Objects.DetailView = false
 Objects.SlowMotion = false
 Objects.SlomoSpeed = 0.5
-Objects._HeartbeatFrame = 0
 
 Objects.BindCollection = nil :: BindCollection.BindCollection
 Objects.HighlightRequiredBindCollection = nil :: BindCollection.BindCollection
@@ -135,8 +134,6 @@ function Objects:OnHeartbeat()
     if not Maps.IsInMap then
         return
     end
-
-    self._HeartbeatFrame += 1
 
     self:UpdateSpawnedObjects()
     self:UpdateSpawnedWires()
@@ -1465,7 +1462,7 @@ end
     Returns if this frame is a slo-mo frame.
 ]]
 function Objects:_IsSlowMotionFrame(): boolean
-    return self.SlowMotion and self._HeartbeatFrame % math.floor((1 / self.SlomoSpeed) + 0.5) ~= 0
+    return self.SlowMotion and Rage.ElapsedFrames % math.floor((1 / self.SlomoSpeed) + 0.5) ~= 0
 end
 
 --[[
