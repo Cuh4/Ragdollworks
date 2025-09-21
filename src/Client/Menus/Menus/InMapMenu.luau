@@ -50,7 +50,11 @@ setmetatable(InMapMenu, Menu)
     Creates a new InMapMenu class instance.
 ]]
 function InMapMenu.New(): InMapMenu
-    local self = setmetatable(Menu.New("InMap"), InMapMenu) :: InMapMenu
+    local self = setmetatable(Menu.New(
+        "InMap",
+        {CanBeForceHidden = true}
+    ), InMapMenu) :: InMapMenu
+
     self.InfoContainer = self.ScreenGUI.Info
 
     self.BindsContainer = self.InfoContainer.BindsContainer

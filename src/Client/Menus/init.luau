@@ -22,6 +22,8 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
+local CLI = require(Rage.Path.CLI)
+
 local Menu = require(Rage.Path.Classes.Menu)
 
 -------------------------------
@@ -32,7 +34,7 @@ local Menu = require(Rage.Path.Classes.Menu)
     A service for handling UI menus.
 ]]
 Menus = Rage:Service("Menus") :: Menus
-Menus.StartPriority = 0
+Menus.StartPriority = 99
 
 Menus.CORE_GUI_TO_HIDE = {
     Enum.CoreGuiType.PlayerList,
@@ -44,6 +46,7 @@ Menus.CORE_GUI_TO_HIDE = {
 } :: {Enum.CoreGuiType}
 
 Menus.Menus = {} :: {[string]: Menu.Menu}
+Menus.ForceHidden = false
 
 --[[
     Called when the service starts.
@@ -51,6 +54,7 @@ Menus.Menus = {} :: {[string]: Menu.Menu}
 function Menus:OnStart()
     self:LoadMenus()
     self:HideCoreGUI()
+    self:_CreateCommands()
 end
 
 --[[
@@ -61,6 +65,27 @@ function Menus:HideCoreGUI()
         Rage.Logging:Info("Menus:HideCoreGUI(): Hiding CoreGUI: "..coreGuiType.Name)
         Rage.StarterGUI:SetCoreGuiEnabled(coreGuiType, false)
     end
+end
+
+--[[
+    Updates all menus after a change.
+]]
+function Menus:_UpdateAll()
+    for _, menu in pairs(self.Menus) do
+        menu:SetForceHidden(self.ForceHidden)
+    end
+end
+
+--[[
+    Sets whether or not force-hide compatible menus are forcefully hidden.
+]]
+function Menus:SetForceHidden(force: boolean)
+    if self.ForceHidden == force then
+        return
+    end
+
+    self.ForceHidden = force
+    self:_UpdateAll()
 end
 
 --[[
@@ -117,6 +142,23 @@ end
 ]]
 function Menus:GetMenus(): {[string]: Menu.Menu}
     return self.Menus
+end
+
+--[[
+    Creates CLI commands.
+]]
+function Menus:_CreateCommands()
+    CLI.Conch.register("ui", {
+        description = "Toggles UI.",
+
+        arguments = function()
+            return CLI.Conch.args.boolean("Visible", "Whether or not UI should be visible.")
+        end,
+
+        callback = function(visible: boolean)
+            self:SetForceHidden(not visible)
+        end
+    })
 end
 
 export type Menus = Rage.Service & typeof(Menus)
