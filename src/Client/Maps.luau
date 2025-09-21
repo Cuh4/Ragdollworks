@@ -253,8 +253,6 @@ function Maps:GetMap(name: string): Map.Map?
             return map
         end
     end
-
-    return nil
 end
 
 --[[
