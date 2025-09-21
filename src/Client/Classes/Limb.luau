@@ -54,9 +54,9 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
 
     self.UNCONSCIOUS_MAX_TIME = 80 -- seconds
     self.UNCONSCIOUS_MIN_TIME = 5 -- seconds
-    self.UNCONSCIOUS_IMPACT_THRESHOLD = 22
-    self.UNCONSCIOUS_RNG = 2 -- 1 in x
-    self.UNCONSCIOUS_IMPACT_TIME_MULTIPLIER = 1.1
+    self.UNCONSCIOUS_IMPACT_THRESHOLD = 15
+    self.UNCONSCIOUS_RNG = 0.75 -- %
+    self.UNCONSCIOUS_IMPACT_TIME_MULTIPLIER = 0.8
 
     self.IMPACT_MAX_PROPAGATIONS = 5
     self.IMPACT_PROPAGATION_MULTIPLIER = 0.2 -- limb 1 = * IMPACT_PROPAGATION_MULTIPLIER, limb 2 = * IMPACT_PROPAGATION_MULTIPLIER / 2, etc
@@ -559,6 +559,13 @@ function Limb:GetUnconsciousnessDuration(): number
 end
 
 --[[
+    Returns if this human should go unconscious (RNG logic only)
+]]
+function Limb:ShouldGoUnconsciousRNG(): boolean
+    return Rage.Libs.Math:RandomFloat() <= self.UNCONSCIOUS_RNG
+end
+
+--[[
     Sets this limb's human to be unconscious for x seconds.
 ]]
 function Limb:SetUnconsciousFor(seconds: number)
@@ -731,7 +738,7 @@ function Limb:HandleImpact(amount: number, _propagations: number?, _propagationJ
     end
 
     -- Knockouts
-    if self.LimbName == "Head" and amount > self.UNCONSCIOUS_IMPACT_THRESHOLD and Rage.Libs.Math:Random(1, self.UNCONSCIOUS_RNG) == 1 then
+    if self.LimbName == "Head" and amount > self.UNCONSCIOUS_IMPACT_THRESHOLD and self:ShouldGoUnconsciousRNG() then
         local seconds = Rage.Libs.Math:Lerp(
             self.UNCONSCIOUS_MIN_TIME,
             self.UNCONSCIOUS_MAX_TIME,
