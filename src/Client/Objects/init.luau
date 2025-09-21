@@ -56,7 +56,6 @@ Objects.RAY_DISTANCE = 50000
 Objects.MAX_ROTATION_SPEED = 6
 Objects.ROTATION_SPEED_INCREMENT = 0.06
 Objects.DEFAULT_ROTATION_SPEED = 1
-Objects.SLOMO_INTERPOLATION_ENABLED = true
 
 Objects.RotationSpeed = 1
 
@@ -93,7 +92,6 @@ Objects.Paused = false
 Objects.DetailView = false
 Objects.SlowMotion = false
 Objects.SlomoSpeed = 0.5
-Objects._HeartbeatFrame = 0
 
 Objects.BindCollection = nil :: BindCollection.BindCollection
 Objects.HighlightRequiredBindCollection = nil :: BindCollection.BindCollection
@@ -119,10 +117,6 @@ function Objects:OnStart()
 
     self:_CreateCommands()
 
-    Rage.RunService.Heartbeat:Connect(function()
-        self:Update()
-    end)
-
     Maps.OnMapStart:Connect(function()
         self:OnMapStart()
     end)
@@ -130,6 +124,20 @@ function Objects:OnStart()
     Maps.OnMapExit:Connect(function()
         self:OnMapExit()
     end)
+end
+
+--[[
+    Called every heartbeat.
+]]
+function Objects:OnHeartbeat()
+    if not Maps.IsInMap then
+        return
+    end
+
+    self:UpdateSpawnedObjects()
+    self:UpdateSpawnedWires()
+    self:UpdateCamera()
+    self:UpdateObjectPartHighlighting()
 end
 
 --[[
@@ -1466,10 +1474,6 @@ function Objects:HandleSlowMotionForObjectPart(objectPart: ObjectTypes.ObjectPar
 
     if self:_IsSlowMotionFrame() then
         objectPart:SetSlomoLock()
-
-        if self.SLOMO_INTERPOLATION_ENABLED then
-            objectPart:InterpolateCFrame(self.SlomoSpeed)
-        end
     else
         objectPart:UnsetSlomoLock()
     end
@@ -1495,7 +1499,7 @@ function Objects:UpdateSpawnedObjects()
     local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
 
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
-        self:HandleSlowMotionForSpawnedObject(spawnedObject) -- important this is called before we update the spawned object
+        self:HandleSlowMotionForSpawnedObject(spawnedObject)
 
         spawnedObject:Update(
             startBound,
@@ -1549,22 +1553,6 @@ function Objects:UpdateObjectPartHighlighting()
     else
         self:UnhighlightPart()
     end
-end
-
---[[
-    Updates everything. To be called every heartbeat.
-]]
-function Objects:Update()
-    if not Maps.IsInMap then
-        return
-    end
-
-    self._HeartbeatFrame += 1
-
-    self:UpdateSpawnedObjects()
-    self:UpdateSpawnedWires()
-    self:UpdateCamera()
-    self:UpdateObjectPartHighlighting()
 end
 
 --[[

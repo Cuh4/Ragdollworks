@@ -144,7 +144,6 @@ export type ObjectPart = {
     UpdateSelectionBoxes: (self: ObjectPart) -> nil,
     UpdatePhysics: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
     Update: (self: ObjectPart, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
-    InterpolateCFrame: (self: ObjectPart, alpha: number) -> nil,
     KeepWithinBounds: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
     Lock: (self: ObjectPart) -> nil,
     Activate: (self: ObjectPart) -> nil,

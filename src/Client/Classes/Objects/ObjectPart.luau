@@ -241,14 +241,6 @@ function ObjectPart:Update(startBound: Vector2, endBound: Vector2, dragPosition:
 end
 
 --[[
-    Interpolates the part from the previous CFrame to the current.
-    Alpha = 0 - 1
-]]
-function ObjectPart:InterpolateCFrame(alpha: number)
-    self.Part.CFrame = self.PreviousCFrame:Lerp(self:GetCFrame(), alpha)
-end
-
---[[
     Keeps the part within the provided bounds.
 ]]
 function ObjectPart:KeepWithinBounds(startBound: Vector2, endBound: Vector2)
