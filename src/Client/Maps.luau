@@ -28,6 +28,7 @@ local CLI = require(Rage.Path.CLI)
 local Toasts = require(Rage.Path.Toasts)
 local Feedback = require(Rage.Path.Feedback)
 local Organization = require(Rage.Path.Organization)
+local Menus = require(Rage.Path.Menus)
 
 local Map = require(Rage.Path.Classes.Map)
 
@@ -83,6 +84,7 @@ function Maps:StartMap(map: Map.Map)
     self:_SetupMapInstance()
     self:_CreateMapBoundaries()
     self:_CreateMapBackground()
+    Menus:SetScene("InMap")
 
     self.OnMapStart:Fire(self.CurrentMap)
 
@@ -232,6 +234,7 @@ function Maps:ExitMap()
     self.CurrentMap = nil
     self.MapInstance:Destroy()
     self.MapInstance = nil
+    Menus:SetScene("MainMenu")
 
     self.OnMapExit:Fire()
 
