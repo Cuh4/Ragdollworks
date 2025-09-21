@@ -55,7 +55,8 @@ Objects.OBJECT_FOLDER = Rage.Assets:GetAsset("Objects")
 Objects.RAY_DISTANCE = 50000
 Objects.MAX_ROTATION_SPEED = 4
 Objects.ROTATION_SPEED_INCREMENT = 0.01
-Objects.DEFAULT_ROTATION_SPEED = 0.5
+Objects.DEFAULT_ROTATION_SPEED = 1
+Objects.PAUSED_ROTATION_SPEED_MULTIPLIER = 0.5
 
 Objects.RotationSpeed = Objects.DEFAULT_ROTATION_SPEED
 
@@ -350,7 +351,7 @@ function Objects:CreateBinds()
                         return
                     end
 
-                    self:RotateDraggedPart(-self.RotationSpeed)
+                    self:RotateDraggedPart(-1)
                 end
             ),
 
@@ -372,7 +373,7 @@ function Objects:CreateBinds()
                         return
                     end
 
-                    self:RotateDraggedPart(self.RotationSpeed)
+                    self:RotateDraggedPart(1)
                 end
             ),
 
@@ -646,9 +647,15 @@ function Objects:UnpauseAllSpawnedObjects()
 end
 
 --[[
-    Rotates the currently-dragged part. -1 = left
+    Rotates the currently-dragged part. -1 = left, 1 = right, 0 = halt rotation
 ]]
 function Objects:RotateDraggedPart(direction: number)
+    direction *= self.RotationSpeed
+
+    if self.Paused then
+        direction *= self.PAUSED_ROTATION_SPEED_MULTIPLIER
+    end
+
     for _, part in pairs(self.SelectedObjectParts) do
         part:SetRotationForce(direction)
     end
