@@ -157,6 +157,49 @@ function Debug:_CreateCommands()
             self:SetDebug(state)
         end
     })
+
+    CLI.Conch.register("debug-set", {
+        description = "Sets a property in a service to the provided value.",
+
+        arguments = function()
+            return CLI.Conch.args.string("Service", "The service to set a property in."),
+                CLI.Conch.args.string("Property", "The property to set."),
+                CLI.Conch.args.any("Value", "The value to set the property to.")
+        end,
+
+        callback = function(service: string, property: string, value: any)
+            local service = Rage.Path:FindFirstChild(service)
+
+            if not service then
+                Rage.Logging:Warn("No service found with provided name.")
+                return
+            end
+
+            service = require(service)
+
+            if service[property] == nil then
+                Rage.Logging:Warn("No property found with provided name.")
+                return
+            end
+
+            if value == "true" then
+                value = true
+            elseif value == "false" then
+                value = false
+            end
+
+            local previous = service[property]
+            service[property] = value
+
+            Rage.Logging:Info(("Set %s.%s to %s (type: %s) from %s"):format(
+                service.Name,
+                property,
+                tostring(value),
+                type(value),
+                tostring(previous)
+            ))
+        end
+    })
 end
 
 export type Debug = Rage.Service & typeof(Debug)
