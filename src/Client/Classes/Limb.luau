@@ -52,11 +52,11 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.GRUNT_IMPACT_THRESHOLD = 12
     self.GRUNT_COOLDOWN = 0.3
 
-    self.UNCONSCIOUS_MAX_TIME = 80 -- seconds
-    self.UNCONSCIOUS_MIN_TIME = 5 -- seconds
-    self.UNCONSCIOUS_IMPACT_THRESHOLD = 15
-    self.UNCONSCIOUS_RNG = 0.75 -- %
-    self.UNCONSCIOUS_IMPACT_TIME_MULTIPLIER = 0.8
+    self.KNOCKOUT_MAX_TIME = 80 -- seconds
+    self.KNOCKOUT_MIN_TIME = 5 -- seconds
+    self.KNOCKOUT_IMPACT_THRESHOLD = 11
+    self.KNOCKOUT_RNG = 0.9 -- %
+    self.KNOCKOUT_IMPACT_TIME_MULTIPLIER = 0.8
 
     self.IMPACT_MAX_PROPAGATIONS = 5
     self.IMPACT_PROPAGATION_MULTIPLIER = 0.2 -- limb 1 = * IMPACT_PROPAGATION_MULTIPLIER, limb 2 = * IMPACT_PROPAGATION_MULTIPLIER / 2, etc
@@ -562,7 +562,7 @@ end
     Returns if this human should go unconscious (RNG logic only)
 ]]
 function Limb:ShouldGoUnconsciousRNG(): boolean
-    return Rage.Libs.Math:RandomFloat() <= self.UNCONSCIOUS_RNG
+    return Rage.Libs.Math:RandomFloat() <= self.KNOCKOUT_RNG
 end
 
 --[[
@@ -572,8 +572,8 @@ function Limb:SetUnconsciousFor(seconds: number)
     if not self:IsAwake() then
         local remaining = self:GetUnconsciousnessDuration()
 
-        if remaining + seconds > self.UNCONSCIOUS_MAX_TIME then
-            seconds = self.UNCONSCIOUS_MAX_TIME - remaining
+        if remaining + seconds > self.KNOCKOUT_MAX_TIME then
+            seconds = self.KNOCKOUT_MAX_TIME - remaining
         end
 
         self.UnconsciousTil = self.UnconsciousTil + seconds
@@ -738,11 +738,11 @@ function Limb:HandleImpact(amount: number, _propagations: number?, _propagationJ
     end
 
     -- Knockouts
-    if self.LimbName == "Head" and amount > self.UNCONSCIOUS_IMPACT_THRESHOLD and self:ShouldGoUnconsciousRNG() then
+    if self.LimbName == "Head" and amount > self.KNOCKOUT_IMPACT_THRESHOLD and self:ShouldGoUnconsciousRNG() then
         local seconds = Rage.Libs.Math:Lerp(
-            self.UNCONSCIOUS_MIN_TIME,
-            self.UNCONSCIOUS_MAX_TIME,
-            math.clamp((amount - self.UNCONSCIOUS_IMPACT_THRESHOLD) / self.UNCONSCIOUS_IMPACT_THRESHOLD, 0, 1)
+            self.KNOCKOUT_MIN_TIME,
+            self.KNOCKOUT_MAX_TIME,
+            math.clamp((amount - self.KNOCKOUT_IMPACT_THRESHOLD) / self.KNOCKOUT_IMPACT_THRESHOLD, 0, 1)
         )
 
         self:SetUnconsciousFor(seconds)
@@ -967,11 +967,11 @@ export type Limb = typeof(Limb) & {
     GRUNT_IMPACT_THRESHOLD: number,
     GRUNT_COOLDOWN: number,
 
-    UNCONSCIOUS_MAX_TIME: number,
-    UNCONSCIOUS_MIN_TIME: number,
-    UNCONSCIOUS_IMPACT_THRESHOLD: number,
-    UNCONSCIOUS_RNG: number,
-    UNCONSCIOUS_IMPACT_TIME_MULTIPLIER: number,
+    KNOCKOUT_MAX_TIME: number,
+    KNOCKOUT_MIN_TIME: number,
+    KNOCKOUT_IMPACT_THRESHOLD: number,
+    KNOCKOUT_RNG: number,
+    KNOCKOUT_IMPACT_TIME_MULTIPLIER: number,
 
     IMPACT_MAX_PROPAGATIONS: number,
     IMPACT_PROPAGATION_MULTIPLIER: number,
