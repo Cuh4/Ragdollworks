@@ -92,6 +92,7 @@ Objects.Paused = false
 Objects.DetailView = false
 Objects.SlowMotion = false
 Objects.SlomoSpeed = 0.5
+Objects._HeartbeatFrame = 0
 
 Objects.BindCollection = nil :: BindCollection.BindCollection
 Objects.HighlightRequiredBindCollection = nil :: BindCollection.BindCollection
@@ -133,6 +134,8 @@ function Objects:OnHeartbeat()
     if not Maps.IsInMap then
         return
     end
+
+    self._HeartbeatFrame += 1
 
     self:UpdateSpawnedObjects()
     self:UpdateSpawnedWires()
