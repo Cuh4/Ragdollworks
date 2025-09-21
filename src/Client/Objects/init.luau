@@ -53,11 +53,11 @@ local ObjectPartSelectionMode = require(Rage.Path.Enums.ObjectPartSelectionMode)
 Objects = Rage:Service("Objects") :: Objects
 Objects.OBJECT_FOLDER = Rage.Assets:GetAsset("Objects")
 Objects.RAY_DISTANCE = 50000
-Objects.MAX_ROTATION_SPEED = 6
-Objects.ROTATION_SPEED_INCREMENT = 0.06
-Objects.DEFAULT_ROTATION_SPEED = 1
+Objects.MAX_ROTATION_SPEED = 4
+Objects.ROTATION_SPEED_INCREMENT = 0.01
+Objects.DEFAULT_ROTATION_SPEED = 0.5
 
-Objects.RotationSpeed = 1
+Objects.RotationSpeed = Objects.DEFAULT_ROTATION_SPEED
 
 Objects.DefaultObject = nil :: ObjectTypes.Object?
 Objects.ExistingObjects = {} :: {string: ObjectTypes.Object}
