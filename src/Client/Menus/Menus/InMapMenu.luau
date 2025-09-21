@@ -58,6 +58,11 @@ function InMapMenu.New(): InMapMenu
 
     self.ObjectsContainer = self.InfoContainer.ObjectsContainer
 
+    self.DetailViewContainer = self.ObjectsContainer.DetailViewContainer
+
+    self.SlomoStateContainer = self.ObjectsContainer.SlomoStateContainer
+    self.SlomoStateText = self.SlomoStateContainer.Text
+
     self.ObjectsSpawnedContainer = self.ObjectsContainer.ObjectsSpawnedContainer
     self.ObjectsSpawnedNumberText = self.ObjectsSpawnedContainer.ObjectCountContainer.ObjectCountText
 
@@ -134,6 +139,21 @@ function InMapMenu:UpdateVignette()
 end
 
 --[[
+    Updates the detail view UI.
+]]
+function InMapMenu:UpdateDetailViewState()
+    self.DetailViewContainer.Visible = Objects.DetailView
+end
+
+--[[
+    Updates the slomo state UI.
+]]
+function InMapMenu:UpdateSlomoState()
+    self.SlomoStateText.Text = ("%.1fx"):format(Objects.SlomoSpeed)
+    self.SlomoStateContainer.Visible = Objects.SlowMotion
+end
+
+--[[
     Adds a bind to the binds container.
 ]]
 function InMapMenu:AddBind(bind: Bind.Bind)
@@ -197,6 +217,8 @@ function InMapMenu:Setup()
     self:UpdateSpawnedObjectsCounter()
     self:UpdatePausedState()
     self:UpdateVignette()
+    self:UpdateDetailViewState()
+    self:UpdateSlomoState()
 
     self.OnMapStart = Maps.OnMapStart:Connect(function()
         self:Show()
@@ -228,6 +250,11 @@ function InMapMenu:Setup()
 
     self.OnSlomoStateChange = Objects.OnSlomoStateChange:Connect(function()
         self:UpdateVignette()
+        self:UpdateSlomoState()
+    end)
+
+    self.OnDetailViewStateChange = Objects.OnDetailViewStateChange:Connect(function()
+        self:UpdateDetailViewState()
     end)
 
     self.OnBindEnter = Binds.OnBindEnter:Connect(function(bind: Bind.Bind)
@@ -250,6 +277,11 @@ export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
     BindTroves: {[Bind.Bind]: {Trove.Trove}},
 
     ObjectsContainer: Frame,
+
+    DetailViewContainer: Frame,
+
+    SlomoStateContainer: Frame,
+    SlomoStateText: TextLabel,
 
     ObjectsSpawnedContainer: Frame,
     ObjectsSpawnedNumberText: TextLabel,
@@ -277,6 +309,7 @@ export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
 
     OnPauseStateChange: signal.Connection,
     OnSlomoStateChange: signal.Connection,
+    OnDetailViewStateChange: signal.Connection,
 
     OnBindEnter: signal.Connection,
     OnBindExit: signal.Connection
