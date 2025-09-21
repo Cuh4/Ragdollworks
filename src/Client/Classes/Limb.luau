@@ -795,6 +795,8 @@ function Limb:HandleUI()
         else
             self:SetStatusIcon(RbxAssets.HUMAN_DEAD_STATUS_ICON)
         end
+
+        self.StatusBillboardGUI.Enabled = Objects.DetailView
     end
 
     -- Health bar
@@ -805,6 +807,7 @@ function Limb:HandleUI()
     )
 
     self.HealthContainer.Size = UDim2.fromScale(self:GetHealthPercentage(), 0.3)
+    self.HealthContainer.Visible = Objects.DetailView
 end
 
 --[[
