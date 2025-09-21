@@ -241,6 +241,7 @@ export type ContextMenu = {
 
     ScreenGUI: ScreenGui,
     ContextMenuUI: ScrollingFrame,
+    ContextMenuBackground: Frame,
 
     New: (objectPart: ObjectPart) -> ContextMenu,
 
