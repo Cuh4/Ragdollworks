@@ -51,7 +51,8 @@ setmetatable(InMapMenu, Menu)
 ]]
 function InMapMenu.New(): InMapMenu
     local self = setmetatable(Menu.New(
-        "InMap",
+        "InMapMenu",
+        {"InMap"},
         {CanBeForceHidden = true}
     ), InMapMenu) :: InMapMenu
 
@@ -215,7 +216,7 @@ end
 --[[
     Setups the menu.
 ]]
-function InMapMenu:Setup()
+function InMapMenu:OnSetup()
     self:UpdateSelectedObject()
     self:UpdateSelectedWire()
     self:UpdateSpawnedObjectsCounter()
@@ -223,14 +224,6 @@ function InMapMenu:Setup()
     self:UpdateVignette()
     self:UpdateDetailViewState()
     self:UpdateSlomoState()
-
-    self.OnMapStart = Maps.OnMapStart:Connect(function()
-        self:Show()
-    end)
-
-    self.OnMapExit = Maps.OnMapExit:Connect(function()
-        self:Hide()
-    end)
 
     self.OnObjectSpawn = Objects.OnSpawn:Connect(function()
         self:UpdateSpawnedObjectsCounter()
@@ -302,9 +295,6 @@ export type InMapMenu = Menu.Menu & typeof(InMapMenu) & {
     PausedStateIcon: ImageLabel,
 
     Vignette: ImageLabel,
-
-    OnMapStart: signal.Connection,
-    OnMapExit: signal.Connection,
 
     OnObjectSpawn: signal.Connection,
     OnObjectDespawn: signal.Connection,
