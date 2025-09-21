@@ -43,7 +43,11 @@ setmetatable(MainMenu, Menu)
     Creates a new MainMenu class instance.
 ]]
 function MainMenu.New(): MainMenu
-    local self = setmetatable(Menu.New("MainMenu"), MainMenu) :: MainMenu
+    local self = setmetatable(Menu.New(
+        "MainMenu",
+        {CanBeForceHidden = false}
+    ), MainMenu) :: MainMenu
+
     self.RootContainer = self.ScreenGUI.Root
     self.Buttons = self.RootContainer.Buttons
 
@@ -55,7 +59,13 @@ end
 ]]
 function MainMenu:HandleButtons()
     self.Buttons.Play.MouseButton1Click:Connect(function()
-        Maps:StartMap(Rage.Libs.Table:GetRandom(Maps.ExistingMaps))
+        local map = Rage.Libs.Table:GetRandom(Maps.ExistingMaps)
+
+        if not map then
+            Rage.Logging:Error("MainMenu: `map` is nil")
+        end
+
+        Maps:StartMap(map)
     end)
 end
 
