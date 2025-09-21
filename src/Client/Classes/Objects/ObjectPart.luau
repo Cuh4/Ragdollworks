@@ -66,6 +66,7 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.RotationForce = 0
     self.Layer = layer
     self.ContextMenu = ContextMenu.New(self)
+    self.PreviousCFrame = self.Part.CFrame
 
     self.OnDragStart = signal.new()
     self.OnDragEnd = signal.new()
@@ -223,6 +224,7 @@ end
     Updates physics.
 ]]
 function ObjectPart:UpdatePhysics(startBound: Vector2, endBound: Vector2)
+    self.PreviousCFrame = self.Part.CFrame
     self.Part.Anchored = self.Frozen or self.Paused or self.SlomoLock
 
     self:Lock()
@@ -239,6 +241,14 @@ function ObjectPart:Update(startBound: Vector2, endBound: Vector2, dragPosition:
 end
 
 --[[
+    Interpolates the part from the previous CFrame to the current.
+    Alpha = 0 - 1
+]]
+function ObjectPart:InterpolateCFrame(alpha: number)
+    self.Part.CFrame = self.PreviousCFrame:Lerp(self:GetCFrame(), alpha)
+end
+
+--[[
     Keeps the part within the provided bounds.
 ]]
 function ObjectPart:KeepWithinBounds(startBound: Vector2, endBound: Vector2)
@@ -246,8 +256,9 @@ function ObjectPart:KeepWithinBounds(startBound: Vector2, endBound: Vector2)
         return
     end
 
-    local rotation = self.Part.CFrame - self.Part.CFrame.Position -- orientation only
-    local position = self.Part.CFrame.Position
+    local partCFrame = self:GetCFrame()
+    local position = partCFrame.Position
+    local rotation = partCFrame.Rotation
 
     position = Vector3.new(
         math.clamp(position.X, startBound.X, endBound.X),
@@ -262,9 +273,9 @@ end
     Locks the part on allowed axes.
 ]]
 function ObjectPart:Lock()
-    local part = self.Part
-    local _, _, rotZ = self.Part.CFrame:ToEulerAnglesXYZ()
-    local posX, posY = part.CFrame.Position.X, part.CFrame.Position.Y
+    local partCFrame = self:GetCFrame()
+    local _, _, rotZ = partCFrame:ToEulerAnglesXYZ()
+    local posX, posY = partCFrame.Position.X, partCFrame.Position.Y
 
     self.Part.CFrame = CFrame.new(
         posX,
@@ -418,6 +429,13 @@ end
 ]]
 function ObjectPart:GetPosition3D(): Vector3
     return self.Part.Position
+end
+
+--[[
+    Returns the CFrame of the part.
+]]
+function ObjectPart:GetCFrame(): CFrame
+    return self.Part.CFrame
 end
 
 --[[

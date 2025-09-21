@@ -56,6 +56,7 @@ Objects.RAY_DISTANCE = 50000
 Objects.MAX_ROTATION_SPEED = 6
 Objects.ROTATION_SPEED_INCREMENT = 0.06
 Objects.DEFAULT_ROTATION_SPEED = 1
+Objects.SLOMO_INTERPOLATION_ENABLED = true
 
 Objects.RotationSpeed = 1
 
@@ -1443,6 +1444,13 @@ function Objects:LoadObjects()
 end
 
 --[[
+    Returns if this frame is a slo-mo frame.
+]]
+function Objects:_IsSlowMotionFrame(): boolean
+    return self.SlowMotion and self._HeartbeatFrame % math.floor((1 / self.SlomoSpeed) + 0.5) ~= 0
+end
+
+--[[
     Handles slow motion for an object part.<br>
     Essentially anchors and unanchors the part at a fixed rate to simulate slow motion
     because that's the best we can do with Roblox's limits.
@@ -1456,8 +1464,12 @@ function Objects:HandleSlowMotionForObjectPart(objectPart: ObjectTypes.ObjectPar
         return
     end
 
-    if self._HeartbeatFrame % math.floor((1 / self.SlomoSpeed) + 0.5) ~= 0 then
+    if self:_IsSlowMotionFrame() then
         objectPart:SetSlomoLock()
+
+        if self.SLOMO_INTERPOLATION_ENABLED then
+            objectPart:InterpolateCFrame(self.SlomoSpeed)
+        end
     else
         objectPart:UnsetSlomoLock()
     end
@@ -1483,7 +1495,7 @@ function Objects:UpdateSpawnedObjects()
     local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
 
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
-        self:HandleSlowMotionForSpawnedObject(spawnedObject)
+        self:HandleSlowMotionForSpawnedObject(spawnedObject) -- important this is called before we update the spawned object
 
         spawnedObject:Update(
             startBound,

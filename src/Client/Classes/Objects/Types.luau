@@ -125,6 +125,7 @@ export type ObjectPart = {
     RotationForce: number,
     Layer: number,
     ContextMenu: ContextMenu,
+    PreviousCFrame: CFrame,
 
     OnDragStart: signal.Signal,
     OnDragEnd: signal.Signal,
@@ -143,6 +144,7 @@ export type ObjectPart = {
     UpdateSelectionBoxes: (self: ObjectPart) -> nil,
     UpdatePhysics: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
     Update: (self: ObjectPart, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
+    InterpolateCFrame: (self: ObjectPart, alpha: number) -> nil,
     KeepWithinBounds: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
     Lock: (self: ObjectPart) -> nil,
     Activate: (self: ObjectPart) -> nil,
@@ -161,6 +163,7 @@ export type ObjectPart = {
     Unhighlight: (self: ObjectPart) -> nil,
     GetPosition: (self: ObjectPart) -> Vector2,
     GetPosition3D: (self: ObjectPart) -> Vector3,
+    GetCFrame: (self: ObjectPart) -> CFrame,
     GetVelocity: (self: ObjectPart) -> Vector2,
     GetVelocity3D: (self: ObjectPart) -> Vector3,
     Despawn: (self: ObjectPart) -> nil
