@@ -179,7 +179,7 @@ function Debug:_CreateCommands()
                 return
             end
 
-            foundService = require(service)
+            foundService = require(foundService)
 
             if foundService[property] == nil then
                 Rage.Logging:Warn("No property found with provided name.")
