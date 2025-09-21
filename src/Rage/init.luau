@@ -79,12 +79,17 @@ Rage.Classes.Service = _service
 --[[
     A table of all services, indexed by name.
 ]]
-Rage.Services = {} :: {[string]: ModuleScript}
+Rage.Services = {} :: {[string]: Service}
 
 --[[
     The default start priority for the next service to use.
 ]]
 Rage._NextStartPriority = 50
+
+--[[
+    Whether or not Rage has started.
+]]
+Rage.Started = false
 
 --[[
     The instance in which all services are under.
@@ -103,6 +108,13 @@ end
     Initializes Rage. This should only be ran once.
 ]]
 function Rage:Initialize()
+    -- Set started
+    if self.Started then
+        self.Logging:Error("Rage:Initialize(): Rage is starting or already has started.")
+    end
+
+    self.Started = true
+
     -- Wait for game to load
     if self.IsClient and not game:IsLoaded() then
         self.Logging:Info("Waiting for game to load before initializing Rage...")
@@ -123,6 +135,9 @@ function Rage:Initialize()
         self:_LoadService(service)
     end
 
+    -- Listen for callbacks
+    self:_SetupServiceCallbacks()
+
     -- Start services
     self:StartServices()
 end
@@ -136,6 +151,23 @@ function Rage:Service(name: string): Service
 end
 
 --[[
+    Setups service callbacks.
+]]
+function Rage:_SetupServiceCallbacks()
+    self.RunService.Heartbeat:Connect(function(deltaTime)
+        self:_InvokeCallbackForServices("OnHeartbeat", false, deltaTime)
+    end)
+
+    self.RunService.PreSimulation:Connect(function(deltaTime)
+        self:_InvokeCallbackForServices("OnPreSimulation", false, deltaTime)
+    end)
+
+    self.RunService.PostSimulation:Connect(function(deltaTime)
+        self:_InvokeCallbackForServices("OnPreSimulation", false, deltaTime)
+    end)
+end
+
+--[[
     Loads a service.
 ]]
 function Rage:_LoadService(service: Service): Service
@@ -146,21 +178,28 @@ function Rage:_LoadService(service: Service): Service
 end
 
 --[[
+    Invokes a callback for all services.
+]]
+function Rage:_InvokeCallbackForServices(name: string, spawnTask: boolean, ...)
+    for _, service in pairs(self.Services) do
+        service:Invoke(name, spawnTask, ...)
+    end
+end
+
+--[[
     Starts all services.
 ]]
 function Rage:StartServices()
     local sorted = self.Libs.Table:Sort(self.Libs.Table:Values(self.Services), function(a: Service, b: Service)
         return a.StartPriority < b.StartPriority
-    end)
+    end) :: {Service}
 
     for _, service in ipairs(sorted) do
-        if not service.OnStart then
-            self.Logging:Warn(service.Name, "(service) does not have an `OnStart` method. This method is not required to be implemented however.")
-            continue
-        end
-
         self.Logging:Info("Starting '"..service.Name.."' with start priority", service.StartPriority)
-        task.spawn(service.OnStart, service)
+
+        if not service:Invoke("OnStart") then
+            self.Logging:Warn(service.Name, "(service) does not have an `OnStart` method. This method is not required to be implemented however.")
+        end
     end
 end
 
