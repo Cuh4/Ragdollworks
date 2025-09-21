@@ -89,7 +89,7 @@ Objects.SelectedWireSourceMousePos = nil :: Vector2?
 Objects.SpawnedWires = {} :: {ObjectTypes.SpawnedWire}
 
 Objects.Paused = false
-
+Objects.DetailView = false
 Objects.SlowMotion = false
 Objects.SlomoSpeed = 0.5
 Objects._HeartbeatFrame = 0
@@ -105,6 +105,7 @@ Objects.OnObjectSelect = signal.new() :: signal.Signal<ObjectTypes.Object>
 Objects.OnWireSelect = signal.new() :: signal.Signal<ObjectTypes.Wire>
 Objects.OnPauseStateChange = signal.new() :: signal.Signal<boolean>
 Objects.OnSlomoStateChange = signal.new() :: signal.Signal<boolean>
+Objects.OnDetailViewStateChange = signal.new() :: signal.Signal<boolean>
 
 --[[
     Called when the service starts.
@@ -220,6 +221,19 @@ function Objects:CreateBinds()
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
                         self:PlayerTogglePaused()
+                    end
+                end
+            ),
+
+            Binds:CreateBind(
+                "Detail View",
+                "Toggles detail view.",
+                {Enum.KeyCode.S},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        self:PlayerToggleDetailView()
                     end
                 end
             )
@@ -464,6 +478,23 @@ function Objects:PipetteHighlightedPart()
     end
 
     self:Pipette(self.HighlightedPart)
+end
+
+--[[
+    Sets detail view.
+]]
+function Objects:SetDetailView(detailView: boolean)
+    self.DetailView = detailView
+    self.OnDetailViewStateChange:Fire(self.DetailView)
+
+    Rage.Logging:Info("Objects:SetDetailView(): Detail view: "..tostring(self.DetailView))
+end
+
+--[[
+    Toggles detail view (player-driven).
+]]
+function Objects:PlayerToggleDetailView()
+    self:SetDetailView(not self.DetailView)
 end
 
 --[[
