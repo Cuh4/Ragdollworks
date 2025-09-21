@@ -92,6 +92,11 @@ Rage._NextStartPriority = 50
 Rage.Started = false
 
 --[[
+    The amount of frames (heartbeat calls) that have passed.
+]]
+Rage.ElapsedFrames = 0
+
+--[[
     The instance in which all services are under.
 ]]
 Rage.Path = nil :: Instance
@@ -155,6 +160,7 @@ end
 ]]
 function Rage:_SetupServiceCallbacks()
     self.RunService.Heartbeat:Connect(function(deltaTime)
+        self.ElapsedFrames += 1
         self:_InvokeCallbackForServices("OnHeartbeat", false, deltaTime)
     end)
 
