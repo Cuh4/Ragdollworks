@@ -66,13 +66,22 @@ function Camera:OnStart()
     self:SetMouseIcon()
     self:CreateBinds()
 
-    self.HeartbeatConnection = Rage.RunService.Heartbeat:Connect(function()
-        self:Update()
-    end)
-
     Maps.OnMapStart:Connect(function()
         self:SetZoom(self.DEFAULT_ZOOM)
     end)
+end
+
+--[[
+    Called every heartbeat.
+]]
+function Camera:OnHeartbeat()
+    Rage.Lighting.FogEnd = math.huge
+
+    Rage.Camera.FieldOfView = self.CAMERA_FOV
+    Rage.Camera.CameraType = Enum.CameraType.Scriptable
+    Rage.Camera.CFrame = self:GetCamCFrame()
+
+    self:_UpdateMousePosition(Rage.Input:GetMouseLocation())
 end
 
 --[[
@@ -430,19 +439,6 @@ function Camera:MouseCastRayToZ0(): Vector2?
 
     local hitPos = origin + direction * scalar
     return Vector2.new(hitPos.X, hitPos.Y)
-end
-
---[[
-    Updates the camera.
-]]
-function Camera:Update()
-    Rage.Lighting.FogEnd = math.huge
-
-    Rage.Camera.FieldOfView = self.CAMERA_FOV
-    Rage.Camera.CameraType = Enum.CameraType.Scriptable
-    Rage.Camera.CFrame = self:GetCamCFrame()
-
-    self:_UpdateMousePosition(Rage.Input:GetMouseLocation())
 end
 
 --[[

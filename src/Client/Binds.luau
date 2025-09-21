@@ -50,11 +50,16 @@ Binds.OnBindTrigger = signal.new() :: signal.Signal<Bind.Bind, Bind.BindContext>
     Called when the service starts.
 ]]
 function Binds:OnStart()
-    self.HeartbeatConnection = Rage.RunService.Heartbeat:Connect(function()
-        self:Heartbeat()
-    end)
-
     self:_CreateCommands()
+end
+
+--[[
+    Called every heartbeat.
+]]
+function Binds:OnHeartbeat()
+    for _, bind in ipairs(self:GetBinds()) do
+        bind:Heartbeat()
+    end
 end
 
 --[[
@@ -192,15 +197,6 @@ function Binds:GetInputTypesOfEnteredBinds(): {Bind.BindInputType}
     end
 
     return inputTypes
-end
-
---[[
-    Invokes heartbeat for all binds.
-]]
-function Binds:Heartbeat()
-    for _, bind in ipairs(self:GetBinds()) do
-        bind:Heartbeat()
-    end
 end
 
 --[[
