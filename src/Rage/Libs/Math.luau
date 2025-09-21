@@ -32,11 +32,26 @@ function Math:Lerp(a: number, b: number, t: number): number
 end
 
 --[[
+    Sets the randomseed.
+]]
+function Math:_RandomSeed()
+    math.randomseed(os.time() * math.random())
+end
+
+--[[
     Returns a random number between the ranges, with better randomness.
 ]]
 function Math:Random(min: number, max: number): number
-    math.randomseed(os.time() * math.random())
+    self:_RandomSeed()
     return math.random(min, max)
+end
+
+--[[
+    Returns a random float between 0 and 1.
+]]
+function Math:RandomFloat(): number
+    self:_RandomSeed()
+    return math.random()
 end
 
 export type Math = typeof(Math)
