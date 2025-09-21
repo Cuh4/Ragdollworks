@@ -50,7 +50,10 @@ function ContextMenu.New(objectPart: ObjectTypes.ObjectPart): ObjectTypes.Contex
     self.OnHide = signal.new()
 
     self.ScreenGUI = UI:GetScreenGUI("ObjectContextMenu")
+    self.ScreenGUI.Enabled = true
+
     self.ContextMenuUI = self.ScreenGUI:FindFirstChild("ContextMenu") :: ScrollingFrame
+    self.ContextMenuBackground = self.ScreenGUI:FindFirstChild("Background") :: Frame
 
     if not self.ContextMenuUI then
         Rage.Logging:Error("ContextMenu:New(): Could not find context menu frame")
@@ -110,9 +113,22 @@ function ContextMenu:Show(position: UDim2): Frame
         Rage.Logging:Error("ContextMenu:Show(): Context menu is already visible")
     end
 
+    -- Make menu visible
     self.Visible = true
     self.ContextMenuUI.Visible = true
-    self.ContextMenuUI.Position = position
+    self.ContextMenuBackground.Visible = true
+
+    -- Move menu to position (while keeping in mind screen bounds)
+    local screenBounds = self.ScreenGUI.AbsoluteSize
+    local size = self.ContextMenuUI.Size
+
+    local maxX = screenBounds.X - size.X.Offset
+    local maxY = screenBounds.Y - size.Y.Offset
+
+    self.ContextMenuUI.Position = UDim2.fromOffset(
+        math.clamp(position.X.Offset, 0, maxX),
+        math.clamp(position.Y.Offset, 0, maxY)
+    )
 
     self:_AddUIItems()
 
@@ -129,6 +145,7 @@ function ContextMenu:Hide()
 
     self.Visible = false
     self.ContextMenuUI.Visible = false
+    self.ContextMenuBackground.Visible = false
 
     self:_RemoveUIItems()
 
