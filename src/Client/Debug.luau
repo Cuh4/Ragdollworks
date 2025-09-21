@@ -168,16 +168,20 @@ function Debug:_CreateCommands()
         end,
 
         callback = function(service: string, property: string, value: any)
-            local service = Rage.Path:FindFirstChild(service)
+            if not self.DebugEnabled then
+                return
+            end
 
-            if not service then
+            local foundService = Rage.Path:FindFirstChild(service)
+
+            if not foundService then
                 Rage.Logging:Warn("No service found with provided name.")
                 return
             end
 
-            service = require(service)
+            foundService = require(service)
 
-            if service[property] == nil then
+            if foundService[property] == nil then
                 Rage.Logging:Warn("No property found with provided name.")
                 return
             end
@@ -188,11 +192,11 @@ function Debug:_CreateCommands()
                 value = false
             end
 
-            local previous = service[property]
-            service[property] = value
+            local previous = foundService[property]
+            foundService[property] = value
 
             Rage.Logging:Info(("Set %s.%s to %s (type: %s) from %s"):format(
-                service.Name,
+                foundService.Name,
                 property,
                 tostring(value),
                 type(value),
