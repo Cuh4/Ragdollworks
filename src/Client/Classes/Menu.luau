@@ -34,14 +34,19 @@ Menu.__index = Menu
 --[[
     Creates a new menu class instance.
 ]]
-function Menu.New(name: string, settings: {
-    CanBeForceHidden: boolean
-}?): Menu
+function Menu.New(
+    name: string,
+    scenes: {string},
+    settings: {
+        CanBeForceHidden: boolean
+    }?
+): Menu
     settings = settings or {}
 
     local self = setmetatable({}, Menu) :: Menu
     self.Name = name
-    self.ScreenGUI = Rage.Player.PlayerGui:WaitForChild(name, 10) or Rage.Logging:Error("Menu:New(): Could not find screen GUI of name '"..name.."'.")
+    self.Scenes = scenes
+    self.ScreenGUI = Rage.Player.PlayerGui:WaitForChild(name, 5) or Rage.Logging:Error("Menu:New(): Could not find screen GUI of name '"..name.."'.")
     self.Visible = false
     self.ForceHidden = false
     self.CanBeForceHidden = settings.CanBeForceHidden ~= nil and settings.CanBeForceHidden or true
@@ -50,10 +55,26 @@ function Menu.New(name: string, settings: {
 end
 
 --[[
-    Setups the menu.
+    Setups the menu.<br>
+    Optional abstractmethod.
 ]]
-function Menu:Setup()
-    Rage.Logging:Error(self.Name..": Setup not implemented!")
+function Menu:OnSetup() end
+
+--[[
+    Updates the menu.<br>
+    Optional abstractmethod.
+]]
+function Menu:OnUpdate() end
+
+--[[
+    Returns if this menu is allowed to show with the provided scene.
+]]
+function Menu:CanShowWithScene(scene: string): boolean
+    if Rage.Libs.Table:Find(self.Scenes, "*") then
+        return true
+    end
+
+    return Rage.Libs.Table:Find(self.Scenes, scene) ~= nil
 end
 
 --[[
@@ -65,7 +86,7 @@ function Menu:SetVisible(visible: boolean)
     end
 
     self.Visible = visible
-    self:Update()
+    self:Refresh()
 
     Rage.Logging:Info(self.Name.." (Menu): Set visible to "..tostring(visible))
 end
@@ -97,7 +118,7 @@ function Menu:SetForceHidden(forceHide: boolean)
     end
 
     self.ForceHidden = forceHide
-    self:Update()
+    self:Refresh()
 
     Rage.Logging:Info(self.Name.." (Menu): Set force hidden to "..tostring(forceHide))
 end
@@ -128,14 +149,32 @@ function Menu:IsVisible(): boolean
 end
 
 --[[
-    Updates the screen GUI.
+    Setups the menu.
+]]
+function Menu:Setup()
+    self.ScreenGUI.ResetOnSpawn = false
+
+    self:Hide()
+    self:OnSetup()
+end
+
+--[[
+    Updates the menu. To be called every frame.
 ]]
 function Menu:Update()
+    self:OnUpdate()
+end
+
+--[[
+    Refreshes the menu.
+]]
+function Menu:Refresh()
     self.ScreenGUI.Enabled = self:IsVisible()
 end
 
 export type Menu = typeof(Menu) & {
     Name: string,
+    Scenes: {string},
     ScreenGUI: ScreenGui,
     Visible: boolean,
     ForceHidden: boolean,

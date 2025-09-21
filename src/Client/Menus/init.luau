@@ -26,6 +26,8 @@ local CLI = require(Rage.Path.CLI)
 
 local Menu = require(Rage.Path.Classes.Menu)
 
+local signal = require(Rage.WallyPackages.signal)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -35,6 +37,8 @@ local Menu = require(Rage.Path.Classes.Menu)
 ]]
 Menus = Rage:Service("Menus") :: Menus
 Menus.StartPriority = 99
+
+Menus.DEFAULT_SCENE = "MainMenu"
 
 Menus.CORE_GUI_TO_HIDE = {
     Enum.CoreGuiType.PlayerList,
@@ -47,6 +51,9 @@ Menus.CORE_GUI_TO_HIDE = {
 
 Menus.Menus = {} :: {[string]: Menu.Menu}
 Menus.ForceHidden = false
+Menus.Scene = ""
+
+Menus.OnSceneChange = signal.new() :: signal.Signal<string>
 
 --[[
     Called when the service starts.
@@ -55,6 +62,42 @@ function Menus:OnStart()
     self:LoadMenus()
     self:HideCoreGUI()
     self:_CreateCommands()
+
+    self:SetScene(self.DEFAULT_SCENE)
+end
+
+--[[
+    Called every heartbeat.
+]]
+function Menus:OnHeartbeat()
+    for _, menu in pairs(self:GetMenus()) do
+        menu:SetForceHidden(self.ForceHidden)
+        menu:Update()
+    end
+end
+
+--[[
+    Sets the current scene.
+]]
+function Menus:SetScene(scene: string)
+    if scene == self.Scene then
+        return
+    end
+
+    self.Scene = scene
+    self:_UpdateAllMenusVisibility()
+    self.OnSceneChange:Fire(scene)
+
+    Rage.Logging:Info("Menus: Set scene to "..scene)
+end
+
+--[[
+    Shows/hides all menus that can be shown with the current scene.
+]]
+function Menus:_UpdateAllMenusVisibility()
+    for _, menu in pairs(self:GetMenus()) do
+        menu:SetVisible(menu:CanShowWithScene(self.Scene))
+    end
 end
 
 --[[
@@ -68,15 +111,6 @@ function Menus:HideCoreGUI()
 end
 
 --[[
-    Updates all menus after a change.
-]]
-function Menus:_UpdateAll()
-    for _, menu in pairs(self.Menus) do
-        menu:SetForceHidden(self.ForceHidden)
-    end
-end
-
---[[
     Sets whether or not force-hide compatible menus are forcefully hidden.
 ]]
 function Menus:SetForceHidden(force: boolean)
@@ -85,7 +119,7 @@ function Menus:SetForceHidden(force: boolean)
     end
 
     self.ForceHidden = force
-    self:_UpdateAll()
+    self:_UpdateMenuStates()
 end
 
 --[[
@@ -96,29 +130,10 @@ function Menus:GetMenu(name: string): Menu.Menu?
 end
 
 --[[
-    Sets a menu as visible.
+    Returns all available menus.
 ]]
-function Menus:ShowMenu(name: string)
-    local menu = self:GetMenu(name)
-
-    if not menu then
-        Rage.Logging:Error("Menus:ShowMenu(): No menu found with name '"..name.."'")
-    end
-
-    menu:Show()
-end
-
---[[
-    Sets a menu as hidden.
-]]
-function Menus:HideMenu(name: string)
-    local menu = self:GetMenu(name)
-
-    if not menu then
-        Rage.Logging:Error("Menus:HideMenu(): No menu found with name '"..name.."'")
-    end
-
-    menu:Hide()
+function Menus:GetMenus(): {[string]: Menu.Menu}
+    return self.Menus
 end
 
 --[[
@@ -129,19 +144,11 @@ function Menus:LoadMenus()
 
     for _, menuModuleScript: ModuleScript in pairs(script.Menus:GetChildren()) do
         local menu = require(menuModuleScript).New() :: Menu.Menu
-        menu:Hide()
         menu:Setup()
         self.Menus[menu.Name] = menu
 
         Rage.Logging:Info("Menus:LoadMenus(): Loaded menu: "..menu.Name)
     end
-end
-
---[[
-    Returns all available menus.
-]]
-function Menus:GetMenus(): {[string]: Menu.Menu}
-    return self.Menus
 end
 
 --[[
