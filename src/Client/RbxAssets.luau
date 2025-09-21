@@ -76,6 +76,12 @@ RbxAssets.POSITIVE_FEEDBACK_SOUND = "rbxassetid://116995696565929"
 RbxAssets.INFO_FEEDBACK_SOUND = "rbxassetid://17582299860"
 RbxAssets.NEGATIVE_FEEDBACK_SOUND = "rbxassetid://7441284478"
 
+RbxAssets.MAIN_MENU_IMAGE_1 = "rbxassetid://84490449408770"
+RbxAssets.MAIN_MENU_IMAGE_2 = "rbxassetid://126343621908944"
+RbxAssets.MAIN_MENU_IMAGE_3 = "rbxassetid://134507096282562"
+RbxAssets.MAIN_MENU_IMAGE_4 = "rbxassetid://103158340058875"
+RbxAssets.MAIN_MENU_IMAGE_5 = "rbxassetid://77076066604542"
+
 RbxAssets.BIND_ICONS = { -- https://devforum.roblox.com/t/images-for-almost-every-keycode-and-userinputtype/2932907
     [Enum.KeyCode.U] = "rbxassetid://17164171424",
     [Enum.KeyCode.Five] = "rbxassetid://17164184242",
@@ -216,9 +222,43 @@ function RbxAssets:PreloadAll()
 end
 
 --[[
+    Returns all asset IDs with a name starting with the provided prefix.
+]]
+function RbxAssets:GetAssetsWithPrefix(prefix: string): {[string]: string}
+    local assets = self:GetAssets()
+
+    for name, _ in pairs(assets) do
+        if not Rage.Libs.String:StartsWith(name, prefix) then
+            assets[name] = nil
+        end
+    end
+
+    return assets
+end
+
+--[[
+    Returns all asset IDs, with the key being the name associated.
+]]
+function RbxAssets:GetAssets(): {[string]: string}
+    local assetIDs = {} :: {[string]: string}
+
+    for name, value in pairs(self) do
+        if self:IsAsset(value) then
+            assetIDs[name] = value
+        end
+    end
+
+    return assetIDs
+end
+
+--[[
     Returns if the provided string is a valid asset ID.
 ]]
 function RbxAssets:IsAsset(asset: string): boolean
+    if type(asset) ~= "string" then
+        return false
+    end
+
     return Rage.Libs.String:StartsWith(asset, "rbxassetid://")
 end
 
