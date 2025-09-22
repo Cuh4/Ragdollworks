@@ -113,6 +113,8 @@ Objects.OnWireSelect = signal.new() :: signal.Signal<ObjectTypes.Wire>
 Objects.OnPauseStateChange = signal.new() :: signal.Signal<boolean>
 Objects.OnSlomoStateChange = signal.new() :: signal.Signal<boolean>
 Objects.OnDetailViewStateChange = signal.new() :: signal.Signal<boolean>
+Objects.OnObjectRegister = signal.new() :: signal.Signal<ObjectTypes.Object>
+Objects.OnWireRegister = signal.new() :: signal.Signal<ObjectTypes.Wire>
 
 --[[
     Called when the service starts.
@@ -1011,6 +1013,8 @@ function Objects:RegisterWire(wire: ObjectTypes.Wire)
         self:SetDefaultWire(wire)
     end
 
+    self.OnWireRegister:Fire(wire)
+
     Rage.Logging:Info(("Objects:RegisterWire(): Registered wire %s."):format(wire.Name))
 end
 
@@ -1042,6 +1046,8 @@ end
     Removes a spawned wire.
 ]]
 function Objects:RemoveWire(wire: ObjectTypes.SpawnedWire)
+    self:RemoveFromHistory(wire)
+
     wire:Despawn()
     Rage.Libs.Table:Remove(self.SpawnedWires, wire)
 end
@@ -1435,6 +1441,8 @@ function Objects:RegisterObject(object: ObjectTypes.Object)
 
         self:SetDefaultObject(object)
     end
+
+    self.OnObjectRegister:Fire(object)
 
     Rage.Logging:Info("Objects:RegisterObject(): Registered object: "..object.Name)
 end
