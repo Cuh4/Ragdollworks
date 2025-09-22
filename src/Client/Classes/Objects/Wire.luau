@@ -22,6 +22,8 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local ObjectTypes = require(script.Parent.Types)
 
+local RbxAssets = require(Rage.Path.RbxAssets)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -50,6 +52,13 @@ function Wire.New(
     self.IconAssetID = iconAssetID
 
     return self
+end
+
+--[[
+    Returns the icon asset ID.
+]]
+function Wire:GetIcon(): string
+    return self.IconAssetID or RbxAssets.UNKNOWN_ICON
 end
 
 return Wire

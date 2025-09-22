@@ -57,6 +57,7 @@ export type Object = {
     New: (name: string, description: string, category: string, settings: ObjectSettings, behaviours: {ObjectBehaviour}, instance: Model, iconAssetID: string) -> Object,
     FromInstance: (instance: Model, behaviours: {ObjectBehaviour}) -> Object,
 
+    GetIcon: (self: Object) -> string,
     CanPlayerSpawn: (self: Object) -> boolean,
     Spawn: (self: Object) -> Model
 }
@@ -190,7 +191,9 @@ export type Wire = {
     IsDefault: boolean,
     IconAssetID: string?,
 
-    New: (name: string, description: string, wireClass: SpawnedWire, isDefault: boolean, iconAssetID: string?) -> Wire
+    New: (name: string, description: string, wireClass: SpawnedWire, isDefault: boolean, iconAssetID: string?) -> Wire,
+
+    GetIcon: (self: Object) -> string,
 }
 
 export type SpawnedWire = Entity & {

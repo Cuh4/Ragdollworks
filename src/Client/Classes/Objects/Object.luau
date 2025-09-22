@@ -22,6 +22,8 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local ObjectTypes = require(script.Parent.Types)
 
+local RbxAssets = require(Rage.Path.RbxAssets)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -77,6 +79,13 @@ function Object.FromInstance(instance: Model, behaviours: {ObjectTypes.ObjectBeh
         instance:GetAttribute("ObjectIconAssetID"),
         instance:GetAttribute("ObjectIsDefault")
     )
+end
+
+--[[
+    Returns the icon asset ID.
+]]
+function Object:GetIcon(): string
+    return self.IconAssetID or RbxAssets.UNKNOWN_ICON
 end
 
 --[[
