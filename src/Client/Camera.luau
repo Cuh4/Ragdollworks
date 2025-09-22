@@ -95,7 +95,7 @@ function Camera:CreateBinds()
                 "Zoom Camera",
                 "Zooms the camera.",
                 {Enum.UserInputType.MouseWheel},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = false},
 
                 function(context: Bind.BindContext)
                     if context.State ~= Enum.UserInputState.Change then
@@ -110,7 +110,7 @@ function Camera:CreateBinds()
                 "Zoom In",
                 "Zooms the camera in.",
                 {Enum.KeyCode.LeftBracket},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = false},
                 nil,
 
                 function(context: Bind.BindContext)
@@ -126,7 +126,7 @@ function Camera:CreateBinds()
                 "Zoom Out",
                 "Zooms the camera out.",
                 {Enum.KeyCode.RightBracket},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = false},
                 nil,
 
                 function(context: Bind.BindContext)
@@ -142,7 +142,7 @@ function Camera:CreateBinds()
                 "Pan Camera",
                 "Pans the camera.",
                 {Enum.UserInputType.MouseButton3},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = false},
 
                 function(context: Bind.BindContext)
                     self.IsPanning = context.Bind.IsBeingPressed
@@ -155,7 +155,7 @@ function Camera:CreateBinds()
                         "Move Camera",
                         "Moves the camera when panning.",
                         {Enum.UserInputType.MouseMovement},
-                        {ShowTouchButton = true},
+                        {ShowTouchButton = true, ShowBindUI = false},
 
                         function(context: Bind.BindContext)
                             if context.State ~= Enum.UserInputState.Change then
@@ -176,7 +176,7 @@ function Camera:CreateBinds()
             Binds:CreateBind(
                 "Move Camera Faster",
                 "Moves the camera faster.",
-                {Enum.KeyCode.LeftShift},
+                {Enum.KeyCode.LeftShift, ShowBindUI = false},
                 {ShowTouchButton = true},
 
                 function(context: Bind.BindContext)
@@ -187,7 +187,7 @@ function Camera:CreateBinds()
             Binds:CreateBind(
                 "Move Left",
                 "Moves the camera left.",
-                {Enum.KeyCode.Left},
+                {Enum.KeyCode.Left, ShowBindUI = false},
                 {ShowTouchButton = true},
                 nil,
 
@@ -204,7 +204,7 @@ function Camera:CreateBinds()
                 "Move Right",
                 "Moves the camera right.",
                 {Enum.KeyCode.Right},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = false},
                 nil,
 
                 function(context: Bind.BindContext)
@@ -220,7 +220,7 @@ function Camera:CreateBinds()
                 "Move Up",
                 "Moves the camera up.",
                 {Enum.KeyCode.Up},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = false},
                 nil,
 
                 function(context: Bind.BindContext)
@@ -236,7 +236,7 @@ function Camera:CreateBinds()
                 "Move Down",
                 "Moves the camera down.",
                 {Enum.KeyCode.Down},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = false},
                 nil,
 
                 function(context: Bind.BindContext)

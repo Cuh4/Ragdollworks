@@ -94,7 +94,7 @@ function Maps:_CreateBinds()
             Binds:CreateBind(
                 "Pause Menu",
                 "Shows the pause menu.",
-                {Enum.KeyCode.P},
+                {Enum.KeyCode.P, ShowBindUI = true},
                 {ShowTouchButton = true},
 
                 function(context: Bind.BindContext)

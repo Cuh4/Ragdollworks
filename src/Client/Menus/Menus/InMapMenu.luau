@@ -161,6 +161,10 @@ end
     Adds a bind to the binds container.
 ]]
 function InMapMenu:AddBind(bind: Bind.Bind)
+    if not bind.Settings.ShowBindUI then
+        return
+    end
+
     if self.BindTroves[bind] then
         return
     end

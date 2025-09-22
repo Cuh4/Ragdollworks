@@ -161,7 +161,7 @@ function Objects:CreateBinds()
                 "Select/Drag Part",
                 "Selects and drags the part under the mouse.",
                 {Enum.UserInputType.MouseButton1},
-                {ShowTouchButton = false},
+                {ShowTouchButton = false, ShowBindUI = false},
 
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -181,7 +181,7 @@ function Objects:CreateBinds()
                 "Spawn Object",
                 "Spawns an object.",
                 {Enum.KeyCode.E},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = true},
 
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -194,7 +194,7 @@ function Objects:CreateBinds()
                 "Toggle Slow Motion",
                 "Toggles slow motion.",
                 {Enum.KeyCode.G},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = true},
 
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -207,7 +207,7 @@ function Objects:CreateBinds()
                 "Undo",
                 "Undoes the last action.",
                 {Enum.KeyCode.Z},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = true},
 
                 function(context: Bind.BindContext)
                     if not context.Bind.IsBeingPressed then
@@ -220,7 +220,7 @@ function Objects:CreateBinds()
                 "Wire",
                 "Wires two things together.",
                 {Enum.KeyCode.T},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = true},
 
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -235,7 +235,7 @@ function Objects:CreateBinds()
                 "Toggle Pause",
                 "Toggles paused state.",
                 {Enum.KeyCode.Space},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = true},
 
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -248,7 +248,7 @@ function Objects:CreateBinds()
                 "Detail View",
                 "Toggles detail view.",
                 {Enum.KeyCode.S},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = true},
 
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -266,7 +266,7 @@ function Objects:CreateBinds()
                 "Show Context Menu",
                 "Shows a context menu for the selected part(s).",
                 {Enum.UserInputType.MouseButton2},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = false},
 
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -279,7 +279,7 @@ function Objects:CreateBinds()
             Binds:CreateBind(
                 "Pipette",
                 "Pipettes an object.",
-                {Enum.KeyCode.Y},
+                {Enum.KeyCode.Y, ShowBindUI = true},
                 {ShowTouchButton = true},
 
                 function(context: Bind.BindContext)
@@ -292,7 +292,7 @@ function Objects:CreateBinds()
             Binds:CreateBind(
                 "Activate Part",
                 "Activates the part under the mouse.",
-                {Enum.KeyCode.F},
+                {Enum.KeyCode.F, ShowBindUI = true},
                 {ShowTouchButton = true},
 
                 function(context: Bind.BindContext)
@@ -311,7 +311,7 @@ function Objects:CreateBinds()
                 "Follow",
                 "Toggles whether the camera follows the selected parts.",
                 {Enum.KeyCode.U},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = true},
 
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -324,7 +324,7 @@ function Objects:CreateBinds()
                 "Delete Object",
                 "Deletes the selected objects.",
                 {Enum.KeyCode.Delete},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = true},
 
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -342,7 +342,7 @@ function Objects:CreateBinds()
             Binds:CreateBind(
                 "Rotate Part Left",
                 "Rotates the selected part counterclockwise.",
-                {Enum.KeyCode.A},
+                {Enum.KeyCode.A, ShowBindUI = true},
                 {ShowTouchButton = true},
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -365,7 +365,7 @@ function Objects:CreateBinds()
                 "Rotate Part Right",
                 "Rotates the selected part clockwise.",
                 {Enum.KeyCode.D},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = true},
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
                         return

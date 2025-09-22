@@ -47,7 +47,12 @@ function Bind.New(name: string, summary: string, binds: {BindInputType}, setting
     self.Name = name
     self.Summary = summary
     self.Binds = binds
-    self.Settings = settings
+
+    self.Settings = {
+        ShowTouchButton = settings.ShowTouchButton or false,
+        ShowBindUI = settings.ShowBindUI or false
+    }
+
     self.Entered = false
     self.IsBeingPressed = false
     self.CurrentContext = nil
@@ -209,7 +214,8 @@ export type BindContext = {
 }
 
 export type BindSettings = {
-    ShowTouchButton: boolean
+    ShowTouchButton: boolean,
+    ShowBindUI: boolean
 }
 
 export type BindInputType = Enum.KeyCode | Enum.UserInputType
