@@ -154,7 +154,7 @@ end
     Returns if the menu is visible.
 ]]
 function Menu:IsVisible(): boolean
-    if self.ForceHidden then
+    if self.ForceHidden and self.CanBeForceHidden then
         return false
     end
 
