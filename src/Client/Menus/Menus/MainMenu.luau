@@ -22,13 +22,10 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local Maps = require(Rage.Path.Maps)
 local RbxAssets = require(Rage.Path.RbxAssets)
 local Menus = require(Rage.Path.Menus)
 
 local Menu = require(Rage.Path.Classes.Menu)
-
-local signal = require(Rage.WallyPackages.signal)
 
 -------------------------------
 -- // Main
