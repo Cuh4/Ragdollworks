@@ -461,7 +461,7 @@ function Limb:TrackImpacts()
         self:HandleImpact(impactAmount)
 
         Debug:CreateDebugText(
-            self:GetPosition(),
+            self.ObjectPart:GetPosition(),
             ("%s: %.2f (mass: %.2f)"):format(
                 self.LimbName,
                 impactAmount,
