@@ -23,6 +23,7 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local Maps = require(Rage.Path.Maps)
+local Menus = require(Rage.Path.Menus)
 local UI = require(Rage.Path.UI)
 
 local Menu = require(Rage.Path.Classes.Menu)
@@ -53,6 +54,9 @@ function MapSelectionMenu.New(): MapSelectionMenu
 
     self.RootContainer = self.ScreenGUI.Root
 
+    self.TitleContainer = self.RootContainer.Title
+    self.GoBackButton = self.TitleContainer.GoBack
+
     self.MapContainer = self.RootContainer.MapContainer
     self.MapsContainer = self.MapContainer.Maps
 
@@ -62,6 +66,15 @@ function MapSelectionMenu.New(): MapSelectionMenu
     self.MapIcon = self.MapInfoContainer.Icon
 
     return self
+end
+
+--[[
+    Handles buttons.
+]]
+function MapSelectionMenu:HandleButtons()
+    self.GoBackButton.MouseButton1Click:Connect(function()
+        Menus:SetMainMenuScene()
+    end)
 end
 
 --[[
@@ -109,10 +122,15 @@ function MapSelectionMenu:OnSetup()
     self.OnMapLoad = Maps.OnMapLoad:Connect(function(map: Map.Map)
         self:AddMap(map)
     end)
+
+    self:HandleButtons()
 end
 
 export type MapSelectionMenu = Menu.Menu & typeof(MapSelectionMenu) & {
     RootContainer: Frame,
+
+    TitleContainer: Frame,
+    GoBackButton: TextButton,
 
     MapContainer: Frame,
     MapsContainer: Frame,
