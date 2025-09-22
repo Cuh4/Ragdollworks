@@ -22,7 +22,6 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
-local Maps = require(Rage.Path.Maps)
 local Objects = require(Rage.Path.Objects)
 local RbxAssets = require(Rage.Path.RbxAssets)
 local Binds = require(Rage.Path.Binds)
@@ -105,7 +104,7 @@ function InMapMenu:UpdateSelectedObject()
 
     self.SelectedObjectContainer.Visible = true
     self.SelectedObjectText.Text = Objects.SelectedObject.Name
-    self.SelectedObjectIcon.Image = Objects.SelectedObject.IconAssetID or RbxAssets.UNKNOWN_ICON
+    self.SelectedObjectIcon.Image = Objects.SelectedObject:GetIcon()
 end
 
 --[[
@@ -119,7 +118,7 @@ function InMapMenu:UpdateSelectedWire()
 
     self.SelectedWireContainer.Visible = true
     self.SelectedWireText.Text = Objects.SelectedWire.Name
-    self.SelectedWireIcon.Image = Objects.SelectedWire.IconAssetID or RbxAssets.UNKNOWN_ICON
+    self.SelectedWireIcon.Image = Objects.SelectedWire:GetIcon()
 end
 
 --[[
