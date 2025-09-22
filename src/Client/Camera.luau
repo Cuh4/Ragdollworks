@@ -39,10 +39,10 @@ local BindCollection = require(Rage.Path.Classes.BindCollection)
 ]]
 Camera = Rage:Service("Camera") :: Camera
 Camera.CAMERA_FOV = 30
-Camera.CAMERA_SPEED = 0.5
+Camera.CAMERA_SPEED = 0.2
 Camera.CAMERA_SPEED_ZOOMED_OUT = 7
 Camera.SCROLL_ZOOM_SENSITIVITY = 0.06
-Camera.CAMERA_Z_ZOOMED_IN = 30
+Camera.CAMERA_Z_ZOOMED_IN = 15
 Camera.CAMERA_Z_ZOOMED_OUT = 500
 Camera.DEFAULT_ZOOM = 0.5
 
