@@ -28,6 +28,7 @@ local CLI = require(Rage.Path.CLI)
 local ID = require(Rage.Path.ID)
 local Camera = require(Rage.Path.Camera)
 local Maps = require(Rage.Path.Maps)
+local Menus = require(Rage.Path.Menus)
 local Debug = require(Rage.Path.Debug)
 local Toasts = require(Rage.Path.Toasts)
 local Effects = require(Rage.Path.Effects)
@@ -115,6 +116,7 @@ Objects.OnSlomoStateChange = signal.new() :: signal.Signal<boolean>
 Objects.OnDetailViewStateChange = signal.new() :: signal.Signal<boolean>
 Objects.OnObjectRegister = signal.new() :: signal.Signal<ObjectTypes.Object>
 Objects.OnWireRegister = signal.new() :: signal.Signal<ObjectTypes.Wire>
+Objects.OnObjectCategoryRegister = signal.new() :: signal.Signal<string>
 
 --[[
     Called when the service starts.
@@ -184,6 +186,19 @@ function Objects:CreateBinds()
     self.BindCollection = Binds:CreateBindCollection(
         "Objects",
         Rage.Libs.Table:Merge(self:GetWireBinds(), {
+            Binds:CreateBind(
+                "Object Selection",
+                "Toggles the menu for selecting objects.",
+                {Enum.KeyCode.Tab},
+                {ShowTouchButton = true, ShowBindUI = true},
+
+                function(context: Bind.BindContext)
+                    if context.Bind.IsBeingPressed then
+                        Menus:ToggleScene("ObjectSelection")
+                    end
+                end
+            ),
+
             Binds:CreateBind(
                 "Select/Drag Part",
                 "Selects and drags the part under the mouse.",
@@ -1464,6 +1479,8 @@ end
 function Objects:CreateCategory(category: string): {ObjectTypes.Object}
     if not self.ExistingObjectsByCategory[category] then
         self.ExistingObjectsByCategory[category] = {}
+        self.OnObjectCategoryRegister:Fire(category)
+
         Rage.Logging:Info("Objects:CreateCategory(): Created new category: "..category)
     end
 
