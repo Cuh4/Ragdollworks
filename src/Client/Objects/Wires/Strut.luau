@@ -26,6 +26,8 @@ local Wire = require(Rage.Path.Classes.Objects.Wire)
 local SpawnedWire = require(Rage.Path.Classes.Objects.SpawnedWire)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
+local RbxAssets = require(Rage.Path.RbxAssets)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -91,8 +93,10 @@ export type Strut = ObjectTypes.SpawnedWire & typeof(Strut) & {
 }
 
 return Wire.New(
+    1,
     "Strut",
     "A strut that provides a rigid connection as if the parts are welded together.",
     Strut,
-    true
+    true,
+    RbxAssets.STRUT_WIRE_ICON
 )

@@ -28,6 +28,7 @@ local SpawnedWire = require(Rage.Path.Classes.Objects.SpawnedWire)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
 local Toasts = require(Rage.Path.Toasts)
+local RbxAssets = require(Rage.Path.RbxAssets)
 
 local WireTargetType = require(Rage.Path.Enums.WireTargetType)
 
@@ -110,8 +111,10 @@ export type ActivationLink = ObjectTypes.SpawnedWire & typeof(ActivationLink) & 
 }
 
 return Wire.New(
+    2,
     "Activation Link",
     "A non-physics wire that propagates activation signals from one object part to the other.",
     ActivationLink,
-    false
+    false,
+    RbxAssets.ACTIVATION_LINK_WIRE_ICON
 )

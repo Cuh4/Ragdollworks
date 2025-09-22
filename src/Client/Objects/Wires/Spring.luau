@@ -26,6 +26,8 @@ local Wire = require(Rage.Path.Classes.Objects.Wire)
 local SpawnedWire = require(Rage.Path.Classes.Objects.SpawnedWire)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
+local RbxAssets = require(Rage.Path.RbxAssets)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -80,8 +82,10 @@ export type Spring = ObjectTypes.SpawnedWire & typeof(Spring) & {
 }
 
 return Wire.New(
+    3,
     "Spring",
     "A wire that acts as a spring.",
     Spring,
-    false
+    false,
+    RbxAssets.SPRING_WIRE_ICON
 )

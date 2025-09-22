@@ -26,6 +26,8 @@ local Wire = require(Rage.Path.Classes.Objects.Wire)
 local SpawnedWire = require(Rage.Path.Classes.Objects.SpawnedWire)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
+local RbxAssets = require(Rage.Path.RbxAssets)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -79,8 +81,10 @@ export type Rope = ObjectTypes.SpawnedWire & typeof(Rope) & {
 }
 
 return Wire.New(
+    4,
     "Rope",
     "A simple rope that attaches two objects together.",
     Rope,
-    false
+    false,
+    RbxAssets.ROPE_WIRE_ICON
 )
