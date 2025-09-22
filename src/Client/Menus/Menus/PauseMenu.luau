@@ -65,19 +65,29 @@ function PauseMenu:HandleButtons()
 
     self.Buttons.ToggleUI.MouseButton1Click:Connect(function()
         Menus:SetForceHidden(not Menus.ForceHidden)
+        self:HideScene()
     end)
 
     self.Buttons.DespawnAll.MouseButton1Click:Connect(function()
         Objects:DespawnAllObjects()
+        self:HideScene()
     end)
 
     self.Buttons.ToggleSunlight.MouseButton1Click:Connect(function()
         Maps:SetSunlight(not Maps.IsSunlight)
+        self:HideScene()
     end)
 
     self.Buttons.Quit.MouseButton1Click:Connect(function()
         Rage.Player:Kick("You quit the game.")
     end)
+end
+
+--[[
+    Hides the menu.
+]]
+function PauseMenu:HideScene()
+    Menus:RemoveScene("PauseMenu")
 end
 
 --[[
