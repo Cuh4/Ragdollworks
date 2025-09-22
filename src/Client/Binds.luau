@@ -153,6 +153,25 @@ function Binds:CreateBind(
 end
 
 --[[
+    Returns a KeyCode for the provided integer (1 = Enum.KeyCode.One, etc).<br>
+    Note that 10 is Enum.KeyCode.Zero.
+]]
+function Binds:GetKeyCodeNumber(number: number): Enum.KeyCode
+    return ({
+        [1] = Enum.KeyCode.One,
+        [2] = Enum.KeyCode.Two,
+        [3] = Enum.KeyCode.Three,
+        [4] = Enum.KeyCode.Four,
+        [5] = Enum.KeyCode.Five,
+        [6] = Enum.KeyCode.Six,
+        [7] = Enum.KeyCode.Seven,
+        [8] = Enum.KeyCode.Eight,
+        [9] = Enum.KeyCode.Nine,
+        [10] = Enum.KeyCode.Zero,
+    })[number]
+end
+
+--[[
     Returns a bind by name.
 ]]
 function Binds:GetBind(name: string): Bind.Bind?
