@@ -83,7 +83,7 @@ function PauseMenu:HandleButtons()
         Rage.Player:Kick("You quit the game.")
     end)
 
-    self.Root.ToggleDebug.MouseButton1Click:Connect(function()
+    self.RootContainer.ToggleDebug.MouseButton1Click:Connect(function()
         Debug:SetDebug(not Debug.DebugEnabled)
     end)
 end
