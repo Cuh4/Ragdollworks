@@ -108,6 +108,7 @@ export type ObjectPartCollisionContext = {
     CollidingPart: BasePart,
     CollidingPartVelocity: Vector2,
     CollidingPartPosition: Vector2,
+    CollidingPartMass: number,
     PartBelongsToMap: boolean,
     ImpactAmount: number
 }
