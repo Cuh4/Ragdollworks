@@ -139,18 +139,10 @@ function ObjectPart:SetupCollisionDetection()
             CollidingPart = part,
             CollidingPartVelocity = partVelocity,
             CollidingPartPosition = partPosition,
+            CollidingPartMass = mass,
             PartBelongsToMap = partBelongsToMap,
             ImpactAmount = impactAmount
         } :: ObjectTypes.ObjectPartCollisionContext)
-
-        Debug:CreateDebugText(
-            self:GetPosition(),
-            ("%s: %.2f (mass: %.2f)"):format(
-                self.Part.Name,
-                impactAmount,
-                mass
-            )
-        )
     end)
 
     self.Trove:Add(connection)
