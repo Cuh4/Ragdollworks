@@ -25,6 +25,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local Maps = require(Rage.Path.Maps)
 local Objects = require(Rage.Path.Objects)
 local Menus = require(Rage.Path.Menus)
+local Debug = require(Rage.Path.Debug)
 
 local Menu = require(Rage.Path.Classes.Menu)
 
@@ -80,6 +81,10 @@ function PauseMenu:HandleButtons()
 
     self.Buttons.Quit.MouseButton1Click:Connect(function()
         Rage.Player:Kick("You quit the game.")
+    end)
+
+    self.Root.ToggleDebug.MouseButton1Click:Connect(function()
+        Debug:SetDebug(not Debug.DebugEnabled)
     end)
 end
 
