@@ -72,6 +72,18 @@ function Menu:OnSetup() end
 function Menu:OnUpdate(deltaTime: number) end
 
 --[[
+    Called when the menu is shown.<br>
+    Optional abstractmethod.
+]]
+function Menu:OnShow() end
+
+--[[
+    Called when the menu is hidden.<br>
+    Optional abstractmethod.
+]]
+function Menu:OnHide() end
+
+--[[
     Returns if this menu is allowed to show with the provided scene.
 ]]
 function Menu:CanShowWithScene(scene: string): boolean
@@ -106,6 +118,12 @@ function Menu:SetVisible(visible: boolean)
     self.Visible = visible
     self:Refresh()
 
+    if self.Visible then
+        self:OnShow()
+    else
+        self:OnHide()
+    end
+
     Rage.Logging:Info(self.Name.." (Menu): Set visible to "..tostring(visible))
 end
 
@@ -113,6 +131,10 @@ end
     Shows the menu.
 ]]
 function Menu:Show()
+    if self.Visible then
+        return
+    end
+
     self:SetVisible(true)
 end
 
@@ -120,6 +142,10 @@ end
     Hides the menu.
 ]]
 function Menu:Hide()
+    if not self.Visible then
+        return
+    end
+
     self:SetVisible(false)
 end
 
