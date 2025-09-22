@@ -35,7 +35,7 @@ local signal = require(Rage.WallyPackages.signal)
 -------------------------------
 
 --[[
-    The menu shown for selecting a wire to palce.
+    The menu shown for selecting a wire to place.
 ]]
 WireSelectionMenu = {} :: WireSelectionMenu
 WireSelectionMenu.__index = WireSelectionMenu
