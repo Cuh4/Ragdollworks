@@ -21,6 +21,8 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
+local RbxAssets = require(Rage.Path.RbxAssets)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -34,11 +36,12 @@ Map.__index = Map
 --[[
     Creates a new Map class instance.
 ]]
-function Map.New(name: string, description: string, size: Vector2, mapInstance: Model): Map
+function Map.New(name: string, description: string, size: Vector2, iconAssetID: string?, mapInstance: Model): Map
     local self = setmetatable({}, Map) :: Map
     self.Name = name
     self.Description = description
     self.Size = size
+    self.IconAssetID = iconAssetID
     self.Instance = mapInstance
 
     return self
@@ -52,8 +55,16 @@ function Map.FromInstance(mapInstance: Model): Map
         mapInstance:GetAttribute("MapName") or Rage.Logging:Error(mapInstance:GetFullName()..": No map name provided."),
         mapInstance:GetAttribute("MapDescription") or Rage.Logging:Error(mapInstance:GetFullName()..": No map description provided."),
         mapInstance:GetAttribute("MapSize") or Rage.Logging:Error(mapInstance:GetFullName()..": No map size provided."),
+        mapInstance:GetAttribute("MapIconAssetID"),
         mapInstance
     )
+end
+
+--[[
+    Returns the icon for this map.
+]]
+function Map:GetIcon(): string
+    return self.IconAssetID or RbxAssets.UNKNOWN_ICON
 end
 
 --[[
@@ -67,6 +78,7 @@ export type Map = typeof(Map) & {
     Name: string,
     Description: string,
     Size: Vector2,
+    IconAssetID: string?,
     Instance: Model
 }
 
