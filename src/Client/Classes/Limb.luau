@@ -65,6 +65,8 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.IMPACT_DAMAGE_MULTIPLIER = 1.3
     self.IMPACT_MASS_MULTIPLIER = 1
 
+    self.BLOODY_IMPACT_FX_SKIN_DAMAGE_THRESHOLD = 0.95 -- %
+
     self.BRUISE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.55, 1)
     self.IMPACT_BRUISING_THRESHOLD = 16
     self.IMPACT_BRUISING_MULTIPLIER = 0.0095
@@ -155,6 +157,10 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
 
     self.ImpactEffects = {
         "Impact1"
+    }
+
+    self.BloodyImpactEffects = {
+        "BloodyImpact1"
     }
 
     self.GruntSounds = Sounds:CreateSoundCollection(
@@ -749,7 +755,19 @@ function Limb:HandleImpact(amount: number, _propagations: number?, _propagationJ
     end
 
     -- VFX
-    Effects:SpawnEffect(Rage.Libs.Table:GetRandom(self.ImpactEffects), 0.07, self.ObjectPart.Part)
+    Effects:SpawnEffect(
+        Rage.Libs.Table:GetRandom(self.ImpactEffects),
+        0.07,
+        self.ObjectPart.Part
+    )
+
+    if self.SkinDamage >= self.BLOODY_IMPACT_FX_SKIN_DAMAGE_THRESHOLD then
+        Effects:SpawnEffect(
+            Rage.Libs.Table:GetRandom(self.BloodyImpactEffects),
+            0.06,
+            self.ObjectPart.Part
+        )
+    end
 end
 
 --[[
@@ -973,6 +991,8 @@ export type Limb = typeof(Limb) & {
     IMPACT_DAMAGE_MULTIPLIER: number,
     IMPACT_MASS_MULTIPLIER: number,
 
+    BLOODY_IMPACT_FX_SKIN_DAMAGE_THRESHOLD: number,
+
     BRUISE_DECAL_TRANSPARENCY_RANGE: NumberRange,
     IMPACT_BRUISING_THRESHOLD: number,
     IMPACT_BRUISING_MULTIPLIER: number,
@@ -1038,6 +1058,7 @@ export type Limb = typeof(Limb) & {
     GoryImpactSounds: SoundCollection.SoundCollection,
     ImpactSounds: SoundCollection.SoundCollection,
     ImpactEffects: {string},
+    BloodyImpactEffects: {string},
     GruntSounds: SoundCollection.SoundCollection,
     DeathSounds: SoundCollection.SoundCollection,
     BleedingEffect: ParticleEmitter,
