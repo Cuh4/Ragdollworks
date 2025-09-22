@@ -82,9 +82,11 @@ Rage.Classes.Service = _service
 Rage.Services = {} :: {[string]: Service}
 
 --[[
-    The default start priority for the next service to use.
+    A table of Rage's constants.
 ]]
-Rage._NextStartPriority = 50
+Rage.Constants = {}
+Rage.Constants.DEFAULT_START_PRIORITY = 50
+Rage.Constants.IDEAL_FPS = 60
 
 --[[
     Whether or not Rage has started.
@@ -95,6 +97,16 @@ Rage.Started = false
     The amount of frames (heartbeat calls) that have passed.
 ]]
 Rage.ElapsedFrames = 0
+
+--[[
+    The delta time of the last heartbeat call.
+]]
+Rage.DeltaTime = 0
+
+--[[
+    The multiplier to use for frame-rate independent operations.
+]]
+Rage.DeltaTimeMultiplier = 0
 
 --[[
     The instance in which all services are under.
@@ -151,7 +163,7 @@ end
     Creates a service. To be used within a service script.
 ]]
 function Rage:Service(name: string): Service
-    self._NextStartPriority = self._NextStartPriority + 1
+    self._NextStartPriority = (self._NextStartPriority or self.Constants.DEFAULT_START_PRIORITY) + 1
     return self.Classes.Service.New(name, self._NextStartPriority)
 end
 
@@ -161,6 +173,9 @@ end
 function Rage:_SetupServiceCallbacks()
     self.RunService.Heartbeat:Connect(function(deltaTime)
         self.ElapsedFrames += 1
+        self.DeltaTime = deltaTime
+        self.DeltaTimeMultiplier = deltaTime * self.Constants.IDEAL_FPS
+
         self:_InvokeCallbackForServices("OnHeartbeat", false, deltaTime)
     end)
 
@@ -169,7 +184,7 @@ function Rage:_SetupServiceCallbacks()
     end)
 
     self.RunService.PostSimulation:Connect(function(deltaTime)
-        self:_InvokeCallbackForServices("OnPreSimulation", false, deltaTime)
+        self:_InvokeCallbackForServices("OnPostSimulation", false, deltaTime)
     end)
 end
 
