@@ -48,7 +48,7 @@ function MainMenu.New(): MainMenu
         {CanBeForceHidden = false}
     ), MainMenu) :: MainMenu
 
-    self.CYCLING_IMAGE_INTERVAL = 3
+    self.CYCLING_IMAGE_INTERVAL = 5
 
     self.RootContainer = self.ScreenGUI.Root
     self.Buttons = self.RootContainer.Buttons
