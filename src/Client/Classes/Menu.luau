@@ -49,7 +49,12 @@ function Menu.New(
     self.ScreenGUI = Rage.Player.PlayerGui:WaitForChild(name, 5) or Rage.Logging:Error("Menu:New(): Could not find screen GUI of name '"..name.."'.")
     self.Visible = false
     self.ForceHidden = false
-    self.CanBeForceHidden = settings.CanBeForceHidden ~= nil and settings.CanBeForceHidden or true
+
+    if settings.CanBeForceHidden ~= nil then
+        self.CanBeForceHidden = settings.CanBeForceHidden
+    else
+        self.CanBeForceHidden = true
+    end
 
     return self
 end
