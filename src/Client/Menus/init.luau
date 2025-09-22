@@ -176,7 +176,6 @@ function Menus:SetForceHidden(force: boolean)
     end
 
     self.ForceHidden = force
-    self:_UpdateMenuStates()
 end
 
 --[[
