@@ -88,7 +88,7 @@ function HumanObjectBehaviour:CreateContextMenuItems(objectPart: ObjectTypes.Obj
         limb:WakeUp()
     end)
 
-    objectPart.ContextMenu:AddContextMenuItem("Knockout (1 minute)", function()
+    objectPart.ContextMenu:AddContextMenuItem("Knockout", function()
         limb:SetUnconsciousFor(60)
     end)
 
