@@ -48,11 +48,11 @@ setmetatable(ExplosiveObjectBehaviour, ObjectBehaviour)
 ]]
 function ExplosiveObjectBehaviour.New(spawnedObject: ObjectTypes.SpawnedObject): ExplosiveObjectBehaviour
     local self = setmetatable(ObjectBehaviour.New(spawnedObject), ExplosiveObjectBehaviour) :: ExplosiveObjectBehaviour
-    self.LastPosition = Vector2.new(0, 0)
     self.MainPart = table.pack(next(self.SpawnedObject.Parts))[2]
+
     self.ExplosionRadius = self.SpawnedObject.Instance:GetAttribute("ExplosionRadius") or 10
     self.ExplosionPressure = self.SpawnedObject.Instance:GetAttribute("ExplosionPressure") or 50000
-    self.ExplosionPositionDeltaThreshold = self.SpawnedObject.Instance:GetAttribute("ExplosionPositionDeltaThreshold") or 10
+    self.ExplosionCollisionThreshold = self.SpawnedObject.Instance:GetAttribute("ExplosionCollisionThreshold") or 50
     self.ExplodeOnActivation = self.SpawnedObject.Instance:GetAttribute("ExplodeOnActivation") or false
 
     local soundAssetID = self.SpawnedObject.Instance:GetAttribute("ExplosionSoundAssetID") or Rage.Logging:Error(self.SpawnedObject.Instance:GetFullName()..": No explosion sound asset ID provided.")
@@ -63,34 +63,6 @@ function ExplosiveObjectBehaviour.New(spawnedObject: ObjectTypes.SpawnedObject):
     })
 
     return self
-end
-
---[[
-    Updates the last position.
-]]
-function ExplosiveObjectBehaviour:UpdateLastPosition()
-    self.LastPosition = self:GetPosition()
-end
-
---[[
-    Returns the current position.
-]]
-function ExplosiveObjectBehaviour:GetPosition()
-    return Vector2.new(self.MainPart.Part.Position.X, self.MainPart.Part.Position.Y)
-end
-
---[[
-    Returns the position delta.
-]]
-function ExplosiveObjectBehaviour:GetPositionDelta()
-    return self:GetPosition() - self.LastPosition
-end
-
---[[
-    Returns whether or not the object passed the position delta threshold.
-]]
-function ExplosiveObjectBehaviour:HasPassedPositionDeltaThreshold(delta: Vector2)
-    return delta.Magnitude > self.ExplosionPositionDeltaThreshold
 end
 
 --[[
@@ -126,7 +98,13 @@ end
 --[[
     Called when an object using this behaviour is spawned.
 ]]
-function ExplosiveObjectBehaviour:OnSpawn() end
+function ExplosiveObjectBehaviour:OnSpawn()
+    self.MainPart.Trove:Add(self.MainPart.OnCollision:Connect(function(context: ObjectTypes.ObjectPartCollisionContext)
+        if context.ImpactAmount > self.ExplosionCollisionThreshold then
+            self:Explode()
+        end
+    end))
+end
 
 --[[
     Called when an object using this behaviour is about to be despawned.
@@ -151,27 +129,15 @@ end
 --[[
     Called when an object using this behaviour is updated.
 ]]
-function ExplosiveObjectBehaviour:OnUpdate()
-    if not self.MainPart then
-        return
-    end
-
-    if self:HasPassedPositionDeltaThreshold(self:GetPositionDelta()) and #self.MainPart.Part:GetTouchingParts() >= 1 then
-        self:Explode()
-        return
-    end
-
-    self:UpdateLastPosition()
-end
+function ExplosiveObjectBehaviour:OnUpdate() end
 
 export type ExplosiveObjectBehaviour = ObjectTypes.ObjectBehaviour & typeof(ExplosiveObjectBehaviour) & {
     _ExplosionsFolder: Folder,
 
-    LastPosition: Vector2,
     MainPart: ObjectTypes.ObjectPart,
     ExplosionRadius: number,
     ExplosionPressure: number,
-    PositionDeltaThreshold: number,
+    ExplosionCollisionThreshold: number,
     ExplodeOnActivation: boolean,
     Sound: Sound.RSound
 }
