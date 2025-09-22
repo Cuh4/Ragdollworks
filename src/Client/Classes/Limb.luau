@@ -63,7 +63,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.IMPACT_THRESHOLD = 15
     self.IMPACT_COOLDOWN = 0.1
     self.IMPACT_DAMAGE_MULTIPLIER = 1.3
-    self.IMPACT_MASS_MULTIPLIER = 0.25
+    self.IMPACT_MASS_MULTIPLIER = 1
 
     self.BRUISE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.55, 1)
     self.IMPACT_BRUISING_THRESHOLD = 16
@@ -442,39 +442,22 @@ end
     Tracks limb impacts.
 ]]
 function Limb:TrackImpacts()
-    self.Trove:Add(self.ObjectPart.Part.Touched:Connect(function(part: BasePart)
-        if self:DoesPartBelongsToLimb(part) then
+    self.Trove:Add(self.ObjectPart.OnCollision:Connect(function(context: ObjectTypes.ObjectPartCollisionContext)
+        if self:DoesPartBelongsToLimb(context.CollidingPart) then
             return
         end
 
-        if time() - self.LastImpact < self.IMPACT_COOLDOWN then
+        if os.clock() - self.LastImpact < self.IMPACT_COOLDOWN then
             return
         end
 
-        self.LastImpact = time()
+        self.LastImpact = os.clock()
 
-        local limbVelocity = self.ObjectPart:GetVelocity3D()
-        local partVelocity = part.AssemblyLinearVelocity
-        local relativeVelocity =  partVelocity - limbVelocity :: Vector3
-        local directionVector = part.Position - self.ObjectPart:GetPosition3D() :: Vector3
-
-        -- if limbVelocity:Dot(directionVector) <= 0 or (partVelocity:Dot(-directionVector) <= 0 and not part.Anchored) then
-        --     return
-        -- end
-
-        if relativeVelocity.Magnitude < self.IMPACT_THRESHOLD then
+        if context.RelativeVelocity.Magnitude < self.IMPACT_THRESHOLD then
             return
         end
 
-        local mass = Maps:BelongsToMap(part) and 1 or part.Mass
-
-        local impactAmount = (relativeVelocity.Magnitude - self.IMPACT_THRESHOLD) + (mass * self.IMPACT_MASS_MULTIPLIER)
-        self:HandleImpact(impactAmount)
-
-        Debug:CreateDebugText(
-            self.ObjectPart:GetPosition(),
-            ("%s: %.2f (mass: %.2f)"):format(self.LimbName, impactAmount, mass)
-        )
+        self:HandleImpact(context.ImpactAmount - self.IMPACT_THRESHOLD)
     end))
 end
 
