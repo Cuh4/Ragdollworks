@@ -281,6 +281,13 @@ function ObjectPart:Lock()
 end
 
 --[[
+    Interpolates the part from previous CFrame to current.
+]]
+function ObjectPart:Interpolate(alpha: number)
+    self.PreviousCFrame:Lerp(self:GetCFrame(), alpha)
+end
+
+--[[
     Activates the part.
 ]]
 function ObjectPart:Activate()

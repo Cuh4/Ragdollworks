@@ -147,6 +147,7 @@ export type ObjectPart = {
     Update: (self: ObjectPart, startBound: Vector2, endBound: Vector2, dragPosition: Vector2) -> nil,
     KeepWithinBounds: (self: ObjectPart, startBound: Vector2, endBound: Vector2) -> nil,
     Lock: (self: ObjectPart) -> nil,
+    Interpolate: (self: ObjectPart, alpha: number) -> nil,
     Activate: (self: ObjectPart) -> nil,
     SetRotationForce: (self: ObjectPart, force: number) -> nil,
     Drag: (self: ObjectPart, position: Vector2) -> nil,
