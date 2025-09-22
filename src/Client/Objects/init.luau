@@ -41,6 +41,7 @@ local SpawnedObject = require(Rage.Path.Classes.Objects.SpawnedObject)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
 local ObjectPartSelectionMode = require(Rage.Path.Enums.ObjectPartSelectionMode)
+local SlomoMode = require(Rage.Path.Enums.SlomoMode)
 
 -------------------------------
 -- // Main
@@ -53,10 +54,14 @@ local ObjectPartSelectionMode = require(Rage.Path.Enums.ObjectPartSelectionMode)
 Objects = Rage:Service("Objects") :: Objects
 Objects.OBJECT_FOLDER = Rage.Assets:GetAsset("Objects")
 Objects.RAY_DISTANCE = 50000
+
 Objects.MAX_ROTATION_SPEED = 4
 Objects.ROTATION_SPEED_INCREMENT = 0.01
 Objects.DEFAULT_ROTATION_SPEED = 1
-Objects.PAUSED_ROTATION_SPEED_MULTIPLIER = 0.5
+Objects.PAUSED_ROTATION_SPEED_MULTIPLIER = 0.8
+
+Objects.CAMERA_FOLLOW_SMOOTH_TIME = 0.1
+Objects.CAMERA_FOLLOW_MAX_SPEED = math.huge
 
 Objects.RotationSpeed = Objects.DEFAULT_ROTATION_SPEED
 
@@ -73,6 +78,7 @@ Objects.HighlightedPart = nil :: ObjectTypes.ObjectPart?
 Objects.EntityHistory = {} :: {ObjectTypes.Entity}
 
 Objects.IsFollowing = false
+Objects._CameraFollowVelocity = Vector2.zero
 
 Objects.IsDragging = false
 Objects.DraggingPart = nil :: ObjectTypes.ObjectPart
@@ -93,6 +99,7 @@ Objects.Paused = false
 Objects.DetailView = false
 Objects.SlowMotion = false
 Objects.SlomoSpeed = 0.5
+Objects.SlomoMode = SlomoMode.FREEZING :: SlomoMode.SlomoMode
 
 Objects.BindCollection = nil :: BindCollection.BindCollection
 Objects.HighlightRequiredBindCollection = nil :: BindCollection.BindCollection
@@ -130,14 +137,14 @@ end
 --[[
     Called every heartbeat.
 ]]
-function Objects:OnHeartbeat()
+function Objects:OnHeartbeat(deltaTime: number)
     if not Maps.IsInMap then
         return
     end
 
-    self:UpdateSpawnedObjects()
+    self:UpdateSpawnedObjects(deltaTime)
     self:UpdateSpawnedWires()
-    self:UpdateCamera()
+    self:UpdateCamera(deltaTime)
     self:UpdateObjectPartHighlighting()
 end
 
@@ -1466,11 +1473,24 @@ function Objects:_IsSlowMotionFrame(): boolean
 end
 
 --[[
-    Handles slow motion for an object part.<br>
-    Essentially anchors and unanchors the part at a fixed rate to simulate slow motion
-    because that's the best we can do with Roblox's limits.
+    Performs interpolation slomo logic on an object part.
 ]]
-function Objects:HandleSlowMotionForObjectPart(objectPart: ObjectTypes.ObjectPart)
+function Objects:InterpolateSlomoForObjectPart(objectPart: ObjectTypes.ObjectPart, deltaTime: number)
+    if not self.SlowMotion then
+        return
+    end
+
+    local physicsFPS = Rage.Workspace:GetRealPhysicsFPS()
+    local alpha = self.SlomoSpeed / (deltaTime * physicsFPS)
+
+    objectPart:Interpolate(alpha) -- looks much more smoother, but gets weird with physics at <0.5x slomo scales
+                                    -- also fucks up things with some types of constraints like wheels. humans are fine tho
+end
+
+--[[
+    Performs freezing slomo logic on an object part.
+]]
+function Objects:FreezeSlomoForObjectPart(objectPart: ObjectTypes.ObjectPart)
     if not self.SlowMotion then
         if objectPart.SlomoLock then
             objectPart:UnsetSlomoLock()
@@ -1487,26 +1507,42 @@ function Objects:HandleSlowMotionForObjectPart(objectPart: ObjectTypes.ObjectPar
 end
 
 --[[
+    Handles slow motion for an object part.
+]]
+function Objects:HandleSlowMotionForObjectPart(objectPart: ObjectTypes.ObjectPart, deltaTime: number)
+    if self.SlomoMode == SlomoMode.FREEZING then
+        self:FreezeSlomoForObjectPart(objectPart)
+    elseif self.SlomoMode == SlomoMode.INTERPOLATION then
+        self:InterpolateSlomoForObjectPart(objectPart, deltaTime)
+    elseif self.SlomoMode == SlomoMode.FREEZING_INTERPOLATION then
+        self:FreezeSlomoForObjectPart(objectPart)
+        self:InterpolateSlomoForObjectPart(objectPart, deltaTime)
+    else
+        Rage.Logging:Error("Objects:HandleSlowMotionForObjectPart(): Unknown slomo mode: "..tostring(self.SlomoMode))
+    end
+end
+
+--[[
     Handles slow motion for all object parts of a spawned object.<br>
     oopsies for the very verbose name
 ]]
-function Objects:HandleSlowMotionForSpawnedObject(spawnedObject: ObjectTypes.SpawnedObject)
+function Objects:HandleSlowMotionForSpawnedObject(spawnedObject: ObjectTypes.SpawnedObject, deltaTime: number)
     for _, objectPart: ObjectTypes.ObjectPart in pairs(spawnedObject.Parts) do
-        self:HandleSlowMotionForObjectPart(objectPart)
+        self:HandleSlowMotionForObjectPart(objectPart, deltaTime)
     end
 end
 
 --[[
     Updates spawned objects.
 ]]
-function Objects:UpdateSpawnedObjects()
+function Objects:UpdateSpawnedObjects(deltaTime: number)
     local mapSize = Maps.CurrentMap.Size
     local mapPos = Maps.MAP_POSITION
     local startBound = Vector2.new(mapPos.X - mapSize.X / 2, mapPos.Y - mapSize.Y / 2)
     local endBound = Vector2.new(mapPos.X + mapSize.X / 2, mapPos.Y + mapSize.Y / 2)
 
     for _, spawnedObject: ObjectTypes.SpawnedObject in pairs(self.SpawnedObjects) do
-        self:HandleSlowMotionForSpawnedObject(spawnedObject)
+        self:HandleSlowMotionForSpawnedObject(spawnedObject, deltaTime)
 
         spawnedObject:Update(
             startBound,
@@ -1530,23 +1566,33 @@ end
 --[[
     Updates the camera.
 ]]
-function Objects:UpdateCamera()
-    if self.IsFollowing then
-        if not self:IsAnyObjectPartSelected() then
-            self:SetFollowing(false)
-            return
-        end
-
-        local average = Vector2.new(0, 0)
-
-        for _, objectPart: ObjectTypes.ObjectPart in pairs(self.SelectedObjectParts) do
-            average = average + objectPart:GetPosition()
-        end
-
-        average = average / #self.SelectedObjectParts
-
-        Camera.Position = average
+function Objects:UpdateCamera(deltaTime: number)
+    if not self.IsFollowing then
+        self._CameraFollowVelocity = 0
+        return
     end
+
+    if not self:IsAnyObjectPartSelected() then
+        self:SetFollowing(false)
+        return
+    end
+
+    local average = Vector2.new(0, 0)
+
+    for _, objectPart: ObjectTypes.ObjectPart in pairs(self.SelectedObjectParts) do
+        average = average + objectPart:GetPosition()
+    end
+
+    average = average / #self.SelectedObjectParts
+
+    Camera.Position, self._CameraFollowVelocity = Rage.Tweening:SmoothDamp(
+        Camera.Position,
+        average,
+        self._CameraFollowVelocity,
+        self.CAMERA_FOLLOW_SMOOTH_TIME,
+        self.CAMERA_FOLLOW_MAX_SPEED,
+        deltaTime
+    )
 end
 
 --[[
@@ -1566,6 +1612,18 @@ end
     Creates commands.
 ]]
 function Objects:_CreateCommands()
+    CLI.Conch.register("set-slomo-mode", {
+        description = "Sets the slomo mode.",
+
+        arguments = function()
+            return CLI.Conch.args.string("Mode", "The mode to use, see `SlomoMode` enum.")
+        end,
+
+        callback = function(mode: string)
+            self.SlomoMode = SlomoMode[mode]
+        end
+    })
+
     CLI.Conch.register("set-selection-mode", {
         description = "Sets the selection mode.",
 
