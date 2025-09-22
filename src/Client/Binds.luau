@@ -156,7 +156,7 @@ end
     Returns a KeyCode for the provided integer (1 = Enum.KeyCode.One, etc).<br>
     Note that 10 is Enum.KeyCode.Zero.
 ]]
-function Binds:GetKeyCodeNumber(number: number): Enum.KeyCode
+function Binds:GetKeyCodeFromInt(number: number): Enum.KeyCode
     return ({
         [1] = Enum.KeyCode.One,
         [2] = Enum.KeyCode.Two,
