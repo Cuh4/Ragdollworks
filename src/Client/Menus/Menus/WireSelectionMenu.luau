@@ -72,6 +72,7 @@ function WireSelectionMenu:AddWire(wire: ObjectTypes.Wire)
     imageButton.Image = wire:GetIcon()
     wireName.Text = wire.Name
 
+    container.LayoutOrder = wire.ID
     container.Parent = self.WiresContainer
 end
 
