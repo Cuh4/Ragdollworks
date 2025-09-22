@@ -21,11 +21,14 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local signal = require(Rage.WallyPackages.signal)
+local Trove = require(Rage.WallyPackages.trove)
 
 local ObjectTypes = require(script.Parent.Types)
 local ContextMenu = require(script.Parent.ContextMenu)
 
 local Effects = require(Rage.Path.Effects)
+local Debug = require(Rage.Path.Debug)
+local Maps = require(Rage.Path.Maps)
 
 -------------------------------
 -- // Main
@@ -47,6 +50,7 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.FROZEN_SELECTION_BOX_COLOR = Color3.fromRGB(40, 95, 183)
     self.SELECTION_BOX_THICKNESS = 0.07
     self.DRAGGING_RESPONSIVENESS = 45
+    self.IMPACT_MASS_MULTIPLIER = 0.25
 
     self.Part = part
     self.SpawnedObject = spawnedObject
@@ -68,10 +72,14 @@ function ObjectPart.New(part: BasePart, spawnedObject: ObjectTypes.SpawnedObject
     self.ContextMenu = ContextMenu.New(self)
     self.PreviousCFrame = self.Part.CFrame
 
+    self.Trove = Trove.new()
+    self.Trove:Add(self.Part)
+
     self.OnDragStart = signal.new()
     self.OnDragEnd = signal.new()
     self.OnActivate = signal.new()
     self.OnDespawn = signal.new()
+    self.OnCollision = signal.new()
 
     return self
 end
@@ -95,10 +103,57 @@ end
     Setups the part.
 ]]
 function ObjectPart:Setup()
+    self:SetupCollisionDetection()
     self:SetupContextMenu()
     self:SetupAttachments()
     self:SetupSelectionBoxes()
     self:SetupDragging()
+end
+
+--[[
+    Setups collision detection.
+]]
+function ObjectPart:SetupCollisionDetection()
+    local connection = self.Part.Touched:Connect(function(part: BasePart)
+        local ourVelocity = self:GetVelocity()
+        local partVelocity = Vector2.new(part.AssemblyLinearVelocity.X, part.AssemblyLinearVelocity.Y)
+
+        local ourPosition = self:GetPosition()
+        local partPosition = Vector2.new(part.Position.X, part.Position.Y)
+
+        local relativeVelocity =  partVelocity - ourVelocity
+        local directionVector = partPosition - ourPosition
+
+        -- if limbVelocity:Dot(directionVector) <= 0 or (partVelocity:Dot(-directionVector) <= 0 and not part.Anchored) then
+        --     return
+        -- end
+
+        local partBelongsToMap = Maps:BelongsToMap(part)
+        local mass = Maps:BelongsToMap(part) and 1 or part.Mass
+
+        local impactAmount = relativeVelocity.Magnitude + (mass * self.IMPACT_MASS_MULTIPLIER)
+
+        self.OnCollision:Fire({
+            RelativeVelocity = relativeVelocity,
+            RelativePosition = directionVector,
+            CollidingPart = part,
+            CollidingPartVelocity = partVelocity,
+            CollidingPartPosition = partPosition,
+            PartBelongsToMap = partBelongsToMap,
+            ImpactAmount = impactAmount
+        } :: ObjectTypes.ObjectPartCollisionContext)
+
+        Debug:CreateDebugText(
+            self:GetPosition(),
+            ("%s: %.2f (mass: %.2f)"):format(
+                self.Part.Name,
+                impactAmount,
+                mass
+            )
+        )
+    end)
+
+    self.Trove:Add(connection)
 end
 
 --[[
@@ -455,7 +510,7 @@ end
     Despawns the part.
 ]]
 function ObjectPart:Despawn()
-    self.Part:Destroy()
+    self.Trove:Destroy()
     self.OnDespawn:Fire()
 end
 

@@ -21,6 +21,7 @@
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local signal = require(Rage.WallyPackages.signal)
+local Trove = require(Rage.WallyPackages.trove)
 
 local WireTargetType = require(Rage.Path.Enums.WireTargetType)
 
@@ -101,12 +102,23 @@ export type SpawnedObject = Entity & {
     Remove: (self: SpawnedObject) -> nil
 }
 
+export type ObjectPartCollisionContext = {
+    RelativeVelocity: Vector2,
+    RelativePosition: Vector2,
+    CollidingPart: BasePart,
+    CollidingPartVelocity: Vector2,
+    CollidingPartPosition: Vector2,
+    PartBelongsToMap: boolean,
+    ImpactAmount: number
+}
+
 export type ObjectPart = {
     SELECTION_COLOR: Color3,
     HIGHLIGHT_COLOR: Color3,
     FROZEN_SELECTION_BOX_COLOR: Color3,
     SELECTION_BOX_THICKNESS: number,
     DRAGGING_RESPONSIVENESS: number,
+    IMPACT_MASS_MULTIPLIER: number,
 
     Part: BasePart,
     SpawnedObject: SpawnedObject,
@@ -128,15 +140,19 @@ export type ObjectPart = {
     ContextMenu: ContextMenu,
     PreviousCFrame: CFrame,
 
+    Trove: Trove.Trove,
+
     OnDragStart: signal.Signal,
     OnDragEnd: signal.Signal,
     OnActivate: signal.Signal,
     OnDespawn: signal.Signal,
+    OnCollision: signal.Signal<ObjectPartCollisionContext>,
 
     New: (part: BasePart, spawnedObject: SpawnedObject, layer: number, settings: ObjectPartSettings) -> ObjectPart,
     FromPart: (part: BasePart, spawnedObject: SpawnedObject) -> ObjectPart,
 
     Setup: (self: ObjectPart) -> nil,
+    SetupCollisionDetection: (self: ObjectPart) -> nil,
     SetupContextMenu: (self: ObjectPart) -> nil,
     SetupAttachments: (self: ObjectPart) -> nil,
     SetupSelectionBoxes: (self: ObjectPart) -> nil,
