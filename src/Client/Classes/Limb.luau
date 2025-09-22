@@ -457,7 +457,17 @@ function Limb:TrackImpacts()
             return
         end
 
-        self:HandleImpact(context.ImpactAmount - self.IMPACT_THRESHOLD)
+        local impactAmount = context.ImpactAmount - self.IMPACT_THRESHOLD
+        self:HandleImpact(impactAmount)
+
+        Debug:CreateDebugText(
+            self:GetPosition(),
+            ("%s: %.2f (mass: %.2f)"):format(
+                self.LimbName,
+                impactAmount,
+                context.CollidingPartMass
+            )
+        )
     end))
 end
 
