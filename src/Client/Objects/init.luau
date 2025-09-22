@@ -66,7 +66,7 @@ Objects.CAMERA_FOLLOW_MAX_SPEED = math.huge
 Objects.RotationSpeed = Objects.DEFAULT_ROTATION_SPEED
 
 Objects.DefaultObject = nil :: ObjectTypes.Object?
-Objects.ExistingObjects = {} :: {string: ObjectTypes.Object}
+Objects.ExistingObjects = {} :: {ObjectTypes.Object}
 Objects.ExistingObjectsByCategory = {} :: {string: {ObjectTypes.Object}}
 Objects.Behaviours = {} :: {string: ObjectTypes.ObjectBehaviour}
 
@@ -89,7 +89,7 @@ Objects.SelectionMode = ObjectPartSelectionMode.SMALLEST :: ObjectPartSelectionM
 Objects.ContextMenuActivePart = nil :: ObjectTypes.ObjectPart?
 
 Objects.DefaultWire = nil :: ObjectTypes.Wire?
-Objects.ExistingWires = {} :: {string: ObjectTypes.Wire}
+Objects.ExistingWires = {} :: {ObjectTypes.Wire}
 Objects.SelectedWire = nil :: ObjectTypes.Wire?
 Objects.SelectedWireSource = nil :: ObjectTypes.WireTargetInstance?
 Objects.SelectedWireSourceMousePos = nil :: Vector2?
@@ -120,10 +120,10 @@ Objects.OnWireRegister = signal.new() :: signal.Signal<ObjectTypes.Wire>
     Called when the service starts.
 ]]
 function Objects:OnStart()
-    self:CreateBinds()
     self:LoadBehaviours()
     self:LoadWires()
     self:LoadObjects()
+    self:CreateBinds()
 
     self:_CreateCommands()
 
@@ -151,12 +151,39 @@ function Objects:OnHeartbeat(deltaTime: number)
 end
 
 --[[
+    Returns a table of newly-created binds for wire shortcuts.
+]]
+function Objects:GetWireBinds(): {Bind.Bind}
+    local binds = {} :: {Bind.Bind}
+
+    for i = 1, math.clamp(#self.ExistingWires, 1, 9) do
+        local wire = self.ExistingWires[i]
+        local bind = Binds:GetKeyCodeFromInt(i)
+
+        table.insert(binds, Binds:CreateBind(
+            wire.Name,
+            ("Selects the '%s' wire."):format(wire.Name),
+            {bind},
+            {ShowTouchButton = false, ShowBindUI = false},
+
+            function(context: Bind.BindContext)
+                if context.Bind.IsBeingPressed then
+                    self:SelectWire(wire)
+                end
+            end
+        ))
+    end
+
+    return binds
+end
+
+--[[
     Creates all keybinds.
 ]]
 function Objects:CreateBinds()
     self.BindCollection = Binds:CreateBindCollection(
         "Objects",
-        {
+        Rage.Libs.Table:Merge(self:GetWireBinds(), {
             Binds:CreateBind(
                 "Select/Drag Part",
                 "Selects and drags the part under the mouse.",
@@ -256,7 +283,7 @@ function Objects:CreateBinds()
                     end
                 end
             )
-        }
+        })
     ) :: BindCollection.BindCollection
 
     self.HighlightRequiredBindCollection = Binds:CreateBindCollection(
@@ -856,7 +883,11 @@ end
     Gets an object by name.
 ]]
 function Objects:GetObject(name: string): ObjectTypes.Object?
-    return self.ExistingObjects[name]
+    for _, object in pairs(self.ExistingObjects) do
+        if object.Name == name then
+            return object
+        end
+    end
 end
 
 --[[
@@ -991,8 +1022,18 @@ end
     Loads all wires.
 ]]
 function Objects:LoadWires()
+    local wires = {} :: {ObjectTypes.Wire}
+
     for _, wireModuleScript: ModuleScript in pairs(script.Wires:GetChildren()) do
         local wire = require(wireModuleScript) :: ObjectTypes.Wire
+        table.insert(wires, wire)
+    end
+
+    local sorted = Rage.Libs.Table:Sort(wires, function(wireA: ObjectTypes.Wire, wireB: ObjectTypes.Wire)
+        return wireA.ID < wireB.ID
+    end)
+
+    for _, wire: ObjectTypes.Wire in pairs(sorted) do
         self:RegisterWire(wire)
     end
 
@@ -1003,7 +1044,7 @@ end
     Registers a new wire.
 ]]
 function Objects:RegisterWire(wire: ObjectTypes.Wire)
-    self.ExistingWires[wire.Name] = wire
+    table.insert(self.ExistingWires, wire)
 
     if wire.IsDefault then
         if self.DefaultWire then
@@ -1022,7 +1063,11 @@ end
     Retrieves a wire by name.
 ]]
 function Objects:GetWire(name: string): ObjectTypes.Wire?
-    return self.ExistingWires[name]
+    for _, wire in pairs(self.ExistingWires) do
+        if wire.Name == name then
+            return wire
+        end
+    end
 end
 
 --[[
@@ -1432,7 +1477,7 @@ function Objects:RegisterObject(object: ObjectTypes.Object)
     local category = self:CreateCategory(object.Category)
     table.insert(category, object)
 
-    self.ExistingObjects[object.Name] = object
+    table.insert(self.ExistingObjects, object)
 
     if object.IsDefault then
         if self.DefaultObject ~= nil then
