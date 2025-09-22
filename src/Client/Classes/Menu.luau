@@ -64,7 +64,7 @@ function Menu:OnSetup() end
     Updates the menu.<br>
     Optional abstractmethod.
 ]]
-function Menu:OnUpdate() end
+function Menu:OnUpdate(deltaTime: number) end
 
 --[[
     Returns if this menu is allowed to show with the provided scene.
@@ -75,6 +75,19 @@ function Menu:CanShowWithScene(scene: string): boolean
     end
 
     return Rage.Libs.Table:Find(self.Scenes, scene) ~= nil
+end
+
+--[[
+    Returns if this menu is allowed to show with any of the provided scenes.
+]]
+function Menu:CanShowWithScenes(scenes: {string}): boolean
+   for _, scene in pairs(scenes) do
+       if self:CanShowWithScene(scene) then
+           return true
+       end
+   end
+
+   return false
 end
 
 --[[
@@ -161,8 +174,8 @@ end
 --[[
     Updates the menu. To be called every frame.
 ]]
-function Menu:Update()
-    self:OnUpdate()
+function Menu:Update(deltaTime: number)
+    self:OnUpdate(deltaTime)
 end
 
 --[[

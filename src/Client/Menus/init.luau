@@ -38,7 +38,7 @@ local signal = require(Rage.WallyPackages.signal)
 Menus = Rage:Service("Menus") :: Menus
 Menus.StartPriority = 99
 
-Menus.DEFAULT_SCENE = "MainMenu"
+Menus.MAIN_MENU_SCENE = "MainMenu"
 
 Menus.CORE_GUI_TO_HIDE = {
     Enum.CoreGuiType.PlayerList,
@@ -51,9 +51,11 @@ Menus.CORE_GUI_TO_HIDE = {
 
 Menus.Menus = {} :: {[string]: Menu.Menu}
 Menus.ForceHidden = false
-Menus.Scene = ""
+Menus.Scenes = {} :: {string}
 
-Menus.OnSceneChange = signal.new() :: signal.Signal<string>
+Menus.OnSceneSet = signal.new() :: signal.Signal<string>
+Menus.OnSceneAdd = signal.new() :: signal.Signal<string>
+Menus.OnSceneRemove = signal.new() :: signal.Signal<string>
 
 --[[
     Called when the service starts.
@@ -63,32 +65,87 @@ function Menus:OnStart()
     self:HideCoreGUI()
     self:_CreateCommands()
 
-    self:SetScene(self.DEFAULT_SCENE)
+    self:SetMainMenuScene()
 end
 
 --[[
     Called every heartbeat.
 ]]
-function Menus:OnHeartbeat()
+function Menus:OnHeartbeat(deltaTime: number)
     for _, menu in pairs(self:GetMenus()) do
         menu:SetForceHidden(self.ForceHidden)
-        menu:Update()
+        menu:Update(deltaTime)
     end
+end
+
+--[[
+    Sets the current scene to the main menu.
+]]
+function Menus:SetMainMenuScene()
+    self:SetScene(self.MAIN_MENU_SCENE)
 end
 
 --[[
     Sets the current scene.
 ]]
 function Menus:SetScene(scene: string)
-    if scene == self.Scene then
+    if self:HasScene(scene) and #self.Scenes == 1 then
         return
     end
 
-    self.Scene = scene
+    self.Scenes = {scene}
     self:_UpdateAllMenusVisibility()
-    self.OnSceneChange:Fire(scene)
+    self.OnSceneSet:Fire(scene)
 
-    Rage.Logging:Info("Menus: Set scene to "..scene)
+    Rage.Logging:Info("Menus: Set scene ONLY to "..scene)
+end
+
+--[[
+    Adds a scene.
+]]
+function Menus:AddScene(scene: string)
+    if self:HasScene(scene) then
+        return
+    end
+
+    table.insert(self.Scenes, scene)
+    self:_UpdateAllMenusVisibility()
+    self.OnSceneAdd:Fire(scene)
+
+    Rage.Logging:Info("Menus: Added scene "..scene)
+end
+
+--[[
+    Removes a scene.
+]]
+function Menus:RemoveScene(scene: string)
+    if not self:HasScene(scene) then
+        return
+    end
+
+    table.remove(self.Scenes, Rage.Libs.Table:Find(self.Scenes, scene))
+    self:_UpdateAllMenusVisibility()
+    self.OnSceneRemove:Fire(scene)
+
+    Rage.Logging:Info("Menus: Removed scene "..scene)
+end
+
+--[[
+    Adds or removes the provided scene (toggle).
+]]
+function Menus:ToggleScene(scene: string)
+    if self:HasScene(scene) then
+        self:RemoveScene(scene)
+    else
+        self:AddScene(scene)
+    end
+end
+
+--[[
+    Returns if the provided scene is active.
+]]
+function Menus:HasScene(scene: string): boolean
+    return Rage.Libs.Table:Find(self.Scenes, scene) ~= nil
 end
 
 --[[
@@ -96,7 +153,7 @@ end
 ]]
 function Menus:_UpdateAllMenusVisibility()
     for _, menu in pairs(self:GetMenus()) do
-        menu:SetVisible(menu:CanShowWithScene(self.Scene))
+        menu:SetVisible(menu:CanShowWithScenes(self.Scenes))
     end
 end
 
