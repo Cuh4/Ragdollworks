@@ -23,11 +23,12 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local Maps = require(Rage.Path.Maps)
-local RbxAssets = require(Rage.Path.RbxAssets)
-local Menus = require(Rage.Path.Menus)
+local UI = require(Rage.Path.UI)
 
 local Menu = require(Rage.Path.Classes.Menu)
+local Map = require(Rage.Path.Classes.Map)
 
+local signal = require(Rage.WallyPackages.signal)
 
 -------------------------------
 -- // Main
@@ -50,25 +51,78 @@ function MapSelectionMenu.New(): MapSelectionMenu
         {CanBeForceHidden = false}
     ), MapSelectionMenu) :: MapSelectionMenu
 
+    self.RootContainer = self.ScreenGUI.Root
+
+    self.MapContainer = self.RootContainer.MapContainer
+    self.MapsContainer = self.MapContainer.Maps
+
+    self.MapInfoContainer = self.MapContainer.MapInfo
+    self.MapName = self.MapInfoContainer.MapName
+    self.MapDescription = self.MapInfoContainer.MapDescription
+    self.MapIcon = self.MapInfoContainer.Icon
+
     return self
+end
+
+--[[
+    Shows info for the selected map.
+]]
+function MapSelectionMenu:ShowMapInfo(map: Map.Map)
+    self.MapName.Text = map.Name
+    self.MapDescription.Text = map.Description
+    self.MapIcon.Image = map:GetIcon()
+
+    self.MapInfoContainer.Visible = true
+end
+
+--[[
+    Adds a map to the map selection menu.
+]]
+function MapSelectionMenu:AddMap(map: Map.Map)
+    local container = UI:GetComponent("Map"):Clone() :: Frame
+    container.TitleText.Text = map.Name
+    container.Icon.Image = map:GetIcon()
+
+    local enterButton = container.Enter :: TextButton
+
+    enterButton.MouseButton1Click:Connect(function()
+        Maps:StartMap(map)
+    end)
+
+    container.MouseEnter:Connect(function()
+        self:ShowMapInfo(map)
+    end)
+
+    container.Parent = self.MapsContainer
 end
 
 --[[
     Setups the menu.
 ]]
 function MapSelectionMenu:OnSetup()
-    
-end
+    self.MapInfoContainer.Visible = false
 
---[[
-    Called every heartbeat.
-]]
-function MapSelectionMenu:OnUpdate()
-    
+    for _, map in pairs(Maps:GetMaps()) do
+        self:AddMap(map)
+    end
+
+    self.OnMapLoad = Maps.OnMapLoad:Connect(function(map: Map.Map)
+        self:AddMap(map)
+    end)
 end
 
 export type MapSelectionMenu = Menu.Menu & typeof(MapSelectionMenu) & {
-    RootContainer: Frame
+    RootContainer: Frame,
+
+    MapContainer: Frame,
+    MapsContainer: Frame,
+
+    MapInfoContainer: Frame,
+    MapName: TextLabel,
+    MapDescription: TextLabel,
+    MapIcon: ImageLabel,
+
+    OnMapLoad: signal.Connection
 }
 
 return MapSelectionMenu
