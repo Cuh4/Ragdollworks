@@ -875,11 +875,11 @@ end
 ]]
 function Limb:HandlePassiveDamage()
     if not self.IsBrainAlive then
-        self:Damage(self.BRAIN_DEAD_HEALTH_LOSS_RATE)
+        self:Damage(self.BRAIN_DEAD_HEALTH_LOSS_RATE * Rage.DeltaTimeMultiplier)
     end
 
     if not self.IsHeartBeating then
-        self:Damage(self.HEART_DEAD_HEALTH_LOSS_RATE)
+        self:Damage(self.HEART_DEAD_HEALTH_LOSS_RATE * Rage.DeltaTimeMultiplier)
     end
 end
 
