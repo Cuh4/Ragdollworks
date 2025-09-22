@@ -52,6 +52,8 @@ Maps.BACKGROUND_COLOR = Maps.BOUNDARY_COLOR
 
 Maps.ZPosition = 0
 
+Maps.IsSunlight = true
+
 Maps.OnMapStart = signal.new() :: signal.Signal<Map.Map>
 Maps.OnMapExit = signal.new() :: signal.Signal
 Maps.OnMapLoad = signal.new() :: signal.Signal<Map.Map>
@@ -73,6 +75,13 @@ function Maps:OnStart()
 
     self:_CreateCommands()
     self:_CreateBinds()
+end
+
+--[[
+    Called every heartbeat.
+]]
+function Maps:OnHeartbeat()
+    Rage.Lighting.ClockTime = self:GetLightingClockTime()
 end
 
 --[[
@@ -121,8 +130,12 @@ function Maps:StartMap(map: Map.Map)
     self:_CreateMapBoundaries()
     self:_CreateMapBackground()
 
+    self:SetSunlight(true)
+
     Menus:SetScene("InMap")
+
     self.InMapBindCollection:Enter()
+
     self.OnMapStart:Fire(self.CurrentMap)
 
     Feedback:GivePositive(1.1)
@@ -286,6 +299,20 @@ function Maps:ExitMap()
 end
 
 --[[
+    Sets if sun is out or not.
+]]
+function Maps:SetSunlight(sunlight: boolean)
+    self.IsSunlight = sunlight
+end
+
+--[[
+    Returns a clock time based on sunlight boolean.
+]]
+function Maps:GetLightingClockTime(): number
+    return self.IsSunlight and 11 or 0
+end
+
+--[[
     Gets a map by its name.
 ]]
 function Maps:GetMap(name: string): Map.Map?
@@ -378,6 +405,15 @@ function Maps:_CreateCommands()
             end
 
             self:ExitMap()
+        end
+    })
+
+    CLI.Conch.register("sunlight", {
+        description = "Toggles sunlight.",
+        arguments = function() end,
+
+        callback = function()
+            self:SetSunlight(not self.IsSunlight)
         end
     })
 end
