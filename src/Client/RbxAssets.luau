@@ -82,6 +82,11 @@ RbxAssets.MAIN_MENU_IMAGE_3 = "rbxassetid://134507096282562"
 RbxAssets.MAIN_MENU_IMAGE_4 = "rbxassetid://103158340058875"
 RbxAssets.MAIN_MENU_IMAGE_5 = "rbxassetid://77076066604542"
 
+RbxAssets.ACTIVATION_LINK_WIRE_ICON = "rbxassetid://123625903569238"
+RbxAssets.ROPE_WIRE_ICON = "rbxassetid://89291047415254"
+RbxAssets.SPRING_WIRE_ICON = "rbxassetid://101266600469950"
+RbxAssets.STRUT_WIRE_ICON = "rbxassetid://118116262068857"
+
 RbxAssets.BIND_ICONS = { -- https://devforum.roblox.com/t/images-for-almost-every-keycode-and-userinputtype/2932907
     [Enum.KeyCode.U] = "rbxassetid://17164171424",
     [Enum.KeyCode.Five] = "rbxassetid://17164184242",
