@@ -279,8 +279,8 @@ function Objects:CreateBinds()
             Binds:CreateBind(
                 "Pipette",
                 "Pipettes an object.",
-                {Enum.KeyCode.Y, ShowBindUI = true},
-                {ShowTouchButton = true},
+                {Enum.KeyCode.Y},
+                {ShowTouchButton = true, ShowBindUI = true},
 
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -292,8 +292,8 @@ function Objects:CreateBinds()
             Binds:CreateBind(
                 "Activate Part",
                 "Activates the part under the mouse.",
-                {Enum.KeyCode.F, ShowBindUI = true},
-                {ShowTouchButton = true},
+                {Enum.KeyCode.F},
+                {ShowTouchButton = true, ShowBindUI = true},
 
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
@@ -342,8 +342,8 @@ function Objects:CreateBinds()
             Binds:CreateBind(
                 "Rotate Part Left",
                 "Rotates the selected part counterclockwise.",
-                {Enum.KeyCode.A, ShowBindUI = true},
-                {ShowTouchButton = true},
+                {Enum.KeyCode.A},
+                {ShowTouchButton = true, ShowBindUI = true},
                 function(context: Bind.BindContext)
                     if context.Bind.IsBeingPressed then
                         return
@@ -387,7 +387,7 @@ function Objects:CreateBinds()
                 "Rotate Faster",
                 "Rotates the selected part faster.",
                 {Enum.KeyCode.LeftShift},
-                {ShowTouchButton = true},
+                {ShowTouchButton = true, ShowBindUI = false},
                 nil,
 
                 function(context: Bind.BindContext)

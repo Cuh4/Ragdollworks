@@ -176,8 +176,8 @@ function Camera:CreateBinds()
             Binds:CreateBind(
                 "Move Camera Faster",
                 "Moves the camera faster.",
-                {Enum.KeyCode.LeftShift, ShowBindUI = false},
-                {ShowTouchButton = true},
+                {Enum.KeyCode.LeftShift},
+                {ShowTouchButton = true, ShowBindUI = false},
 
                 function(context: Bind.BindContext)
                     self.MoveFaster = context.Bind.IsBeingPressed
@@ -187,8 +187,8 @@ function Camera:CreateBinds()
             Binds:CreateBind(
                 "Move Left",
                 "Moves the camera left.",
-                {Enum.KeyCode.Left, ShowBindUI = false},
-                {ShowTouchButton = true},
+                {Enum.KeyCode.Left},
+                {ShowTouchButton = true, ShowBindUI = false},
                 nil,
 
                 function(context: Bind.BindContext)
