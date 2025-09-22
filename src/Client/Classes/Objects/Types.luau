@@ -203,13 +203,14 @@ export type ObjectBehaviour = {
 }
 
 export type Wire = {
+    ID: number,
     Name: string,
     Description: string,
     WireClass: SpawnedWire,
     IsDefault: boolean,
     IconAssetID: string?,
 
-    New: (name: string, description: string, wireClass: SpawnedWire, isDefault: boolean, iconAssetID: string?) -> Wire,
+    New: (ID: number, name: string, description: string, wireClass: SpawnedWire, isDefault: boolean, iconAssetID: string?) -> Wire,
 
     GetIcon: (self: Object) -> string,
 }

@@ -38,6 +38,7 @@ Wire.__index = Wire
     Creates a new Wire class instance.
 ]]
 function Wire.New(
+    ID: number,
     name: string,
     description: string,
     wireClass: ObjectTypes.SpawnedWire,
@@ -45,6 +46,7 @@ function Wire.New(
     iconAssetID: string
 ): ObjectTypes.Wire
     local self = setmetatable({}, Wire) :: Wire
+    self.ID = ID
     self.Name = name
     self.Description = description
     self.WireClass = wireClass
