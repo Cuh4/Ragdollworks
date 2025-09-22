@@ -35,7 +35,7 @@ local CLI = require(Rage.Path.CLI)
     A service for playing sounds.
 ]]
 Sounds = Rage:Service("Sounds") :: Sounds
-Sounds.ROLLOFF_MAX = 500
+Sounds.ROLLOFF_OFFSET = 500
 
 --[[
     Called when the service starts.
@@ -70,7 +70,7 @@ end
 ]]
 function Sounds:CreateSound(soundID: number, settings: Sound.SoundSettings): Sound.RSound
     local sound = Sound.New(soundID, settings)
-    sound.Settings.RollOffMaxDistance = sound.Settings.RollOffMaxDistance or self.ROLLOFF_MAX
+    sound.Settings.RollOffMaxDistance = (sound.Settings.RollOffMaxDistance or 0) + self.ROLLOFF_OFFSET
 
     return sound
 end
