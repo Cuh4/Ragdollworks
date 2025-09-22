@@ -62,15 +62,16 @@ end
 --[[
     Handles background fancy effects.
 ]]
-function CoreBackgroundMenu:HandleFancyEffects()
+function CoreBackgroundMenu:HandleFancyEffects(deltaTime: number)
     -- Update alphas
-    self.GradientRotationAlpha += self.GRADIENT_ROTATION_SPEED
+    local dt = deltaTime * 60 -- match results of 60 fps
+    self.GradientRotationAlpha += self.GRADIENT_ROTATION_SPEED * dt
 
     if self.GradientRotationAlpha > 1 then
         self.GradientRotationAlpha = 0
     end
 
-    self.TilingPositionAlpha += self.TILING_POSITION_SPEED
+    self.TilingPositionAlpha += self.TILING_POSITION_SPEED * dt
 
     if self.TilingPositionAlpha > 1 then
         self.TilingPositionAlpha = 0
@@ -91,8 +92,8 @@ end
 --[[
     Called every heartbeat.
 ]]
-function CoreBackgroundMenu:OnUpdate()
-    self:HandleFancyEffects()
+function CoreBackgroundMenu:OnUpdate(deltaTime: number)
+    self:HandleFancyEffects(deltaTime)
 end
 
 export type CoreBackgroundMenu = Menu.Menu & typeof(CoreBackgroundMenu) & {
