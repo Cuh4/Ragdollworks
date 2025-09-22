@@ -23,6 +23,7 @@
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local Maps = require(Rage.Path.Maps)
+local Objects = require(Rage.Path.Objects)
 local Menus = require(Rage.Path.Menus)
 
 local Menu = require(Rage.Path.Classes.Menu)
@@ -60,6 +61,18 @@ end
 function PauseMenu:HandleButtons()
     self.Buttons.MainMenu.MouseButton1Click:Connect(function()
         Maps:ExitMap()
+    end)
+
+    self.Buttons.ToggleUI.MouseButton1Click:Connect(function()
+        Menus:SetForceHidden(not Menus.ForceHidden)
+    end)
+
+    self.Buttons.DespawnAll.MouseButton1Click:Connect(function()
+        Objects:DespawnAllObjects()
+    end)
+
+    self.Buttons.ToggleSunlight.MouseButton1Click:Connect(function()
+        Maps:SetSunlight(not Maps.IsSunlight)
     end)
 
     self.Buttons.Quit.MouseButton1Click:Connect(function()
