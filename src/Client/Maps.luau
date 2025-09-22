@@ -25,12 +25,14 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local signal = require(Rage.WallyPackages.signal)
 
 local CLI = require(Rage.Path.CLI)
+local Binds = require(Rage.Path.Binds)
 local Toasts = require(Rage.Path.Toasts)
 local Feedback = require(Rage.Path.Feedback)
 local Organization = require(Rage.Path.Organization)
 local Menus = require(Rage.Path.Menus)
 
 local Map = require(Rage.Path.Classes.Map)
+local Bind, BindCollection = require(Rage.Path.Classes.Bind), require(Rage.Path.Classes.BindCollection)
 
 -------------------------------
 -- // Main
@@ -52,11 +54,14 @@ Maps.ZPosition = 0
 
 Maps.OnMapStart = signal.new() :: signal.Signal<Map.Map>
 Maps.OnMapExit = signal.new() :: signal.Signal
+Maps.OnMapLoad = signal.new() :: signal.Signal<Map.Map>
 
 Maps.ExistingMaps = {} :: {Map.Map}
 Maps.CurrentMap = nil :: Map.Map?
 Maps.MapInstance = nil :: Model?
 Maps.IsInMap = false
+
+Maps.InMapBindCollection = nil :: BindCollection.BindCollection
 
 Maps.StartedMapsFolder = Organization:CreateFolder("Map", Rage.Workspace)
 
@@ -67,6 +72,36 @@ function Maps:OnStart()
     self:LoadMaps()
 
     self:_CreateCommands()
+    self:_CreateBinds()
+end
+
+--[[
+    Creates binds.
+]]
+function Maps:_CreateBinds()
+    self.InMapBindCollection = Binds:CreateBindCollection(
+        "InMap",
+        {
+            Binds:CreateBind(
+                "Pause Menu",
+                "Shows the pause menu.",
+                {Enum.KeyCode.P},
+                {ShowTouchButton = true},
+
+                function(context: Bind.BindContext)
+                    if not context.Bind.IsBeingPressed then
+                        return
+                    end
+
+                    if not self.IsInMap then
+                        return
+                    end
+
+                    Menus:ToggleScene("PauseMenu")
+                end
+            )
+        }
+    )
 end
 
 --[[
@@ -81,11 +116,13 @@ function Maps:StartMap(map: Map.Map)
 
     self.CurrentMap = map
     self.IsInMap = true
+
     self:_SetupMapInstance()
     self:_CreateMapBoundaries()
     self:_CreateMapBackground()
-    Menus:SetScene("InMap")
 
+    Menus:SetScene("InMap")
+    self.InMapBindCollection:Enter()
     self.OnMapStart:Fire(self.CurrentMap)
 
     Feedback:GivePositive(1.1)
@@ -234,8 +271,9 @@ function Maps:ExitMap()
     self.CurrentMap = nil
     self.MapInstance:Destroy()
     self.MapInstance = nil
-    Menus:SetScene("MainMenu")
 
+    Menus:SetScene("MainMenu")
+    self.InMapBindCollection:Exit()
     self.OnMapExit:Fire()
 
     Feedback:GivePositive(0.9)
@@ -251,7 +289,7 @@ end
     Gets a map by its name.
 ]]
 function Maps:GetMap(name: string): Map.Map?
-    for _, map in pairs(self.ExistingMaps) do
+    for _, map in pairs(self:GetMaps()) do
         if map.Name == name then
             return map
         end
@@ -259,12 +297,28 @@ function Maps:GetMap(name: string): Map.Map?
 end
 
 --[[
+    Returns all maps.
+]]
+function Maps:GetMaps(): {Map.Map}
+    return self.ExistingMaps
+end
+
+--[[
+    Registers a map.
+]]
+function Maps:RegisterMap(map: Map.Map)
+    table.insert(self.ExistingMaps, map)
+    self.OnMapLoad:Fire(map)
+    Rage.Logging:Info("Maps:RegisterMap(): Registered map: "..map.Name)
+end
+
+--[[
     Loads all maps in MAP_FOLDER into this service.
 ]]
 function Maps:LoadMaps()
-    for _, map in pairs(self.MAP_FOLDER:GetChildren()) do
-        Rage.Logging:Info("Maps:LoadMaps(): Loaded map '"..map.Name.."'.")
-        table.insert(self.ExistingMaps, Map.FromInstance(map))
+    for _, map: Model in pairs(self.MAP_FOLDER:GetChildren()) do
+        Rage.Logging:Info("Maps:LoadMaps(): Loading map: "..map:GetFullName())
+        self:RegisterMap(Map.FromInstance(map))
     end
 end
 
@@ -300,14 +354,14 @@ function Maps:_CreateCommands()
         arguments = function() end,
 
         callback = function()
-            if #self.ExistingMaps == 0 then
+            if #self:GetMaps() == 0 then
                 Rage.Logging:Warn("No maps found. This should not be the case.")
                 return
             end
 
             Rage.Logging:Info("Available maps:")
 
-            for _, map in pairs(self.ExistingMaps) do
+            for _, map in pairs(self:GetMaps()) do
                 Rage.Logging:Info("- " .. map.Name)
             end
         end
