@@ -233,7 +233,7 @@ function Objects:CreateBinds()
             ),
 
             Binds:CreateBind(
-                "Toggle Slow Motion",
+                "Slow Motion",
                 "Toggles slow motion.",
                 {Enum.KeyCode.G},
                 {ShowTouchButton = true, ShowBindUI = true},
@@ -274,7 +274,7 @@ function Objects:CreateBinds()
             ),
 
             Binds:CreateBind(
-                "Toggle Pause",
+                "Pause/Unpause",
                 "Toggles paused state.",
                 {Enum.KeyCode.Space},
                 {ShowTouchButton = true, ShowBindUI = true},
