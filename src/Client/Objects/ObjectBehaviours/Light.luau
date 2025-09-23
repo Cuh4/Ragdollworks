@@ -24,6 +24,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local ObjectBehaviour = require(Rage.Path.Classes.Objects.ObjectBehaviour)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
+local Light = require(Rage.Path.Classes.Light)
 
 -------------------------------
 -- // Main
@@ -39,90 +40,71 @@ setmetatable(LightObjectBehaviour, ObjectBehaviour)
 --[[
     Creates a new LightObjectBehaviour class instance.
 ]]
-function LightObjectBehaviour.New(spawnedObject: ObjectTypes.SpawnedObject): LightObjectBehaviour
-    local self = setmetatable(ObjectBehaviour.New(spawnedObject), LightObjectBehaviour) :: LightObjectBehaviour
-    self.LIGHT_MATERIAL_ON = Enum.Material.Neon
-    self.LIGHT_MATERIAL_OFF = Enum.Material.SmoothPlastic
-
-    self.LightParts = {}
+function LightObjectBehaviour.New(...): LightObjectBehaviour
+    local self = setmetatable(ObjectBehaviour.New(...), LightObjectBehaviour) :: LightObjectBehaviour
+    self.Lights = {} :: {[ObjectTypes.SpawnedObject]: Light.Light}
 
     return self
 end
 
 --[[
-    Finds and registers all light parts.
+    Creates a light for a spawned object.
 ]]
-function LightObjectBehaviour:FindLightParts()
-    for _, part in pairs(self.SpawnedObject.Parts) do
-        if part.Part:GetAttribute("LightSource") then
-            local light = self:GetLightFromPart(part)
+function LightObjectBehaviour:CreateLight(spawnedObject: ObjectTypes.SpawnedObject): Light.Light
+    local light = Light.New(spawnedObject)
+    self.Lights[spawnedObject] = light
 
-            if not light then
-                Rage.Logging:Error(("LightObjectBehaviour:FindLightParts(): No light found on '%s' of object '%s'."):format(part.Part:GetFullName(), self.SpawnedObject.Object.Name))
-            end
-
-            part.Part.Material = self.LIGHT_MATERIAL_OFF
-            light.Enabled = false
-            light.Color = part.Part.Color
-
-            self.LightParts[part] = part
-
-            part.OnDespawn:Once(function()
-                self:RemoveLightPart(part)
-            end)
-
-            Rage.Logging:Info("LightObjectBehaviour:FindLightParts(): Found light part: "..part.Part:GetFullName())
-        end
-    end
+    return light
 end
 
 --[[
-    Removes a light part.
+    Removes a light.
 ]]
-function LightObjectBehaviour:RemoveLightPart(part: ObjectTypes.ObjectPart)
-    self.LightParts[part] = nil
+function LightObjectBehaviour:RemoveLight(spawnedObject: ObjectTypes.SpawnedObject)
+    self.Lights[spawnedObject] = nil
 end
 
 --[[
-    Returns a light from a light part.
+    Returns a light from a spawned object.
 ]]
-function LightObjectBehaviour:GetLightFromPart(part: ObjectTypes.ObjectPart): Light
-    return part.Part:FindFirstChild("Light") :: Light
+function LightObjectBehaviour:GetLight(spawnedObject: ObjectTypes.SpawnedObject): Light.Light
+    return self.Lights[spawnedObject]
 end
 
 --[[
     Called when an object using this behaviour is spawned.
 ]]
-function LightObjectBehaviour:OnSpawn()
-    self:FindLightParts()
+function LightObjectBehaviour:OnSpawn(spawnedObject: ObjectTypes.SpawnedObject)
+    self:CreateLight(spawnedObject)
 end
 
 --[[
     Called when an object using this behaviour is about to be despawned.
 ]]
-function LightObjectBehaviour:OnPreDespawn() end
+function LightObjectBehaviour:OnPreDespawn(spawnedObject: ObjectTypes.SpawnedObject)
+    self:RemoveLight(spawnedObject)
+end
 
 --[[
     Called when an object using this behaviour is activated.
 ]]
-function LightObjectBehaviour:OnActivate(_: ObjectTypes.ObjectPart)
-    for _, part in pairs(self.LightParts) do
-        local light = self:GetLightFromPart(part)
-        light.Enabled = not light.Enabled
-        part.Part.Material = light.Enabled and self.LIGHT_MATERIAL_ON or self.LIGHT_MATERIAL_OFF
+function LightObjectBehaviour:OnActivate(spawnedObject: ObjectTypes.SpawnedObject, _: ObjectTypes.ObjectPart)
+    local light = self:GetLight(spawnedObject) :: Light.Light
+
+    if not light then
+        return
     end
+
+    light:Toggle()
 end
 
 --[[
     Called when an object using this behaviour is updated.
 ]]
-function LightObjectBehaviour:OnUpdate() end
+function LightObjectBehaviour:OnUpdate(spawnedObject: ObjectTypes.SpawnedObject) end
 
 export type LightObjectBehaviour = ObjectTypes.ObjectBehaviour & typeof(LightObjectBehaviour) & {
-    LIGHT_MATERIAL_ON: Enum.Material,
-    LIGHT_MATERIAL_OFF: Enum.Material,
-
-    LightParts: {[ObjectTypes.ObjectPart]: ObjectTypes.ObjectPart}
+    Lights: {[ObjectTypes.SpawnedObject]: Light.Light}
 }
 
 return LightObjectBehaviour
