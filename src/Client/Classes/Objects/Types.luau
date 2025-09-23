@@ -192,14 +192,14 @@ export type ObjectPartSettings = {
 }
 
 export type ObjectBehaviour = {
-    SpawnedObject: SpawnedObject,
+    Name: string,
 
-    New: (spawnedObject: SpawnedObject) -> ObjectBehaviour,
+    New: () -> ObjectBehaviour,
 
-    OnSpawn: (self: ObjectBehaviour) -> nil,
-    OnPreDespawn: (self: ObjectBehaviour) -> nil,
-    OnActivate: (self: ObjectBehaviour, objectPart: ObjectPart) -> nil,
-    OnUpdate: (self: ObjectBehaviour) -> nil
+    OnSpawn: (self: ObjectBehaviour, spawnedObject: SpawnedObject) -> nil,
+    OnPreDespawn: (self: ObjectBehaviour, spawnedObject: SpawnedObject) -> nil,
+    OnActivate: (self: ObjectBehaviour, spawnedObject: SpawnedObject, objectPart: ObjectPart) -> nil,
+    OnUpdate: (self: ObjectBehaviour, spawnedObject: SpawnedObject) -> nil
 }
 
 export type Wire = {

@@ -921,7 +921,7 @@ end
     Registers a new object behaviour.
 ]]
 function Objects:RegisterBehaviour(name: string, behaviourClass: ObjectTypes.ObjectBehaviour)
-    self.Behaviours[name] = behaviourClass
+    self.Behaviours[name] = behaviourClass.New(name)
     Rage.Logging:Info(("Objects:RegisterBehaviour(): Registered behaviour %s."):format(name))
 end
 

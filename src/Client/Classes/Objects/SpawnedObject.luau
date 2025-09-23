@@ -64,7 +64,7 @@ function SpawnedObject:Update(startBound: Vector2, endBound: Vector2, dragPositi
     end
 
     for _, behaviour in pairs(self.Behaviours) do
-        behaviour:OnUpdate()
+        behaviour:OnUpdate(self)
     end
 end
 
@@ -76,11 +76,7 @@ function SpawnedObject:Setup(spawnPos: Vector3)
     self:MoveTo(spawnPos)
 
     self.Parts = self:FindParts()
-
-    for _, behaviour in pairs(self.Object.Behaviours) do
-        local behaviourInstance = behaviour.New(self)
-        table.insert(self.Behaviours, behaviourInstance)
-    end
+    self.Behaviours = self.Object.Behaviours
 
     self:CreateNoCollideConstraints()
     self:SetupAttributes()
@@ -92,7 +88,7 @@ function SpawnedObject:Setup(spawnPos: Vector3)
     for _, part in pairs(self.Parts) do
         part.OnActivate:Connect(function()
             for _, behaviour in pairs(self.Behaviours) do
-                behaviour:OnActivate(part)
+                behaviour:OnActivate(self, part)
             end
         end)
 
@@ -110,7 +106,7 @@ end
 ]]
 function SpawnedObject:StartBehaviours()
     for _, behaviour in pairs(self.Behaviours) do
-        behaviour:OnSpawn()
+        behaviour:OnSpawn(self)
     end
 end
 
@@ -270,7 +266,7 @@ function SpawnedObject:Despawn()
     self.IsDespawning = true -- prevent a second despawn due to all parts being removed
 
     for _, behaviour in pairs(self.Behaviours) do
-        behaviour:OnPreDespawn()
+        behaviour:OnPreDespawn(self)
     end
 
     for _, part in pairs(self.Parts) do

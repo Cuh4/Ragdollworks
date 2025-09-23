@@ -35,9 +35,9 @@ ObjectBehaviour.__index = ObjectBehaviour
 --[[
     Creates a new ObjectBehaviour class instance.
 ]]
-function ObjectBehaviour.New(spawnedObject: ObjectTypes.SpawnedObject): ObjectTypes.ObjectBehaviour
+function ObjectBehaviour.New(name: string): ObjectTypes.ObjectBehaviour
     local self = setmetatable({}, ObjectBehaviour)
-    self.SpawnedObject = spawnedObject
+    self.Name = name
 
     return self
 end
@@ -45,28 +45,28 @@ end
 --[[
     Called when an object using this behaviour is spawned.
 ]]
-function ObjectBehaviour:OnSpawn(object: ObjectTypes.SpawnedObject)
+function ObjectBehaviour:OnSpawn(spawnedObject: ObjectTypes.SpawnedObject)
     Rage.Logging:Error(self.Name..": OnSpawn not implemented!")
 end
 
 --[[
     Called when an object using this behaviour is about to be despawned.
 ]]
-function ObjectBehaviour:OnPreDespawn(object: ObjectTypes.SpawnedObject)
+function ObjectBehaviour:OnPreDespawn(spawnedObject: ObjectTypes.SpawnedObject)
     Rage.Logging:Error(self.Name..": OnPreDespawn not implemented!")
 end
 
 --[[
     Called when an object using this behaviour is activated.
 ]]
-function ObjectBehaviour:OnActivate(object: ObjectTypes.SpawnedObject, objectPart: ObjectTypes.ObjectPart)
+function ObjectBehaviour:OnActivate(spawnedObject: ObjectTypes.SpawnedObject, objectPart: ObjectTypes.ObjectPart)
     Rage.Logging:Error(self.Name..": OnActivate not implemented!")
 end
 
 --[[
     Called when an object using this behaviour is updated.
 ]]
-function ObjectBehaviour:OnUpdate(object: ObjectTypes.SpawnedObject)
+function ObjectBehaviour:OnUpdate(spawnedObject: ObjectTypes.SpawnedObject)
     Rage.Logging:Error(self.Name..": OnUpdate not implemented!")
 end
 
