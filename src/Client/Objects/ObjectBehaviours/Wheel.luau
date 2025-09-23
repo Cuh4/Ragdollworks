@@ -25,6 +25,8 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 local ObjectBehaviour = require(Rage.Path.Classes.Objects.ObjectBehaviour)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
 
+local Wheel = require(Rage.Path.Classes.Wheel)
+
 -------------------------------
 -- // Main
 -------------------------------
@@ -39,46 +41,83 @@ setmetatable(WheelObjectBehaviour, ObjectBehaviour)
 --[[
     Creates a new WheelObjectBehaviour class instance.
 ]]
-function WheelObjectBehaviour.New(spawnedObject: ObjectTypes.SpawnedObject): WheelObjectBehaviour
-    local self = setmetatable(ObjectBehaviour.New(spawnedObject), WheelObjectBehaviour) :: WheelObjectBehaviour
-    self.WheelConnector = nil
-    self.Motor = nil
-    self.Enabled = false
+function WheelObjectBehaviour.New(...): WheelObjectBehaviour
+    local self = setmetatable(ObjectBehaviour.New(...), WheelObjectBehaviour) :: WheelObjectBehaviour
+    self.Wheels = {} :: {[ObjectTypes.SpawnedObject]: Wheel.Wheel}
 
     return self
 end
 
 --[[
+    Creates a wheel for a spawned object.
+]]
+function WheelObjectBehaviour:CreateWheel(spawnedObject: ObjectTypes.SpawnedObject): Wheel.Wheel
+    local wheel = Wheel.New(spawnedObject)
+    self.Wheels[spawnedObject] = wheel
+end
+
+--[[
+    Returns a wheel from a spawned object.
+]]
+function WheelObjectBehaviour:GetWheel(spawnedObject: ObjectTypes.SpawnedObject): Wheel.Wheel?
+    return self.Wheels[spawnedObject]
+end
+
+--[[
+    Removes a wheel.
+]]
+function WheelObjectBehaviour:RemoveWheel(wheel: Wheel.Wheel)
+    self.Wheels[wheel.SpawnedObject] = nil
+end
+
+--[[
     Called when an object using this behaviour is spawned.
 ]]
-function WheelObjectBehaviour:OnSpawn()
-    self.WheelConnector = self.SpawnedObject:GetPartByName("WheelConnector") or Rage.Logging:Error("WheelObjectBehaviour: No `WheelConnector` part found for object "..self.SpawnedObject.Object.Name) :: ObjectTypes.ObjectPart
-    self.Motor = self.WheelConnector.Part:FindFirstChild("Motor") or Rage.Logging:Error("WheelObjectBehaviour: No `Motor` part found for object "..self.SpawnedObject.Object.Name) :: HingeConstraint
+function WheelObjectBehaviour:OnSpawn(spawnedObject: ObjectTypes.SpawnedObject)
+    self:CreateWheel(spawnedObject)
 end
 
 --[[
     Called when an object using this behaviour is about to be despawned.
 ]]
-function WheelObjectBehaviour:OnPreDespawn() end
+function WheelObjectBehaviour:OnPreDespawn(spawnedObject: ObjectTypes.SpawnedObject)
+    local wheel = self:GetWheel(spawnedObject)
+
+    if not wheel then
+        return
+    end
+
+    self:RemoveWheel(wheel)
+end
 
 --[[
     Called when an object using this behaviour is activated.
 ]]
-function WheelObjectBehaviour:OnActivate(_: ObjectTypes.ObjectPart)
-    self.Enabled = not self.Enabled
+function WheelObjectBehaviour:OnActivate(spawnedObject: ObjectTypes.SpawnedObject, _: ObjectTypes.ObjectPart)
+    local wheel = self:GetWheel(spawnedObject)
+
+    if not wheel then
+        return
+    end
+
+    wheel:Toggle()
 end
 
 --[[
     Called when an object using this behaviour is updated.
 ]]
-function WheelObjectBehaviour:OnUpdate()
-    self.Motor.ActuatorType = self.Enabled and Enum.ActuatorType.Motor or Enum.ActuatorType.None
+function WheelObjectBehaviour:OnUpdate(spawnedObject: ObjectTypes.SpawnedObject)
+    local wheel = self:GetWheel(spawnedObject)
+
+    if not wheel then
+        return
+    end
+
+    wheel:Update()
 end
 
 export type WheelObjectBehaviour = ObjectTypes.ObjectBehaviour & typeof(WheelObjectBehaviour) & {
-    WheelConnector: ObjectTypes.ObjectPart,
-    Motor: HingeConstraint,
-    Enabled: boolean
+    Wheels: {[ObjectTypes.SpawnedObject]: Wheel.Wheel}
 }
 
 return WheelObjectBehaviour
