@@ -24,11 +24,7 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
 
 local ObjectBehaviour = require(Rage.Path.Classes.Objects.ObjectBehaviour)
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
-local Sound = require(Rage.Path.Classes.Sound)
-
-local Organization = require(Rage.Path.Organization)
-local Sounds = require(Rage.Path.Sounds)
-local Effects = require(Rage.Path.Effects)
+local Explosive = require(Rage.Path.Classes.Explosive)
 
 -------------------------------
 -- // Main
@@ -39,107 +35,97 @@ local Effects = require(Rage.Path.Effects)
 ]]
 ExplosiveObjectBehaviour = {} :: ExplosiveObjectBehaviour
 ExplosiveObjectBehaviour.__index = ExplosiveObjectBehaviour
-ExplosiveObjectBehaviour._ExplosionsFolder = Organization:CreateFolder("Explosions", Rage.Workspace)
 
 setmetatable(ExplosiveObjectBehaviour, ObjectBehaviour)
 
 --[[
     Creates a new ExplosiveObjectBehaviour class instance.
 ]]
-function ExplosiveObjectBehaviour.New(spawnedObject: ObjectTypes.SpawnedObject): ExplosiveObjectBehaviour
-    local self = setmetatable(ObjectBehaviour.New(spawnedObject), ExplosiveObjectBehaviour) :: ExplosiveObjectBehaviour
-    self.MainPart = table.pack(next(self.SpawnedObject.Parts))[2]
-
-    self.ExplosionRadius = self.SpawnedObject.Instance:GetAttribute("ExplosionRadius") or 10
-    self.ExplosionPressure = self.SpawnedObject.Instance:GetAttribute("ExplosionPressure") or 50000
-    self.ExplosionCollisionThreshold = self.SpawnedObject.Instance:GetAttribute("ExplosionCollisionThreshold") or 50
-    self.ExplodeOnActivation = self.SpawnedObject.Instance:GetAttribute("ExplodeOnActivation") or false
-
-    local soundAssetID = self.SpawnedObject.Instance:GetAttribute("ExplosionSoundAssetID") or Rage.Logging:Error(self.SpawnedObject.Instance:GetFullName()..": No explosion sound asset ID provided.")
-
-    self.Sound = Sounds:CreateSound(soundAssetID, {
-        Volume = self.SpawnedObject.Instance:GetAttribute("ExplosionSoundVolume") or Rage.Logging:Error(self.SpawnedObject.Instance:GetFullName()..": No explosion sound volume provided."),
-        RollOffMinDistance = self.ExplosionRadius * 0.8
-    })
+function ExplosiveObjectBehaviour.New(...): ExplosiveObjectBehaviour
+    local self = setmetatable(ObjectBehaviour.New(...), ExplosiveObjectBehaviour) :: ExplosiveObjectBehaviour
+    self.Explosives = {} :: {[ObjectTypes.ObjectPart]: Explosive.Explosive}
 
     return self
 end
 
 --[[
-    Explodes and despawns the part.
+    Creates an explosive for a part.
 ]]
-function ExplosiveObjectBehaviour:Explode()
-    local explosion = Instance.new("Explosion")
-    explosion.BlastRadius = self.ExplosionRadius
-    explosion.BlastPressure = self.ExplosionPressure
-    explosion.ExplosionType = Enum.ExplosionType.NoCraters
-    explosion.DestroyJointRadiusPercent = 0
-    explosion.Position = self.MainPart:GetPosition3D()
-    explosion.Visible = false
-    explosion.Parent = self._ExplosionsFolder
+function ExplosiveObjectBehaviour:CreateExplosive(objectPart: ObjectTypes.ObjectPart): Explosive.Explosive
+    local explosive = Explosive.New(objectPart)
 
-    self.Sound:Play({}, self.MainPart:GetPosition())
+    explosive.OnCleanup:Once(function()
+        self:RemoveExplosive(explosive)
+    end)
 
-    Effects:SpawnEffect(
-        "Explosion",
-        0.5,
-        nil,
-        self.MainPart:GetPosition(),
+    self.Explosives[objectPart] = explosive
+end
 
-        {
-            Size = NumberSequence.new(self.ExplosionRadius)
-        }
-    )
+--[[
+    Returns an explosive from an object part.
+]]
+function ExplosiveObjectBehaviour:GetExplosive(objectPart: ObjectTypes.ObjectPart): Explosive.Explosive?
+    return self.Explosives[objectPart]
+end
 
-    self.MainPart:Despawn()
-    self.MainPart = nil
+--[[
+    Removes an explosive.
+]]
+function ExplosiveObjectBehaviour:RemoveExplosive(explosive: Explosive.Explosive)
+    if not self.Explosives[explosive.Part] then
+        return
+    end
+
+    explosive:Cleanup()
+    self.Explosives[explosive.Part] = nil
 end
 
 --[[
     Called when an object using this behaviour is spawned.
 ]]
-function ExplosiveObjectBehaviour:OnSpawn()
-    self.MainPart.Trove:Add(self.MainPart.OnCollision:Connect(function(context: ObjectTypes.ObjectPartCollisionContext)
-        if context.ImpactAmount > self.ExplosionCollisionThreshold then
-            self:Explode()
-        end
-    end))
+function ExplosiveObjectBehaviour:OnSpawn(spawnedObject: ObjectTypes.SpawnedObject)
+    for _, part in pairs(spawnedObject.Parts) do
+        self:CreateExplosive(part)
+    end
 end
 
 --[[
     Called when an object using this behaviour is about to be despawned.
 ]]
-function ExplosiveObjectBehaviour:OnPreDespawn() end
+function ExplosiveObjectBehaviour:OnPreDespawn(spawnedObject: ObjectTypes.SpawnedObject)
+    for _, part in pairs(spawnedObject.Parts) do
+        local explosive = self:GetExplosive(part) :: Explosive.Explosive
+
+        if not explosive then
+            return
+        end
+
+        self:RemoveExplosive(explosive)
+    end
+end
 
 --[[
     Called when an object using this behaviour is activated.
 ]]
-function ExplosiveObjectBehaviour:OnActivate(objectPart: ObjectTypes.ObjectPart)
-    if not self.ExplodeOnActivation then
+function ExplosiveObjectBehaviour:OnActivate(spawnedObject: ObjectTypes.SpawnedObject, objectPart: ObjectTypes.ObjectPart)
+    local explosive = self:GetExplosive(objectPart) :: Explosive.Explosive
+
+    if not explosive then
         return
     end
 
-    if objectPart ~= self.MainPart then
-        return
+    if explosive.ExplodeOnActivation then
+        explosive:Explode()
     end
-
-    self:Explode()
 end
 
 --[[
     Called when an object using this behaviour is updated.
 ]]
-function ExplosiveObjectBehaviour:OnUpdate() end
+function ExplosiveObjectBehaviour:OnUpdate(spawnedObject: ObjectTypes.SpawnedObject) end
 
 export type ExplosiveObjectBehaviour = ObjectTypes.ObjectBehaviour & typeof(ExplosiveObjectBehaviour) & {
-    _ExplosionsFolder: Folder,
-
-    MainPart: ObjectTypes.ObjectPart,
-    ExplosionRadius: number,
-    ExplosionPressure: number,
-    ExplosionCollisionThreshold: number,
-    ExplodeOnActivation: boolean,
-    Sound: Sound.RSound
+    Explosives: {[ObjectTypes.ObjectPart]: Explosive.Explosive}
 }
 
 return ExplosiveObjectBehaviour
