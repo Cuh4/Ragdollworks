@@ -93,9 +93,23 @@ function Menus:SetScene(scene: string)
         return
     end
 
+    for _, _scene in pairs(self.Scenes) do
+        if _scene == scene then
+            continue
+        end
+
+        self.OnSceneRemove:Fire(_scene)
+    end
+
+    local wasInScene = self:HasScene(scene)
+
     self.Scenes = {scene}
     self:_UpdateAllMenusVisibility()
     self.OnSceneSet:Fire(scene)
+
+    if not wasInScene then
+        self.OnSceneAdd:Fire(scene)
+    end
 
     Rage.Logging:Info("Menus: Set scene ONLY to "..scene)
 end
