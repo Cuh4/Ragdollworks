@@ -38,7 +38,7 @@ RbxAssets.PRELOAD_DIRECTORIES = {
     Rage.ReplicatedStorage
 } :: {Instance}
 
-RbxAssets.CURSOR_ICON = "rbxassetid://118815884093849"
+RbxAssets.CURSOR_ICON = "rbxassetid://118111294366775"
 RbxAssets.UNKNOWN_ICON = "rbxassetid://139531674672176"
 RbxAssets.PAUSED_ICON = "rbxassetid://133133242300387"
 RbxAssets.UNPAUSED_ICON = "rbxassetid://86420074878526"
