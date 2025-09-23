@@ -30,6 +30,8 @@ local Rage = require(game:GetService("ReplicatedStorage").Rage)
     A service for storing and loading assets used throughout the game.
 ]]
 RbxAssets = Rage:Service("RbxAssets") :: RbxAssets
+RbxAssets.StartPriority = 999
+
 RbxAssets.PRELOAD_DIRECTORIES = {
     Rage.Workspace,
     Rage.Player.PlayerGui,
