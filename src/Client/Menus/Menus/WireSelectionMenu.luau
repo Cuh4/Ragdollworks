@@ -62,15 +62,12 @@ end
 function WireSelectionMenu:AddWire(wire: ObjectTypes.Wire)
     local container = UI:GetComponent("Wire"):Clone() :: Frame
     local imageButton = container.IconButton :: ImageButton
-    local textContainer = container.TextContainer :: Frame
-    local wireName = textContainer.WireName :: TextLabel
 
     imageButton.MouseButton1Click:Connect(function()
         Objects:SelectWire(wire)
     end)
 
     imageButton.Image = wire:GetIcon()
-    wireName.Text = wire.Name
 
     container.LayoutOrder = wire.ID
     container.Parent = self.WiresContainer
