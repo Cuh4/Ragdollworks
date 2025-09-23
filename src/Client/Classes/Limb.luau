@@ -912,6 +912,29 @@ function Limb:HandlePassiveDamage()
 end
 
 --[[
+    Creates context menu items for this limb.
+]]
+function Limb:CreateContextMenuItems()
+    self.ObjectPart.ContextMenu:AddContextMenuItem("Wake Up", function()
+        self:WakeUp()
+    end)
+
+    self.ObjectPart.ContextMenu:AddContextMenuItem("Knockout", function()
+        self:SetUnconsciousFor(60)
+    end)
+
+    self.ObjectPart.ContextMenu:AddContextMenuItem("Heal Limb", function()
+        self:Heal()
+    end)
+
+    self.ObjectPart.ContextMenu:AddContextMenuItem("Heal Human", function()
+        for _, limb in pairs(self.Limbs) do
+            limb:Heal()
+        end
+    end)
+end
+
+--[[
     Setups the limb.
 ]]
 function Limb:Setup(limbs: {[ObjectTypes.ObjectPart]: Limb})
@@ -950,6 +973,7 @@ function Limb:Setup(limbs: {[ObjectTypes.ObjectPart]: Limb})
     self.FleshDecal = self.ObjectPart.Part:FindFirstChild("Flesh") or Rage.Logging:Error(self.LimbName..": Missing `Flesh` decal.") :: Decal
     self.BoneDecal = self.ObjectPart.Part:FindFirstChild("Bone") or Rage.Logging:Error(self.LimbName..": Missing `Bone` decal.") :: Decal
 
+    self:CreateContextMenuItems()
     self:TrackImpacts()
     self:CreateStatusIcon() -- head only. the method checks this though
 end
