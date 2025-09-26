@@ -77,15 +77,15 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
 
     self.BLOODY_IMPACT_FX_SKIN_DAMAGE_THRESHOLD = 0.95 -- %
 
-    self.BRUISE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.55, 1)
-    self.IMPACT_BRUISING_THRESHOLD = 16
-    self.IMPACT_BRUISING_MULTIPLIER = 0.0095
+    self.BRUISE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.65, 1)
+    self.IMPACT_BRUISING_THRESHOLD = 14
+    self.IMPACT_BRUISING_MULTIPLIER = 0.0128
 
-    self.SKIN_DAMAGE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.25, 1)
-    self.FLESH_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.95, 1)
+    self.SKIN_DAMAGE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.15, 1)
+    self.FLESH_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.6, 1)
     self.BONE_DECAL_TRANSPARENCY_RANGE = NumberRange.new(0.87, 1)
     self.BONE_FROM_SKIN_DAMAGE_MULTIPLIER = 1.2
-    self.IMPACT_SKIN_DAMAGE_THRESHOLD = 24
+    self.IMPACT_SKIN_DAMAGE_THRESHOLD = 28
     self.IMPACT_SKIN_DAMAGE_MULTIPLIER = 0.013
 
     self.GORY_IMPACT_SOUND_SKIN_DAMAGE_THRESHOLD = 0.95 -- %
@@ -100,6 +100,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
     self.BRAIN_DEAD_HEALTH_LOSS_RATE = 0.35 -- per update
     self.HEART_DEAD_HEALTH_LOSS_RATE = 0.1 -- per update
 
+    self.STABILIZATION_RESPONSIVENESS = 5
     self.UNGROUNDED_STABILIZATION_MULTIPLIER = 0.6
     self.UNGROUNDED_STABILIZATION_TARGET_RANDOMNESS = NumberRange.new(-45, 45) -- degrees
 
@@ -233,7 +234,7 @@ end
     Returns the stabilization force's responsiveness.
 ]]
 function Limb:GetStabilizationForceResponsiveness(): number
-    local responsiveness = 10 * self:GetHealthPercentage()
+    local responsiveness = self.STABILIZATION_RESPONSIVENESS * self:GetHealthPercentage()
 
     if not self.IsGrounded then
         responsiveness *= self.UNGROUNDED_STABILIZATION_MULTIPLIER
@@ -1045,6 +1046,7 @@ export type Limb = typeof(Limb) & {
     BRAIN_DEAD_HEALTH_LOSS_RATE: number,
     HEART_DEAD_HEALTH_LOSS_RATE: number,
 
+    STABILIZATION_RESPONSIVENESS: number,
     UNGROUNDED_STABILIZATION_MULTIPLIER: number,
     UNGROUNDED_STABILIZATION_TARGET_RANDOMNESS: NumberRange,
 
