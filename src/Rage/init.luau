@@ -5,9 +5,20 @@
 --[[
     ----------------------------
 
-    Copyright (C) 2025 Cuh4 - All Rights Reserved
-        - Unauthorized copying of this file, via any medium is strictly prohibited
-        - Proprietary and confidential
+    License:
+        Copyright (C) 2025 Cuh4
+
+        Licensed under the Apache License, Version 2.0 (the "License");
+        you may not use this file except in compliance with the License.
+        You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+        Unless required by applicable law or agreed to in writing, software
+        distributed under the License is distributed on an "AS IS" BASIS,
+        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        See the License for the specific language governing permissions and
+        limitations under the License.
 
     CREDIT:
         Author(s): @Cuh4 (GitHub)
@@ -144,7 +155,7 @@ function Rage:Initialize()
     -- Load services
     self.Logging:Info("Loading all services at:", self.Path:GetFullName())
 
-    for _, service: Service in pairs(self:_LoadAll(self.Path)) do
+    for _, service: Service in pairs(self:LoadAll(self.Path)) do
         if not self.Libs.Classes:IsClassInstance(service, Rage.Classes.Service) then
             continue
         end
@@ -227,12 +238,12 @@ end
 --[[
     Requires all modules within `at` and returns them.
 ]]
-function Rage:_LoadAll(at: Instance)
+function Rage:LoadAll(at: Instance): {[string]: any}
     local modules = {} :: {any}
 
     for _, module in pairs(at:GetDescendants()) do
         if module:IsA("ModuleScript") then
-            table.insert(modules, require(module))
+            modules[module.Name] = require(module)
         end
     end
 
