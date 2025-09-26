@@ -5,9 +5,20 @@
 --[[
     ----------------------------
 
-    Copyright (C) 2025 Cuh4 - All Rights Reserved
-        - Unauthorized copying of this file, via any medium is strictly prohibited
-        - Proprietary and confidential
+    License:
+        Copyright (C) 2025 Cuh4
+
+        Licensed under the Apache License, Version 2.0 (the "License");
+        you may not use this file except in compliance with the License.
+        You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+        Unless required by applicable law or agreed to in writing, software
+        distributed under the License is distributed on an "AS IS" BASIS,
+        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        See the License for the specific language governing permissions and
+        limitations under the License.
 
     CREDIT:
         Author(s): @Cuh4 (GitHub)
@@ -20,17 +31,16 @@
 -------------------------------
 
 local Rage = require(game:GetService("ReplicatedStorage").Rage)
-
 local Sounds = require(Rage.Path.Sounds)
 local UI = require(Rage.Path.UI)
-local Effects = require(Rage.Path.Effects)
 local RbxAssets = require(Rage.Path.RbxAssets)
 local Debug = require(Rage.Path.Debug)
-local Maps = require(Rage.Path.Maps)
 local Objects = require(Rage.Path.Objects)
 
 local Sound, SoundCollection = require(script.Parent.Sound), require(script.Parent.SoundCollection) -- purely for types
 local ObjectTypes = require(Rage.Path.Classes.Objects.Types)
+
+local BleedingEffect = require(Rage.Path.Effects.Bleeding)
 
 local Trove = require(Rage.WallyPackages.trove)
 
@@ -178,8 +188,7 @@ function Limb.New(name: string, objectPart: ObjectTypes.ObjectPart, maxHealth: n
         Sounds:CreateSound(RbxAssets.HUMAN_DEATH_3, {Volume = 0.7})
     )
 
-    self.BleedingEffect = nil :: ParticleEmitter
-    self.BleedingEffectDefaultRate = nil :: number
+    self.BleedingEffect = nil :: BleedingEffect.BleedingEffect
     self.BruiseDecal = nil :: Decal
     self.FleshDecal = nil :: Decal
     self.BoneDecal = nil :: Decal
@@ -755,18 +764,18 @@ function Limb:HandleImpact(amount: number, _propagations: number?, _propagationJ
     end
 
     -- VFX
-    Effects:SpawnEffect(
-        Rage.Libs.Table:GetRandom(self.ImpactEffects),
-        0.07,
-        self.ObjectPart.Part
-    )
+    -- Effects:SpawnEffect(
+    --     Rage.Libs.Table:GetRandom(self.ImpactEffects),
+    --     0.07,
+    --     self.ObjectPart.Part
+    -- )
 
     if self.SkinDamage >= self.BLOODY_IMPACT_FX_SKIN_DAMAGE_THRESHOLD then
-        Effects:SpawnEffect(
-            Rage.Libs.Table:GetRandom(self.BloodyImpactEffects),
-            0.06,
-            self.ObjectPart.Part
-        )
+        -- Effects:SpawnEffect(
+        --     Rage.Libs.Table:GetRandom(self.BloodyImpactEffects),
+        --     0.06,
+        --     self.ObjectPart.Part
+        -- )
     end
 end
 
@@ -785,14 +794,12 @@ end
 ]]
 function Limb:HandleBleeding()
     if self.Bleeding <= 0 then
-        self.BleedingEffect.Enabled = false
         self.BleedingSound.Playing = false
         return
     end
 
     self:Damage(self.BLEEDING_HEALTH_LOSS_RATE * self.Bleeding)
-    self.BleedingEffect.Rate = self.BleedingEffectDefaultRate * self.Bleeding
-    self.BleedingEffect.Enabled = true
+    self.BleedingEffect:SetBleedingRate(self.Bleeding)
 
     self.BleedingSound.Volume = self.BLEEDING_SOUND_VOLUME * self.Bleeding
     self.BleedingSound.Playing = true
@@ -965,9 +972,7 @@ function Limb:Setup(limbs: {[ObjectTypes.ObjectPart]: Limb})
 
     self.HealthContainer = self.BillboardGUI:FindFirstChild("Container") or Rage.Logging:Error(self.LimbName..": Missing `Container` object in health billboard GUI.") :: Frame
 
-    self.BleedingEffect = Effects:SpawnEffect("Bleeding", -1, self.ObjectPart.Part)
-    self.BleedingEffectDefaultRate = self.BleedingEffect.Rate
-    self.BleedingEffect.Enabled = false
+    self.BleedingEffect = BleedingEffect:Spawn()
 
     self.BruiseDecal = self.ObjectPart.Part:FindFirstChild("Bruise") or Rage.Logging:Error(self.LimbName..": Missing `Bruise` decal.") :: Decal
     self.FleshDecal = self.ObjectPart.Part:FindFirstChild("Flesh") or Rage.Logging:Error(self.LimbName..": Missing `Flesh` decal.") :: Decal
@@ -1085,8 +1090,7 @@ export type Limb = typeof(Limb) & {
     BloodyImpactEffects: {string},
     GruntSounds: SoundCollection.SoundCollection,
     DeathSounds: SoundCollection.SoundCollection,
-    BleedingEffect: ParticleEmitter,
-    BleedingEffectDefaultRate: number,
+    BleedingEffect: BleedingEffect.BleedingEffect,
     BruiseDecal: Decal,
     FleshDecal: Decal,
     BoneDecal: Decal
