@@ -1,14 +1,30 @@
 ![Banner](assets/Imagery/BannerDark.png)
 
-## 📚 Ragdollworks
+# 📚 Ragdollworks
 A Roblox 2D sandbox featuring spawnable objects in various sandbox maps, simulated humans, physics, explosions, and more.
 
 In other words, a cheap ripoff of People Playground.
 
+## 👷‍♂️ | Setup
+### Prerequisites
+1) [Aftman](https://github.com/LPGhatguy/aftman)
+2) (Optional) [Roblox LSP Extension](https://marketplace.visualstudio.com/items?itemName=Nightrains.robloxlsp). I do not use the successor Luau extension because I've ran into too many quirks using it on this project.
+
+### Steps
+1) `git clone` this repo.
+2) `cd` into the repo folder.
+3) Install all tools via `aftman install`. This will install all tools used in this game like Wally and Rojo.
+4) Run `wally install`. This will install all Wally packages used in this game.
+5) Run `rojo serve`. This will allow you to synchronise code from the repo to the game itself in Roblox Studio.
+6) Download the latest release of the game from the GitHub repo.
+7) Open it up in Roblox Studio.
+8) Install the `Rojo` plugin in Roblox Studio.
+9) Open up `Rojo` in Roblox Studio and click "Connect". Code should now sync from the repo directory to the game allowing you to code in VSCode.
+
 ## 📸 | Game Screenshots
 ![Game Screenshot 4: 2D Human in front of explosion](assets/Imagery/GameScreenshots/4.png)
 ![Game Screenshot 5: 2D Human under light](assets/Imagery/GameScreenshots/5.png)
-![Game Screenshot 4: 2D Human falling while bleeding](assets/Imagery/GameScreenshots/1.png)
+![Game Screenshot 1: 2D Human falling while bleeding](assets/Imagery/GameScreenshots/1.png)
 
 ## 🤬 | Rants
 - Luau LSP is the most up-to-date LSP for Roblox, but I can't use it because it can't infer types through references (e.g: `require(Rage.Path.ID)` is an unknown type). Stuck with Roblox LSP that can do this but is outdated and most packages don't support types for it. Fuck
