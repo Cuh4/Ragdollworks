@@ -47,7 +47,7 @@ local Organization = require(Rage.Path.Organization)
 -------------------------------
 
 --[[
-    A service for debuggng utilities.
+    A service for debugging utilities.
 ]]
 Debug = Rage:Service("Debug") :: Debug
 Debug.DEBUG_PART_EXPIRATION_TIME = 2
