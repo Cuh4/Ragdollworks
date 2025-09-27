@@ -6,19 +6,25 @@
     ----------------------------
 
     License:
-        Copyright (C) 2025 Cuh4
+        Source-Available No-Redistribution License
+        Copyright (c) 2025 Cuh4. All rights reserved.
 
-        Licensed under the Apache License, Version 2.0 (the "License");
-        you may not use this file except in compliance with the License.
-        You may obtain a copy of the License at
+        IMPORTANT: This source code is NOT Open Source.
 
-            http://www.apache.org/licenses/LICENSE-2.0
+        1. PERMISSIONS (Limited):
+        * View and read the source code.
+        * Modify for private, non-public use only.
+        * Contributions back to the project are permitted.
 
-        Unless required by applicable law or agreed to in writing, software
-        distributed under the License is distributed on an "AS IS" BASIS,
-        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-        See the License for the specific language governing permissions and
-        limitations under the License.
+        2. PROHIBITIONS (Strict):
+        * You MAY NOT copy, redistribute, publish, or share the code (modified or unmodified).
+        * You MAY NOT use this code in ANY public or commercial project or service.
+
+        Any violation automatically terminates your rights.
+        Provided "AS IS" without warranty.
+        Full terms governed by the laws of England and Wales.
+
+        For the full license, see the `LICENSE` file provided with the source code.
 
     CREDIT:
         Author(s): @Cuh4 (GitHub)
