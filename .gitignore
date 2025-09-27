@@ -5,5 +5,8 @@ wally.lock
 # rojo
 sourcemap.json
 
+# releases
+releases
+
 # dev
 backups
