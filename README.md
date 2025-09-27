@@ -1,9 +1,14 @@
 ![Banner](assets/Imagery/BannerDark.png)
 
 # 📚 Ragdollworks
-A Roblox 2D sandbox featuring spawnable objects in various sandbox maps, simulated humans, physics, explosions, and more.
+A Roblox 2D sandbox featuring spawnable objects in various sandbox maps, wiring, simulated humans, physics, machinery, explosions, and more.
 
 In other words, a cheap ripoff of People Playground.
+
+## ❔ | What's "Rage"?
+Rage is the foundation of this game. It serves as a "bootloader" by allowing the creation of services and loading them based on a manually-set (and automatically) priority order. Since it serves as a bootloader, it also allows for using single-script architecture.
+
+Rage will eventually get its own repo and will be fully open-sourced.
 
 ## 👷‍♂️ | Setup
 ### Prerequisites
